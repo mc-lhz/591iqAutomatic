@@ -1,9 +1,9 @@
 """591iq 全量接口测试：账号密码登录 → 跑全部只读端点 → PASS/FAIL 汇总。
 
 用法：
-  python TestEndpoints.py -u <学号> -p <密码>          # 门户登录换 token 后全量测试
-  python TestEndpoints.py --token <ssoToken>          # 直接用已有 token
-  python TestEndpoints.py -u .. -p .. --upload        # 附带图片上传端点（会落一个文件）
+  python TestApi.py -u <学号> -p <密码>          # 门户登录换 token 后全量测试
+  python TestApi.py --token <ssoToken>          # 直接用已有 token
+  python TestApi.py -u .. -p .. --upload        # 附带图片上传端点（会落一个文件）
 """
 import argparse
 import json
@@ -11,11 +11,12 @@ import os
 import sys
 import time
 
-HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, HERE)
+HERE = os.path.dirname(os.path.abspath(__file__))                      # tools/tests（产物）
+TOOLS = os.path.dirname(HERE)                                          # tools（import 根）
+sys.path.insert(0, TOOLS)
 
 from IqClient import IQClient                     # noqa: E402
-from auth.Login import loginForToken                    # noqa: E402
+from auth.Login import loginForToken           # noqa: E402
 
 def _pick_image():
     cand = [os.path.join(os.environ.get("TEMP", ""), "opencode", "iq",
@@ -255,14 +256,14 @@ def main():
           f"SKIP={counts['SKIP']} 共 {len(results)} 项 "
           f"总耗时 {total}ms  token={token[:16]}…")
 
-    out = os.path.join(HERE, "TestEndpointsReport.json")
+    out = os.path.join(HERE, "TestApiReport.json")
     with open(out, "w", encoding="utf-8") as f:
         json.dump([{"name": n, "status": s, "ms": m, "note": b}
                    for n, s, m, b in results], f, ensure_ascii=False, indent=1)
     print("报告:", out)
 
     if args.dump:
-        dump_path = os.path.join(HERE, "TestEndpointsDump.txt")
+        dump_path = os.path.join(HERE, "TestApiDump.txt")
         with open(dump_path, "w", encoding="utf-8") as f:
             for name, status, ms, brief in results:
                 f.write(f"===== {name} [{status}] {ms}ms =====\n")
