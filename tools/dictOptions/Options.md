@@ -1,7 +1,7 @@
 # Options（平台字典域）
 
 管：全局枚举与选项——字典、学期、活动类型、荣誉类型。
-不管：任何写入（见 `record/Write.py`）、统计（见 `grow/Stats.py`）。
+不管：任何写入（见 `recordCenter/Write.py`）、统计（见 `growReport/Stats.py`）。
 
 发布写实记录前，槽位取值都来自本模块。
 

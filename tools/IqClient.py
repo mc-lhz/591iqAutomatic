@@ -2,19 +2,19 @@
 
 按业务域拆分为 profile / meta / workbench / record / grow 五个域
 （域内按职责分子模块，每个模块带同名 .md 说明），
-基础设施为 core/Http.py 与 auth/Login.py。
+基础设施为 coreHttp/Http.py 与 authLogin/Login.py。
 本文件只负责组合，对外保持 IQClient API 不变。
 """
 import json
 
-from core.Http import Http, IQError
-from grow.Report import ReportMixin
-from grow.Stats import StatsMixin
-from meta.Options import OptionsMixin
-from profile.Profile import ProfileMixin
-from record.Query import QueryMixin
-from record.Write import WriteMixin
-from workbench.Workbench import WorkbenchMixin
+from coreHttp.Http import Http, IQError
+from growReport.Report import ReportMixin
+from growReport.Stats import StatsMixin
+from dictOptions.Options import OptionsMixin
+from studentProfile.Profile import ProfileMixin
+from recordCenter.Query import QueryMixin
+from recordCenter.Write import WriteMixin
+from homeWorkbench.Workbench import WorkbenchMixin
 
 
 class IQClient(ProfileMixin, OptionsMixin, WorkbenchMixin, QueryMixin, WriteMixin,

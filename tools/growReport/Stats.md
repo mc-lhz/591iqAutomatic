@@ -1,7 +1,7 @@
 # Stats（成长评价·统计）
 
 管：荣誉统计、活动维度统计。
-不管：成长报告（见同目录 Report.py）、学期列表（`meta/Options.py`）。
+不管：成长报告（见同目录 Report.py）、学期列表（`dictOptions/Options.py`）。
 
 ## 对应端点
 
@@ -24,6 +24,6 @@ c.activityStats(semesterId="15614")   # 指定学期
 
 ## 注意事项
 
-- `semesterId` 留空 = 全部学期；取值来自 `meta/Options.py` 的 `semesters()`。
+- `semesterId` 留空 = 全部学期；取值来自 `dictOptions/Options.py` 的 `semesters()`。
 - 两个接口都自动带 `studentId`（取 `login()` 的 `userId`）。
-- 荣誉类型名/活动维度名的枚举查 `meta/Options.py` 的 `honorTypes()`/`activityLabels()`。
+- 荣誉类型名/活动维度名的枚举查 `dictOptions/Options.py` 的 `honorTypes()`/`activityLabels()`。
