@@ -18,12 +18,52 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 
 | 方法 | 路径 | data payload | 实测结果 |
 |---|---|---|---|
-| GET | `/task/count_task` | `{}` | `{"unfinished":1,"expired":45,"finished":33}` |
-| GET | `/task/list` | `{"status":"0","labelId":"","page":{"offset":0,"limit":3,"total":0,"currentPage":1,"totalPage":0}}` | status 语义：**0=待办(1) / 1=逾期未完成(45) / 2=已办(33)**，与 `/task/count_task` 的 unfinished/expired/finished 一一对应 |
+| GET | `/task/count_task` | `{}` | `{"unfinished":0,"expired":45,"finished":34}`（提交活动总结**前**为 `1/45/33`：提交成功后 `unfinished-1`、`finished+1`） |
+| GET | `/task/list` | `{"status":"0","labelId":"","page":{"offset":0,"limit":3,"total":0,"currentPage":1,"totalPage":0}}` | status 语义：**0=待办(现为 0) / 1=逾期未完成(45) / 2=已办(34)**，与 `/task/count_task` 的 unfinished/expired/finished 一一对应；行含 `taskId/pcUrl`，路由解析见下节 |
 | GET | `/task/list_label` | `{"src":""}` | 任务标签（活动课程、德育评价等） |
 | GET | `/msg/queryUnRead` | `{}` | 未读消息计数 |
 | GET | `/announcement/listAnnouncementRead` | `{"offset":0,"limit":6}` | 公告列表；2026-10-01 实测返回 `list[]` 0 条（接口正常） |
 | GET | `/announcement/listPopupAnnouncementRead` | `{}` | 弹窗公告；同上实测 0 条 |
+
+## 任务详情与路由解析（2026-10-01 实测）
+
+待办条目自带跳转 URL，**moduleId 不用猜**：
+
+| 步骤 | 接口 / 字段 | 实测样例 |
+|---|---|---|
+| 1 | `GET /task/list {"status":"0"\|"1"\|"2",…}` → 行含 `taskId / title / labelList / pcUrl / wxUrl` | `pcUrl:"/#/transferPage?taskId=<taskId>&moduleId=14&appModuleId=9"` |
+| 2 | `GET /task/get {"taskId","messageId":""}` → **按任务类型返回不同参数对象** | 活动总结类：`{templateType:1, eventId:<eventId>, createUserType:"02", title:"…"}`；档案遴选类：`{fileName, reportId, fileId, semesterName, title, userId}` |
+| 3 | 前端 `transferPage` 按 `userType`（`01` 学生 / `02` 教师）分流 `studentRoute(moduleId, task)`；`parseInt(moduleId,10) > 100` 改走 `classBrandRoute` | 见下表 |
+
+**学生端 moduleId → 路由**（源 `chunk-2d0e1d95.js` 的 `studentRoute`，随发版变；`d=""` = 学生端不跳转）
+
+| moduleId | 跳转 |
+|---|---|
+| 1 | `/apps/stuEval/evalStu?moduleId=<m>` |
+| 2 / 4 / 6 / 7 / 9 / 10 / 11 | `""`（学生端不跳） |
+| 3 | `/apps/classEvaluate/evalClass?moduleId=<m>` |
+| 5 | `/teacher/activity/info?eventId=<eventId>&title=活动课程评价&subtitle=评价` |
+| 8 | `/student/growthReport/stuIndex?moduleId=0&moduleName=成长报告` |
+| 12 | `/student/middle_school_archives_comment?wordId=<wordId>&studentId=<userId>` |
+| 13 | `/student/middle_school_archives_evaluate?levelId=<levelId>&studentId=<userId>` |
+| **14** | **`/activity/info?title=活动课程&subtitle=<task.title>&eventId=<eventId>`** —— 活动课程详情，**总结提交页入口** |
+| 15 | `/student/growthZone?theme=gray&moduleId=v6&semesterId=<>&type=<>&examType=<>&examId=<>` |
+| 16 | `/student/growthReport/stuIndex` |
+| 17 / 19 | `/student/qualityArchives/semesterArchives?mode=page&userId=<userId>&fileId=<fileId>&reportId=<reportId>&title=<>&subtitle=<userName>` |
+| 18 | `/student/qualityArchives/semesterArchives/classmate?title=<>&fileId=<fileId>` |
+| 21 | `/student/notice/view/<id>` |
+| 22 | `/apps/classEvaluate/index?moduleId=<>&moduleName=<>&classId=<>&className=<>&time=<>` |
+| 25 | `/student/multi/stuDetail?activityId=<activityId>&isEdit=true` |
+| 28 | `/apps/question/write?moduleId=<>&templateId=<>&answerId=<>` |
+| 38 | `/apps/dormitory/evalClass?moduleId=<m>` |
+| 42 | `<baseEvaluationUrl>/baseEvaluationLayout/evaluateEvent?token=<ssoToken>&templateId=<templateId>` |
+| 209 / 210 / 212 | `/student/growthZone?theme=gray&moduleId=v2` / `v3` / `v9` |
+
+**类品牌路由**（`moduleId > 100`，`classBrandRoute`）：
+`401`→`/classBrand/growReport/stuIndex`、`402`→`/classBrand/exam`、`403`→`/classBrand/evalRecord`、
+`404`→`/classBrand/realistic`、`405`→`/classBrand/activity`、`406`→`/classBrand/integral`。
+
+> 教师端 `teacherRoute`（case 1~47 → `/teacher/*`、`/apps/*`）与学生账号无关，未收录。
 
 ## 写实记录（核心）
 
@@ -168,6 +208,58 @@ body: file=<二进制>, objType=25, id=WU_FILE_1, type=image/jpeg
 | POST | `/record/queryClassifyList` / `/record/queryHistoryBookList` | `{}` / `{}` | 分类 `[1人文科学,2自然科学]`；历史书籍**两层** `data.list.list[]`，行含 `recordContent(null)/recordRead/recordBook{name,writer,intro}` |
 
 ⚠️ 学生端**未发现删除接口**（app.js 无 record/delete），提交后无法自行撤销。
+
+## 写入接口②：活动总结 evaluateActivity（✅ 已实测提交成功）
+
+第二类写入，风险**低于**写实记录：`editAuth=1` 时可带 `summaryId` 用同一接口重新提交；
+bundle 里存在 `/evaluateActivity/delSummary`，但学生端是否暴露**未验证**。
+⚠️ 首次提交前仍须人工确认——总结进入**本校可见** feed。
+
+**闭环 6 步**（2026-10-01 实测）：鉴权 → `/task/list status=0` 发现待办 → 读 `pcUrl` 拿
+`taskId/moduleId` → `/task/get` 拿 `eventId` → `/activity/info?eventId=…`（`moduleId=14`）→
+提交 → **回执校验**。
+
+| 方法 | 路径 | data payload | 说明 |
+|---|---|---|---|
+| GET | `/evaluateActivity/get_config` | `{}` | `{summaryPicCount:5}` 图片数量上限 |
+| GET | `/evaluateActivity/queryHonorListByEventId` | `{"eventId":"<eventId>"}` | 可选荣誉列表（空则荣誉区不显示） |
+| GET | `/evaluateActivity/querySummary` | `{"offset":0,"limit":1,"eventId":"<eventId>","studentId":"<userId>","summaryType":"1"}` | **回读**：`data.pdlist[0]` → `summaryList` / `honorStatus` …（键是 **`pdlist`** 不是 `list`），无记录时 `pdlist=[]` |
+| POST | `/evaluateActivity/submitSummary` | 见下 | 提交（新建与编辑同一接口） |
+| GET | `/evaluateActivity/getActivity` | 参数未抓全 | 活动详情（见下方全族一览） |
+
+`submitSummary` 表单（前端 `data()` 初始值原样，`eventId/summaryType` 来自 URL query）：
+
+```json
+{"eventId":"<eventId>","summaryType":"1","terminalType":"1","honorList":[],
+ "summary":[{"title":"","summaryPic":"","content":"<正文，唯一必填>"}],
+ "summaryAttach":"","honorStatus":"0"}
+```
+
+- `summaryType`：`1` 个人总结 / `2` 个人记录 / `3` 小组总结 / `4` 小组记录（默认 `1`）。
+- `validate()` 只拦两处：`summary[0].content` 为空 →「请填写总结！」；`isHonor=1` 且有荣誉时
+  `honorList` 每项需 `honorTypeId` / `itemName` / `orderName` / `honorPic`。
+  **无字数校验**，标题、图片、附件、荣誉全可选 → 自动化程度高。
+- 编辑：`editAuth=1` 时同接口带 `summaryId` 重交（从 `querySummary.pdlist[0]` 取）。
+- 返回 **`{"list": null}`**（文案在 `msg`，`data` 层为空）→ ⚠️ **不能凭返回值判断是否写入**。
+
+**回执判据（写操作通用规则）**：以读回执为准 ——
+`querySummary.pdlist` 由 `[]` 变有值 / `totalResult` 变化，**且** `/task/count_task` 的
+`unfinished` 下降（本例 `unfinished 1→0`、`finished 33→34`）才算提交成功。
+
+**全族一览**（bundle 静态扫描 48 条，仅列路径，未逐条抓 payload，多为教师端/统计端）：
+
+```
+collect comment countByDimension countByDimensionForExport countByEventForStudent
+countByEventForTeacher countBySchool count_activity delComment delSummary detail_province
+evaluate exportClassStatisticBatchAsync favour getActivity getGroupSummary getUserSummary
+get_config join list list_group_activity manage_del manage_list publish_report queryClassInfo
+queryComment queryEvaluate queryEvaluateForBatch queryEvaluateTask queryFavour queryHonorList
+queryHonorListByEventId queryJoin queryMyEvaluate queryRoleInfo querySummary queryUserInfo
+query_group_title reviewAdd reviewDel reviewEdit set_config statistics_detail_class
+statistics_total_class statistics_total_student submitHonor submitSummary update_join
+```
+
+（前缀均为 `/evaluateActivity/`；同族 `/task/*` 4 条：`count_task` `get` `list` `list_label`）
 
 ## 返回结构速查（2026-10-01 `test_endpoints.py --dump` 实测真实值）
 

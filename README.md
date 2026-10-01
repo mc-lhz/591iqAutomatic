@@ -46,11 +46,16 @@ python scripts/test_records.py <ssoToken>           # 写实记录 13 项断言
 
 ## 实测结论（2026-10-01）
 
-- 只读端点 **PASS=38 / FAIL=0 / WARN=1**（唯一 WARN：积分接口学校侧未配置）。
+- 只读端点 **PASS=41 / FAIL=0 / WARN=1**（42 项；唯一 WARN：积分接口学校侧未配置）。
 - `record/queryRecordList` 的 `type` 决定范围：`1`=本人、`2`=本校、空=全平台（约 14.6 万条）。
 - 写入 `POST /record/updateRecord` 已真实提交验证；**顶层槽位 key 必须是组件名**
   （`recordActivityFJ`…），传数字会 `999999 发布失败`。
-- 学生端**没有删除接口**，提交前务必确认。
+- **待办任务闭环**：`/task/list` 行内 `pcUrl` 自带 `taskId`+`moduleId`，`/task/get` 给 `eventId`，
+  前端按 `moduleId` 分流（本次 `14` → 活动课程详情）→ `POST /evaluateActivity/submitSummary`
+  提交总结（正文必填，其余全可选）。
+- **写操作成功判据 = 读回执，不看返回值**：`submitSummary` 返回 `{"list":null}`；
+  以 `querySummary.pdlist` 变有值 + `count_task.unfinished` 下降（本例 `1→0`）为准。
+- 学生端**没有删除写实记录的接口**，提交前务必确认。
 
 ## 依赖
 
