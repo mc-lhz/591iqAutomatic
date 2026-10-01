@@ -1,9 +1,9 @@
 """591iq 全量接口测试：账号密码登录 → 跑全部只读端点 → PASS/FAIL 汇总。
 
 用法：
-  python test_endpoints.py -u <学号> -p <密码>          # 门户登录换 token 后全量测试
-  python test_endpoints.py --token <ssoToken>          # 直接用已有 token
-  python test_endpoints.py -u .. -p .. --upload        # 附带图片上传端点（会落一个文件）
+  python TestEndpoints.py -u <学号> -p <密码>          # 门户登录换 token 后全量测试
+  python TestEndpoints.py --token <ssoToken>          # 直接用已有 token
+  python TestEndpoints.py -u .. -p .. --upload        # 附带图片上传端点（会落一个文件）
 """
 import argparse
 import json
@@ -14,8 +14,8 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
-from iq_client import IQClient                     # noqa: E402
-from login import login_for_token                    # noqa: E402
+from IqClient import IQClient                     # noqa: E402
+from Login import loginForToken                    # noqa: E402
 
 def _pick_image():
     cand = [os.path.join(os.environ.get("TEMP", ""), "opencode", "iq",
@@ -63,9 +63,9 @@ def main():
         print(f"[login] 使用给定 token {token[:12]}…")
     elif args.username:
         print("[login] 门户账号登录中（验证码 OCR）…")
-        token = login_for_token(args.username, args.password,
-                                retry=args.retry,
-                                captcha_file=os.path.join(HERE, "jcaptcha.jpg"))
+        token = loginForToken(args.username, args.password,
+                              retry=args.retry,
+                              captchaFile=os.path.join(HERE, "jcaptcha.jpg"))
         login_ms = int((time.time() - t0) * 1000)
         print(f"[login] ssoToken={token}")
     else:
@@ -113,7 +113,7 @@ def main():
         s = str(v)
         return s[:60] + ("…" if len(s) > 60 else "")
 
-    uid = c.user_id
+    uid = c.userId
 
     # ---- 0 登录 ----
     results.append(("loginBySSOToken",
@@ -122,17 +122,17 @@ def main():
     raw["loginBySSOToken"] = _dump(prof)
 
     # ---- 账号 / 门户 ----
-    case("getUserInfoDetail", lambda: c.user_info())
+    case("getUserInfoDetail", lambda: c.userInfo())
     case("get_sch_feature", lambda: c.post("/account/get_sch_feature", {}))
     case("module/list_front_new", lambda: c.get("/module/school/list_front_new"))
     case("module/list", lambda: c.get("/module/school/list",
                                       {"terminalType": "1"}))
-    case("sysDict INTEREST", lambda: c.sys_dict("INTEREST"))
-    case("sysDict SemesterCode", lambda: c.sys_dict("SemesterCode"))
-    case("sysDict RecordHonorOrder", lambda: c.sys_dict("RecordHonorOrder"))
+    case("sysDict INTEREST", lambda: c.sysDict("INTEREST"))
+    case("sysDict SemesterCode", lambda: c.sysDict("SemesterCode"))
+    case("sysDict RecordHonorOrder", lambda: c.sysDict("RecordHonorOrder"))
 
     # ---- 任务 / 消息 / 公告 ----
-    case("task/count_task", lambda: c.task_stats())
+    case("task/count_task", lambda: c.taskStats())
     for st in ("0", "1", "2"):
         case(f"task/list status={st}",
              lambda st=st: c.tasks(status=st))
@@ -180,19 +180,19 @@ def main():
          lambda: c.records(limit=10, type_="2"))
     case("record/queryRecordList type=''",
          lambda: c.records(limit=10, type_=""))
-    case("record/queryLabelList", lambda: c.record_labels())
-    case("record/group_type", lambda: c.group_types())
-    case("record/queryRecordStatistics", lambda: c.record_statistics())
+    case("record/queryLabelList", lambda: c.recordLabels())
+    case("record/group_type", lambda: c.groupTypes())
+    case("record/queryRecordStatistics", lambda: c.recordStatistics())
     rid = c.records(limit=1, type_="1")["list"]["list"][0]["recordContent"]["id"]
-    case("record/queryRecord", lambda: c.query_record(rid))
+    case("record/queryRecord", lambda: c.queryRecord(rid))
     case("record/queryClassifyList", lambda: c.post("/record/queryClassifyList", {}))
     case("record/queryHistoryBookList",
          lambda: c.post("/record/queryHistoryBookList", {}))
 
     # ---- 成长空间 / 荣誉 / 活动 ----
     case("querySemesterList", lambda: c.semesters())
-    case("queryHonorStatistics", lambda: c.honor_statistics())
-    case("listActivityStatisticsByDimension", lambda: c.activity_stats())
+    case("queryHonorStatistics", lambda: c.honorStatistics())
+    case("listActivityStatisticsByDimension", lambda: c.activityStats())
     case("get_interest", lambda: c.interests())
     case("integral/account_integral",
          lambda: c.get("/apps/integral/rank/integralRecord/account_integral",
@@ -204,7 +204,7 @@ def main():
          lambda: c.get("/growReport/config/getGrowItem", {}))
     reps = {"v": None}
     case("growReport/list",
-         lambda: reps.update(v=c.grow_reports()) or reps["v"])
+         lambda: reps.update(v=c.growReports()) or reps["v"])
     v = reps["v"]
     rows = v
     if isinstance(v, dict):
@@ -217,7 +217,7 @@ def main():
         r0 = rows[0]
         gid = r0.get("growReportStuId") or r0.get("id")
     if gid:
-        case("growReport/detail", lambda: c.grow_report_detail(gid),
+        case("growReport/detail", lambda: c.growReportDetail(gid),
              note="growReportStuId=<id>")
     else:
         results.append(("growReport/detail", "SKIP", 0,
@@ -228,9 +228,9 @@ def main():
          lambda: c.post("/diathesis/progress/popup_student", {}))
 
     # ---- 写入端只读辅助 ----
-    case("eventTwo/listLabel dim5", lambda: c.activity_labels(5))
-    case("eventTwo/listLabel dim17", lambda: c.activity_labels(17))
-    case("evaluation/honor/list", lambda: c.honor_types())
+    case("eventTwo/listLabel dim5", lambda: c.activityLabels(5))
+    case("eventTwo/listLabel dim17", lambda: c.activityLabels(17))
+    case("evaluation/honor/list", lambda: c.honorTypes())
 
     # ---- 上传（可选） ----
     if args.upload:
@@ -238,7 +238,7 @@ def main():
             path = os.path.abspath(IMG)
             if not os.path.exists(path):
                 return "missing"
-            return c.upload_image(path)
+            return c.uploadImage(path)
         case("announcement/upload", _up, check=lambda v: v.startswith("http"),
              note="https://fs.591iq.cn/…（路径不入库）")
 
@@ -255,14 +255,14 @@ def main():
           f"SKIP={counts['SKIP']} 共 {len(results)} 项 "
           f"总耗时 {total}ms  token={token[:16]}…")
 
-    out = os.path.join(HERE, "test_endpoints_report.json")
+    out = os.path.join(HERE, "TestEndpointsReport.json")
     with open(out, "w", encoding="utf-8") as f:
         json.dump([{"name": n, "status": s, "ms": m, "note": b}
                    for n, s, m, b in results], f, ensure_ascii=False, indent=1)
     print("报告:", out)
 
     if args.dump:
-        dump_path = os.path.join(HERE, "test_endpoints_dump.txt")
+        dump_path = os.path.join(HERE, "TestEndpointsDump.txt")
         with open(dump_path, "w", encoding="utf-8") as f:
             for name, status, ms, brief in results:
                 f.write(f"===== {name} [{status}] {ms}ms =====\n")

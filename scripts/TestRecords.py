@@ -1,12 +1,12 @@
 """写实记录 (record/queryRecordList) 只读业务全量测试"""
-import json, sys, time, collections, traceback
-sys.path.insert(0, r"C:\Users\Administrator\.config\opencode\skills\591iq-eval\scripts")
-from iq_client import IQClient, IQError
+import json, sys, time, collections, traceback, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from IqClient import IQClient, IQError
 
 TOKEN = sys.argv[1] if len(sys.argv) > 1 else ""
 c = IQClient(TOKEN)
 c.login()
-UID = c.user_id
+UID = c.userId
 print(f"== login {c.profile['userName']} userId={UID} ==")
 
 results = []
@@ -25,9 +25,9 @@ def step(name, fn):
         return None
 
 # ---------- 1. 元数据 ----------
-labels = step("queryLabelList 标签库", lambda: c.record_labels())
-gtypes = step("group_type 分组类型", lambda: c.group_types())
-stats  = step("queryRecordStatistics 统计", lambda: c.record_statistics())
+labels = step("queryLabelList 标签库", lambda: c.recordLabels())
+gtypes = step("group_type 分组类型", lambda: c.groupTypes())
+stats  = step("queryRecordStatistics 统计", lambda: c.recordStatistics())
 
 def labels_of(d):
     if isinstance(d, dict): d = d.get("data", d)
@@ -38,12 +38,12 @@ GT  = labels_of(gtypes)
 print(f"标签数={len(LAB)} 分组类型={json.dumps(GT, ensure_ascii=False)[:300]}")
 
 # ---------- 2. 分页全量抓取 ----------
-def paginate(limit, type_="2", record_type="", label_id=""):
+def paginate(limit, type_="2", recordType="", labelId=""):
     all_rows, offset, total = [], 0, None
     pages = 0
     while True:
         d = c.records(offset=offset, limit=limit, type_=type_,
-                      record_type=record_type, label_id=label_id)
+                      recordType=recordType, labelId=labelId)
         if isinstance(d, dict) and "list" in d:
             total = d["list"].get("count")
             rows = d["list"].get("list") or []
@@ -113,7 +113,7 @@ def label_scan():
     for lab in LAB[:15]:
         lid = str(lab.get("labelId") or lab.get("id") or "")
         try:
-            d = c.records(limit=5, label_id=lid)
+            d = c.records(limit=5, labelId=lid)
             lst = d.get("list", {})
             got = lst.get("count")
             out.append({"labelId": lid, "name": lab.get("labelName"), "count": got})
@@ -134,7 +134,7 @@ def rt_scan():
         rt = str(g.get("id") or g.get("type") or g.get("recordType") or "")
         if not rt: continue
         try:
-            r = c.records(limit=5, record_type=rt)
+            r = c.records(limit=5, recordType=rt)
             lst = r.get("list", {})
             out.append({"recordType": rt, "name": g.get("name") or g.get("title"),
                         "count": lst.get("count")})
@@ -145,12 +145,12 @@ step("recordType 维度", rt_scan)
 
 # ---------- 8. 统计接口交叉核对 ----------
 def cross_check():
-    s = c.record_statistics()
+    s = c.recordStatistics()
     s = s if isinstance(s, dict) and "list" in s else {"list": s}
     stat_sum = sum(x.get("count", 0) for x in s.get("list", []))
     per_label = []
     for x in s.get("list", []):
-        d = c.records(limit=1, label_id=str(x.get("labelId")))
+        d = c.records(limit=1, labelId=str(x.get("labelId")))
         per_label.append({"label": x.get("labelName"), "stat": x.get("count"),
                           "list_count": (d.get("list") or {}).get("count")})
     return {"stat_total": stat_sum, "list_total": full["count"] if full else None,
@@ -166,7 +166,7 @@ def semester_scan():
     for s in sems[:6]:
         sid = str(s.get("id"))
         try:
-            st = c.record_statistics(semester_id=sid)
+            st = c.recordStatistics(semesterId=sid)
             st = st if isinstance(st, dict) and "list" in st else {"list": st}
             total = sum(x.get("count", 0) for x in st.get("list", []))
             out.append({"semester": s.get("name"), "id": sid, "records": total})
@@ -196,7 +196,7 @@ def robustness():
         out["bad_token"] = str(e)[:60]
     # 垃圾参数
     try:
-        d = c.records(limit=5, label_id="NOT_EXIST")
+        d = c.records(limit=5, labelId="NOT_EXIST")
         out["bad_label"] = (d.get("list") or {}).get("count")
     except Exception as e:
         out["bad_label"] = str(e)[:60]
