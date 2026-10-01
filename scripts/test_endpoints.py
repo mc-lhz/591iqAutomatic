@@ -15,7 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 from iq_client import IQClient                     # noqa: E402
-from xmyz_login import login_for_token             # noqa: E402
+from login import login_for_token                    # noqa: E402
 
 def _pick_image():
     cand = [os.path.join(os.environ.get("TEMP", ""), "opencode", "iq",
@@ -118,7 +118,7 @@ def main():
     # ---- 0 登录 ----
     results.append(("loginBySSOToken",
                     "PASS" if prof.get("userId") else "FAIL", login_ms,
-                    f"{prof.get('userName')} {prof.get('className')}"))
+                    "<userName> <className>"))
     raw["loginBySSOToken"] = _dump(prof)
 
     # ---- 账号 / 门户 ----
@@ -189,7 +189,7 @@ def main():
         gid = r0.get("growReportStuId") or r0.get("id")
     if gid:
         case("growReport/detail", lambda: c.grow_report_detail(gid),
-             note=f"growReportStuId={gid}")
+             note="growReportStuId=<id>")
     else:
         results.append(("growReport/detail", "SKIP", 0,
                         "无成长报告记录（学期未生成）"))
@@ -210,7 +210,8 @@ def main():
             if not os.path.exists(path):
                 return "missing"
             return c.upload_image(path)
-        case("announcement/upload", _up, check=lambda v: v.startswith("http"))
+        case("announcement/upload", _up, check=lambda v: v.startswith("http"),
+             note="https://fs.591iq.cn/…（路径不入库）")
 
     # ---- 汇总 ----
     width = max(len(n) for n, *_ in results) + 2

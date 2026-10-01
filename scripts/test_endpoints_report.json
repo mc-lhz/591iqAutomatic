@@ -3,72 +3,72 @@
   "name": "loginBySSOToken",
   "status": "PASS",
   "ms": 0,
-   "note": "<userName> <className>"
+  "note": "<userName> <className>"
  },
  {
   "name": "getUserInfoDetail",
   "status": "PASS",
-  "ms": 146,
+  "ms": 231,
   "note": "dict[49] userName,sex,birthday,qq,phoneNumber,blog"
  },
  {
   "name": "get_sch_feature",
   "status": "PASS",
-  "ms": 140,
+  "ms": 134,
   "note": "list[12]"
  },
  {
   "name": "module/list_front_new",
   "status": "PASS",
-  "ms": 102,
+  "ms": 120,
   "note": "list[10]"
  },
  {
   "name": "module/list",
   "status": "PASS",
-  "ms": 102,
+  "ms": 138,
   "note": "list[12]"
  },
  {
   "name": "sysDict INTEREST",
   "status": "PASS",
-  "ms": 107,
+  "ms": 133,
   "note": "list[8]"
  },
  {
   "name": "sysDict SemesterCode",
   "status": "PASS",
-  "ms": 129,
+  "ms": 136,
   "note": "list[6]"
  },
  {
   "name": "sysDict RecordHonorOrder",
   "status": "PASS",
-  "ms": 104,
+  "ms": 177,
   "note": "list[15]"
  },
  {
   "name": "task/count_task",
   "status": "PASS",
-  "ms": 110,
+  "ms": 166,
   "note": "dict[3] unfinished,expired,finished"
  },
  {
   "name": "task/list status=0",
   "status": "PASS",
-  "ms": 102,
+  "ms": 110,
   "note": "dict[2] page,list"
  },
  {
   "name": "task/list status=1",
   "status": "PASS",
-  "ms": 111,
+  "ms": 120,
   "note": "dict[2] page,list"
  },
  {
   "name": "task/list status=2",
   "status": "PASS",
-  "ms": 123,
+  "ms": 124,
   "note": "dict[2] page,list"
  },
  {
@@ -80,13 +80,13 @@
  {
   "name": "msg/queryUnRead",
   "status": "PASS",
-  "ms": 123,
+  "ms": 137,
   "note": "dict[4] systemCount,favourCount,count,commentCount"
  },
  {
   "name": "announcement/listAnnouncementRead",
   "status": "PASS",
-  "ms": 119,
+  "ms": 125,
   "note": "list[0]"
  },
  {
@@ -98,139 +98,139 @@
  {
   "name": "record/queryRecordList type=1",
   "status": "PASS",
-  "ms": 166,
+  "ms": 153,
   "note": "dict[1] list"
  },
  {
   "name": "record/queryRecordList type=2",
   "status": "PASS",
-  "ms": 193,
+  "ms": 226,
   "note": "dict[1] list"
  },
  {
   "name": "record/queryRecordList type=''",
   "status": "PASS",
-  "ms": 409,
+  "ms": 386,
   "note": "dict[1] list"
  },
  {
   "name": "record/queryLabelList",
   "status": "PASS",
-  "ms": 119,
+  "ms": 168,
   "note": "list[21]"
  },
  {
   "name": "record/group_type",
   "status": "PASS",
-  "ms": 123,
+  "ms": 144,
   "note": "list[3]"
  },
  {
   "name": "record/queryRecordStatistics",
   "status": "PASS",
-  "ms": 115,
+  "ms": 124,
   "note": "dict[1] list"
  },
  {
   "name": "record/queryRecord",
   "status": "PASS",
-  "ms": 130,
+  "ms": 109,
   "note": "dict[27] recordContent,recordHonor,recordRead,recordBook,recordSport,recordInvent"
  },
  {
   "name": "record/queryClassifyList",
   "status": "PASS",
-  "ms": 122,
+  "ms": 114,
   "note": "list[2]"
  },
  {
   "name": "record/queryHistoryBookList",
   "status": "PASS",
-  "ms": 312,
+  "ms": 299,
   "note": "dict[1] list"
  },
  {
   "name": "querySemesterList",
   "status": "PASS",
-  "ms": 122,
+  "ms": 112,
   "note": "dict[2] totalResult,pdlist"
  },
  {
   "name": "queryHonorStatistics",
   "status": "PASS",
-  "ms": 180,
+  "ms": 195,
   "note": "dict[1] list"
  },
  {
   "name": "listActivityStatisticsByDimension",
   "status": "PASS",
-  "ms": 265,
+  "ms": 250,
   "note": "list[6]"
  },
  {
   "name": "get_interest",
   "status": "PASS",
-  "ms": 125,
+  "ms": 130,
   "note": "list[3]"
  },
  {
   "name": "integral/account_integral",
   "status": "WARN",
-  "ms": 127,
+  "ms": 120,
   "note": "EXC /apps/integral/rank/integralRecord/account_integral -> code=1 msg=找不到对应的积分配置"
  },
  {
   "name": "growReport/config/getGrowItem",
   "status": "PASS",
-  "ms": 109,
+  "ms": 121,
   "note": "list[8]"
  },
  {
   "name": "growReport/list",
   "status": "PASS",
-  "ms": 135,
+  "ms": 110,
   "note": "dict[2] headGrowReport,list"
  },
  {
   "name": "growReport/detail",
   "status": "PASS",
-  "ms": 222,
-   "note": "growReportStuId=<id>"
+  "ms": 194,
+  "note": "growReportStuId=<id>"
  },
  {
   "name": "studentMgr/getParentList",
   "status": "PASS",
-  "ms": 131,
+  "ms": 130,
   "note": "list[1]"
  },
  {
   "name": "diathesis/popup_student",
   "status": "PASS",
-  "ms": 109,
+  "ms": 117,
   "note": "dict[3] popup,show,list"
  },
  {
   "name": "eventTwo/listLabel dim5",
   "status": "PASS",
-  "ms": 124,
+  "ms": 141,
   "note": "list[11]"
  },
  {
   "name": "eventTwo/listLabel dim17",
   "status": "PASS",
-  "ms": 137,
+  "ms": 126,
   "note": "list[6]"
  },
  {
   "name": "evaluation/honor/list",
   "status": "PASS",
-  "ms": 116,
+  "ms": 124,
   "note": "list[6]"
  },
  {
   "name": "announcement/upload",
   "status": "PASS",
-  "ms": 178,
-   "note": "https://fs.591iq.cn/group1/M00/…/…jpg"
+  "ms": 134,
+  "note": "https://fs.591iq.cn/…（路径不入库）"
  }
 ]

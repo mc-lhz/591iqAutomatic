@@ -43,7 +43,8 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
 
 ### 源站门户登录（xmyz.xmedu.cn → ssoToken，✅ 已全链路打通）
 
-不必人工复制 ssoToken：门户账号 + 验证码 OCR 即可自动签发。登录契约参考
+实现全部内置于 `scripts/login.py`（`password` 子命令）。不必人工复制 ssoToken：
+门户账号 + 验证码 OCR 即可自动签发。登录契约参考
 `github.com/mc-lhz/XMYZAutoChooseClass`（补上了它没有的换 token 后半段）：
 
 ```
@@ -59,9 +60,10 @@ GET  /account/open-api/iqboard!login.action?terminal=computer&service=CQES
 ```
 
 ```bash
-python scripts/xmyz_login.py check                                  # 端点可达性（无凭据）
-python scripts/xmyz_login.py login -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
-python scripts/xmyz_login.py login -u <学号> -p <密码> --interactive  # 人工看图输码
+python scripts/login.py check                                # 无凭据探测门户端点可达性
+python scripts/login.py captcha --out jcaptcha.jpg           # 取验证码图片
+python scripts/login.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
+python scripts/login.py password -u <学号> -p <密码> --interactive  # 人工看图输码
 ```
 
 - **验证码 OCR**：`rapidocr-onnxruntime` + 灰度阈值 160 + 3 倍放大（预处理是关键，
@@ -95,11 +97,7 @@ c.semesters()                # 21 个学期
 c.user_info(); c.honor_statistics(); c.activity_stats(); c.interests()
 ```
 
-需要浏览器操作（提交表单、上传、导出 PDF 等复杂交互）时：
-```bash
-python scripts/browser_login.py --token <ssoToken>            # 验证落地
-python scripts/browser_login.py --url "<完整mock_login链接>" --headed
-```
+全流程纯 HTTP，**不需要浏览器**；学生端也没有可自动化的额外交互入口。
 
 ## 写入：发布写实记录（✅ 已实测提交成功，仍需逐次确认）
 
