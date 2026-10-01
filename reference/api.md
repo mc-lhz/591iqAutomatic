@@ -261,7 +261,7 @@ statistics_total_class statistics_total_student submitHonor submitSummary update
 
 （前缀均为 `/evaluateActivity/`；同族 `/task/*` 4 条：`count_task` `get` `list` `list_label`）
 
-## 返回结构速查（2026-10-01 `TestEndpoints.py --dump` 实测真实值）
+## 返回结构速查（2026-10-01 `TestApi.py --dump` 实测真实值）
 
 | 接口 | 真实返回（节选） |
 |---|---|

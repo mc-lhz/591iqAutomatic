@@ -4,5 +4,5 @@ jcaptcha*.jpg
 jcaptcha*.png
 _tiny.jpg
 *Dump.txt
-TestEndpointsReport.json
+TestApiReport.json
 test_endpoints_report.json
