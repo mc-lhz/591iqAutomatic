@@ -11,11 +11,11 @@ import os
 import sys
 import time
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, HERE)
 
 from IqClient import IQClient                     # noqa: E402
-from Login import loginForToken                    # noqa: E402
+from auth.Login import loginForToken                    # noqa: E402
 
 def _pick_image():
     cand = [os.path.join(os.environ.get("TEMP", ""), "opencode", "iq",

@@ -5,12 +5,12 @@
 """
 import json
 
-from Account import AccountMixin
+from account.Account import AccountMixin
 from core.Client import Client, IQError
-from Grow import GrowMixin
+from grow.Grow import GrowMixin
 from publish.Publish import PublishMixin
-from Records import RecordsMixin
-from Tasks import TasksMixin
+from records.Records import RecordsMixin
+from tasks.Tasks import TasksMixin
 
 
 class IQClient(AccountMixin, TasksMixin, RecordsMixin, GrowMixin, PublishMixin, Client):
