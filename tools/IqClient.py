@@ -1,19 +1,21 @@
 """591iq 综合素质评价 - 纯 API 客户端（门面）。
 
-按域拆分为 Client / Account / Tasks / Records / Grow / Publish 六个模块
-（每个模块带同名 .md 说明），本文件只负责组合，对外保持 IQClient API 不变。
+按业务域拆分为 profile / meta / workbench / record / grow 五个域
+（域内按职责分子模块，每个模块带同名 .md 说明），
+基础设施为 core/Http.py 与 auth/Login.py。
+本文件只负责组合，对外保持 IQClient API 不变。
 """
 import json
 
 from account.Account import AccountMixin
-from core.Client import Client, IQError
+from core.Http import Http, IQError
 from grow.Grow import GrowMixin
 from publish.Publish import PublishMixin
 from records.Records import RecordsMixin
 from tasks.Tasks import TasksMixin
 
 
-class IQClient(AccountMixin, TasksMixin, RecordsMixin, GrowMixin, PublishMixin, Client):
+class IQClient(AccountMixin, TasksMixin, RecordsMixin, GrowMixin, PublishMixin, Http):
     pass
 
 
