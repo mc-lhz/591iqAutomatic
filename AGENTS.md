@@ -8,39 +8,42 @@
 
 ```
 tools/
-  IqClient.py                门面：组合下列各域 mixin，对外 API 就是 IQClient
-  coreHttp/Http.py           传输层：_call / get / post / login / userId + IQError
-  authLogin/Login.py         登录（获取 sso Token 的四种方式）
-  studentProfile/Profile.py  本人档案、家长、兴趣特长
-  dictOptions/Options.py     平台字典、学期、活动/荣誉类型枚举
-  homeWorkbench/Workbench.py 待办任务、未读消息、公告
-  recordCenter/Query.py      写实记录读取（列表/标签/统计/详情）
-  recordCenter/Write.py      图片上传、发布写实记录
-  growReport/Report.py       成长报告列表与详情
-  growReport/Stats.py        荣誉统计、活动维度统计
-  testCases/TestApi.py       42 项只读
-  testCases/TestRecord.py    13 项
+  IqClient.py                     门面：组合下列各域 mixin，对外 API 就是 IQClient
+  access/httpTransport.py         传输层：_call / get / post / login / userId + IQError
+  access/loginToken.py            登录（获取 sso Token 的四种方式）
+  studentBase/profileInfo.py      本人档案、家长、兴趣特长
+  studentBase/dictOptions.py      平台字典、学期、活动/荣誉类型枚举
+  homeWorkbench/taskAndMessage.py 待办任务、未读消息、公告
+  recordCenter/recordQuery.py     写实记录读取（列表/标签/统计/详情）
+  recordCenter/recordWrite.py     图片上传、发布写实记录
+  growReport/growthReport.py      成长报告列表与详情
+  growReport/growthStatistics.py  荣誉统计、活动维度统计
+  testCases/testApiReadOnly.py    42 项只读
+  testCases/testRecordRead.py     13 项
 ```
 
 - `reference/api.md` — 端点清单；`SKILL.md` — skill 定义
-- 每个 `Xxx.py` 都有同名 `Xxx.md` 说明
+- 每个 `.py` 都有同名 `.md` 说明
 - 每个业务目录有 `__init__.py`（**必需**：否则会退化成 namespace package，
   与标准库同名目录冲突时会被标准库抢先）
-- 拆分依据：目录 = 端点前缀聚类 + 业务语义；文件 = 域内职责（读/写、报告/统计）
+- 拆分依据：目录 = 端点前缀聚类 + 业务语义（**只放一个文件的域应合并进更宽的目录**，
+  如档案与字典同属学生端基础数据 → `studentBase/`）；文件 = 域内职责（读/写、报告/统计）
 
 ## 开发契约
 
-- 命名：**文件大驼峰**（`Profile.py`），**目录小驼峰**（`studentProfile/`），
-  **方法小驼峰**（`taskStats()`），常量 UPPER_SNAKE
+- 命名：**目录小驼峰**（`recordCenter/`），**模块文件小驼峰**（`recordQuery.py`），
+  **方法小驼峰**（`taskStats()`），常量 UPPER_SNAKE；门面例外（`IqClient.py`）
+- **文件名不得重复目录名**（不要出现 `studentBase/studentBase.py` 这类冗余）
 - **目录名禁止与标准库同名**（`profile`、`types`、`code`、`json`… 会冲突），
   复合名同时解决可读性与冲突
 - 每业务一个目录 + 每个 py 一个同名 .md 说明；说明含：职责、对应端点、方法清单、最小用法、注意事项
 - 新增业务域 = 新目录（含 `__init__.py`）+ mixin + 说明 + 在 `IqClient.py` 门面注册
-- `Http` 必须留在 `IqClient` 继承链末位（基类）
+- `Http` 必须留在 `IQClient` 继承链末位（基类）
 - 对外 API 只增不改；改方法名必须同步 `IqClient.py` 门面、两个测试、SKILL/README/api.md
 - **改目录/模块名只改 import 语句与文档路径**；API 路径（`/record/...`）、
   JSON 字段（`recordType`/`recordContent`）、方法名（`records()`）里的
   `record`/`grow` 等词**不受目录改名影响**，不要一起替换
+- **禁止用正则批量替换目录名**——会误伤 API 路径与字段名；逐条精确替换并做内容完好性断言
 - **Git 大小写**：仓库已设 `core.ignorecase=false`；仅改大小写必须 `git rm --cached` + `git add` 两步登记
 - 提交：一次一个 commit，按步骤提交（用户要求）；每个 commit 后推送
 
@@ -48,18 +51,18 @@ tools/
 
 ```bash
 # 从仓库根目录执行
-python tools/authLogin/Login.py password -u <学号> -p <密码>   # 账号密码换 token（推荐）
-python tools/authLogin/Login.py token <32hex>                  # 校验已有 token
+python tools/access/loginToken.py password -u <学号> -p <密码>   # 账号密码换 token（推荐）
+python tools/access/loginToken.py token <32hex>                  # 校验已有 token
 python tools/IqClient.py <ssoToken>                       # 验证并打印摘要
-python tools/testCases/TestApi.py --token <ssoToken>         # 42 项只读测试
-python tools/testCases/TestApi.py -u <学号> -p <密码>         # 登录 + 全量
-python tools/testCases/TestRecord.py <ssoToken>               # 写实记录 13 项断言
+python tools/testCases/testApiReadOnly.py --token <ssoToken>         # 42 项只读测试
+python tools/testCases/testApiReadOnly.py -u <学号> -p <密码>         # 登录 + 全量
+python tools/testCases/testRecordRead.py <ssoToken>               # 写实记录 13 项断言
 ```
 
 ## 关键注意事项
 
 - 请求体必须是 `request={"data":{...}}` form 编码；发 JSON 会 `code:10`
-- 写操作（`record/Write.py`）调用前必须向用户确认；成功判据 = 读回执
+- 写操作（`recordCenter/recordWrite.py`）调用前必须向用户确认；成功判据 = 读回执
   （如 `querySummary.pdlist` + `count_task.unfinished`），不看返回值
 - `querySummary` / `sysDict` 返回 `{list:[…]}` 或 `{pdlist:[…]}`，不是裸数组；
   **不可对返回值直接 `.get(code)`** —— 需要 code→name 映射时遍历 `["list"]`（见 `Write._semesterName`）

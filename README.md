@@ -12,48 +12,48 @@ SKILL.md                 完整说明（鉴权模型、写入契约、踩坑、�
 AGENTS.md                开发契约（命名、结构、命令、敏感数据约束）
 reference/api.md         25+ 已抓包验证的端点、payload、返回结构速查、错误码
 tools/
-  IqClient.py               门面：组合各业务 mixin，业务调用唯一入口
-  coreHttp/Http.py          HTTP 传输层（get/post/login）+ IQError
-  authLogin/Login.py        四种登录方式统一入口（门户登录引擎 + 验证码 OCR）
-  studentProfile/Profile.py 本人档案、家长、兴趣特长
-  dictOptions/Options.py    平台字典、学期、活动/荣誉类型枚举
-  homeWorkbench/Workbench.py 待办任务、未读消息、公告
-  recordCenter/Query.py     写实记录读取（列表/标签/统计/详情）
-  recordCenter/Write.py     图片上传、发布写实记录（活动/荣誉）
-  growReport/Report.py      成长报告列表与详情
-  growReport/Stats.py       荣誉统计、活动维度统计
-  testCases/TestApi.py      42 项全量只读测试（`--dump` 落盘真实返回）
-  testCases/TestRecord.py   写实记录业务 13 项断言回归
+  IqClient.py                     门面：组合各业务 mixin，业务调用唯一入口
+  access/httpTransport.py         HTTP 传输层（get/post/login）+ IQError
+  access/loginToken.py            四种登录方式统一入口（门户登录引擎 + 验证码 OCR）
+  studentBase/profileInfo.py      本人档案、家长、兴趣特长
+  studentBase/dictOptions.py      平台字典、学期、活动/荣誉类型枚举
+  homeWorkbench/taskAndMessage.py 待办任务、未读消息、公告
+  recordCenter/recordQuery.py     写实记录读取（列表/标签/统计/详情）
+  recordCenter/recordWrite.py     图片上传、发布写实记录（活动/荣誉）
+  growReport/growthReport.py      成长报告列表与详情
+  growReport/growthStatistics.py  荣誉统计、活动维度统计
+  testCases/testApiReadOnly.py    42 项全量只读测试（`--dump` 落盘真实返回）
+  testCases/testRecordRead.py     写实记录业务 13 项断言回归
 ```
 
-目录 = 业务域（小驼峰），文件 = 域内职责（大驼峰）；每个 `Xxx.py` 都有同名 `Xxx.md` 说明文档。
+目录 = 业务域（小驼峰），文件 = 域内职责（小驼峰）；每个 `.py` 都有同名 `.md` 说明文档。
 
 ## 鉴权（两层）
 
-1. **换 token —— 四种登录方式**（统一入口 `tools/authLogin/Login.py`，输出同一个 `ssoToken`）：
+1. **换 token —— 四种登录方式**（统一入口 `tools/access/loginToken.py`，输出同一个 `ssoToken`）：
 
    | # | 方式 | 命令 |
    |---|---|---|
-   | 1 | 账号密码（推荐） | `python tools/authLogin/Login.py password -u <学号> -p <密码>` |
-   | 2 | 原站 JSESSIONID | `python tools/authLogin/Login.py jsessionid --jsessionid <JSESSIONID>` |
-   | 3 | 591iq 302 跳转链接 | `python tools/authLogin/Login.py redirect "<含 token= 的完整链接>"` |
-   | 4 | 591iq token | `python tools/authLogin/Login.py token <32hex>` |
+   | 1 | 账号密码（推荐） | `python tools/access/loginToken.py password -u <学号> -p <密码>` |
+   | 2 | 原站 JSESSIONID | `python tools/access/loginToken.py jsessionid --jsessionid <JSESSIONID>` |
+   | 3 | 591iq 302 跳转链接 | `python tools/access/loginToken.py redirect "<含 token= 的完整链接>"` |
+   | 4 | 591iq token | `python tools/access/loginToken.py token <32hex>` |
 
    ① 门户 `xmyz.xmedu.cn` 登录 + 验证码 OCR（`--retry` 默认 3，`--interactive` 人工输码）；
    ② 浏览器里已登录门户时，直接复制 Cookie 里的 `JSESSIONID` 换 token，不必再输验证码；
    ③ 从自己浏览器的 302/mock_login 完整链接里提取 token；④ 已有 token 只做校验。
    每种方式都会打印 `ssoToken`、`mock_login` 链接和 `verify: OK/FAIL`（走 `loginBySSOToken`）。
-   附带工具：`python tools/authLogin/Login.py check`（无凭据探测门户端点）、
-   `python tools/authLogin/Login.py captcha --out cap.jpg`（取验证码图片）。
+   附带工具：`python tools/access/loginToken.py check`（无凭据探测门户端点）、
+   `python tools/access/loginToken.py captcha --out cap.jpg`（取验证码图片）。
 2. **业务网关**：`service.591iq.cn`，header `AccessToken: <ssoToken>`，
    参数统一 `request={"data":{...}}`（GET 拼 query、POST form body）。
    `ssoToken` 有效期内可重复使用，脚本一律从命令行参数取，不写死。
 
 ```bash
 python tools/IqClient.py <ssoToken>              # 验证并打印账号摘要
-python tools/testCases/TestApi.py --token <ssoToken> # 全量 42 项
-python tools/testCases/TestApi.py -u <学号> -p <密码>  # 登录 → 全量 → 上传
-python tools/testCases/TestRecord.py <ssoToken>           # 写实记录 13 项断言
+python tools/testCases/testApiReadOnly.py --token <ssoToken> # 全量 42 项
+python tools/testCases/testApiReadOnly.py -u <学号> -p <密码>  # 登录 → 全量 → 上传
+python tools/testCases/testRecordRead.py <ssoToken>           # 写实记录 13 项断言
 ```
 
 ## 实测结论（2026-10-01）
