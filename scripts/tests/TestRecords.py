@@ -1,6 +1,6 @@
 """写实记录 (record/queryRecordList) 只读业务全量测试"""
 import json, sys, time, collections, traceback, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from IqClient import IQClient, IQError
 
 TOKEN = sys.argv[1] if len(sys.argv) > 1 else ""
