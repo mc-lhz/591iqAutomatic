@@ -1,4 +1,4 @@
-"""传输层：封装 591iq 网关请求（鉴权头 + request={"data":{...}}）。
+"""HTTP 传输层：封装 591iq 网关请求（鉴权头 + request={"data":{...}}）。
 
 各业务 mixin 只依赖本模块提供的 _call / get / post / login / userId，
 不直接接触 urllib。
@@ -14,7 +14,7 @@ class IQError(Exception):
     pass
 
 
-class Client:
+class Http:
     def __init__(self, ssoToken: str):
         self.ssoToken = ssoToken
         self.profile = None
