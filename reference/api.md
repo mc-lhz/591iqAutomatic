@@ -196,6 +196,34 @@ body: file=<二进制>, objType=25, id=WU_FILE_1, type=image/jpeg
 
 **③ 其余 19 种 recordType** 结构同构，槽位名查 `RECORD_TYPE_MAP`（0 recordGrow、2 recordRead、6 recordCase、7 recordSubject、14/15/16 劳动类…），字段以对应 chunk 的 `validate()` 为准。
 
+### 未知槽位结构怎么查（优先级链，务必按序）
+
+填 `recordContent` 前需要某 recordType 的表单结构时，**按下面顺序走，前一步够用就不要走后一步**：
+
+| # | 手段 | 成本 | 产出 | 适用 |
+|---|---|---|---|---|
+| 1 | 反查本校 feed：`records(type_="2")` 翻页取行，看行里哪个 `recordXXX` 槽位非空 → `queryRecord(id)` | ~27 次 API，秒级 | **真实样本结构**，含服务端回填字段 | 该类型本校已有记录时最快最准 |
+| 2 | 查本文档 + `RECORD_TYPE_MAP` | 0 | 槽位名、已知必填项 | 槽位名一定在这里 |
+| 3 | 由前端模块映射**定位** chunk：`recordRelease.components` → 模块 id → chunk 文件名，读那 1 个文件 | 读 1 个文件 | 该类型的 `validate()` 与表单默认值 | 本校无样本时走这条 |
+| 4 | 全量关键词搜前端 bundle | **564 chunk / 13 MB 串行下载 ≈ 2.5 min** | 兜底 | 只在 1-3 全失败时 |
+
+2026-10-02 查 `recordGrow`（recordType=0）的教训：直接从第 4 步起手，浪费约 2.5 min 下载；
+而第 1 步（`findslots`）本校只查到 6 个槽位
+（`recordCase`/`recordSubject`/`recordArt`/`recordRead`/`recordLaborResult`/`recordLaborAbility`），
+**不含 recordGrow** —— 本校无该类型样本，所以第 3 步才是正解。
+最终顺着 `recordRelease.components` 映射定位到 chunk-3a29ec67（发布态模块 3792）拿到表单结构；
+注意 chunk-98eb46fe 是**查看态**组件，结构不同，别读错。
+
+前端 bundle 检索的工程要点：
+
+- **先映射后搜索**：由 webpack 模块 id / `recordRelease.components` 直接定位 chunk，
+  不要遍历 564 个文件找字符串
+- **区分发布态与查看态**：同一业务有两个 chunk（编辑/预览），要的是发布态
+- **下载必须并发**：`scan.py` 那类串行 `urlopen` 循环是本次耗时主因
+- **落地即建索引**：首次下载后生成「关键词 → 文件名」倒排表，之后查询全走本地，
+  不要每次 `os.listdir` 全量重扫
+- **加落盘缓存**：重复查询时先 `if not os.path.exists(p)` 跳过下载
+
 **辅助接口**
 
 | 方法 | 路径 | 用途 |

@@ -136,6 +136,11 @@ c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档
 ⚠️ 提交前必须向用户确认：记录进入**本校可见** feed，且**未发现学生端删除接口**，提交后可能无法自行撤销。
 字段/枚举/校验细节见 `reference/api.md`「写入接口」章节。
 
+> **填 `recordContent` 前先查已有结论**：槽位名查 `RECORD_TYPE_MAP`，表单结构查
+> `reference/api.md`「未知槽位结构怎么查」的优先级链。
+> 只有 `api.md` 与映射表都缺时，才去翻前端 bundle，且**必须先由模块映射定位 chunk 再搜索**——
+> 全站 564 个 chunk 串行下载约 2.5 min，且注意发布态与查看态是两个不同 chunk。
+
 ### 第二类写入：提交活动总结（✅ 已实测，风险低于写实记录）
 
 `POST /evaluateActivity/submitSummary` —— 表单只有 `summary[0].content` 必填（**无字数校验**），

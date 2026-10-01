@@ -65,11 +65,15 @@ python tools/testCases/testRecordRead.py <ssoToken>               # 写实记录
 - 写操作（`recordCenter/recordWrite.py`）调用前必须向用户确认；成功判据 = 读回执
   （如 `querySummary.pdlist` + `count_task.unfinished`），不看返回值
 - `querySummary` / `sysDict` 返回 `{list:[…]}` 或 `{pdlist:[…]}`，不是裸数组；
-  **不可对返回值直接 `.get(code)`** —— 需要 code→name 映射时遍历 `["list"]`（见 `Write._semesterName`）
+  **不可对返回值直接 `.get(code)`** —— 需要 code→name 映射时遍历 `["list"]`（见 `recordWrite._semesterName`）
 - `records()` 的 `type_` 参数带下划线（避免遮蔽内置 `type`），用关键字传
+- **查未知槽位结构按优先级链走**（详见 `reference/api.md`「未知槽位结构怎么查」）：
+  ① 反查本校 feed 样本 → ② 查 `api.md` + `RECORD_TYPE_MAP` → ③ 由前端模块映射定位单个 chunk
+  → ④ 全量搜 564 个 chunk（串行下载约 2.5 min，**仅在前三步全失败时**）。
+  禁止从第 ④ 步起手；翻 bundle 必须先映射定位、并发下载、落盘建索引，并区分发布态/查看态 chunk
 - PowerShell 5.1：不要用 Get-Content/Set-Content 处理 UTF-8 中文（会乱码），用文件工具或 python
 - 提交前脱敏：不得包含 token / 密码 / 姓名 / userId / 班级
-- 测试需要有效 ssoToken；无 token 时 TestApi 的登录步骤会失败
+- 测试需要有效 ssoToken；无 token 时 `testApiReadOnly.py` 的登录步骤会失败
 
 ## 依赖
 
