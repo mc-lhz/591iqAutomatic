@@ -195,4 +195,7 @@ python scripts/TestEndpoints.py --token <t> --dump      # 额外落盘每个接�
   `{"type":"2","recordType":"","labelId":"","offset":0,"limit":10}`；
   字段不全会导致请求挂起超时。
 - token 过期表现：`loginBySSOToken` 返回 `code:1 登录失败`，此时需向用户重新索要 ssoToken。
+- **Windows 编码坑**：PowerShell 5.1 默认 GBK 代码页，Python 输出中文前先
+  `$env:PYTHONIOENCODING='utf-8'`；UTF-8 中文文件用文件工具/Python 读写，
+  不要用 `Get-Content`/`Set-Content`（会整文件乱码）。
 - 教育系统数据含学生个人信息，仅限授权使用，不要外传。
