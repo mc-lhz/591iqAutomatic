@@ -3,4 +3,5 @@ __pycache__/
 jcaptcha*.jpg
 jcaptcha*.png
 _tiny.jpg
-*_dump.txt
+*Dump.txt
+TestEndpointsReport.json

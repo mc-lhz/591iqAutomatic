@@ -13,8 +13,8 @@
 | 方法 | 说明 |
 |---|---|
 | `userInfo()` | 当前用户 49 键详情（sex/birthday/className/schoolName…） |
-| `sysDict(field)` | 取指定字典，返回 `pdlist` |
-| `semesterOptions()` | `sysDict("SemesterCode")` 的快捷方式 → `{'1':'高一上',…,'6':'高三下'}` |
+| `sysDict(field)` | 取指定字典，返回 `{list:[{id,field,fieldName,code,describe,sort}]}` |
+| `semesterOptions()` | `sysDict("SemesterCode")` 同结构，取 `["list"]` 后按 `code`/`describe` 映射 |
 
 ## 用法
 
@@ -22,10 +22,10 @@
 from IqClient import IQClient
 c = IQClient("<ssoToken>"); c.login()
 c.userInfo()["className"]
-c.semesterOptions()["3"]   # '高二上'
+c.semesterOptions()["list"][2]["describe"]   # '高二上'
 ```
 
 ## 注意事项
 
 - `userId` 属性来自 `login()` 返回，未登录会抛 TypeError。
-- 字典接口返回 `pdlist`（不是 `list`）。
+- 字典接口返回 `{list:[…]}`（不是裸数组，也不是 `pdlist`）。
