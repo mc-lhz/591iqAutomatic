@@ -16,9 +16,14 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
    `https://www.591iq.cn/#/mock_login?logoutDisable=1&from=third&token=<32位小写hex>&userType=2`
    - ⚠️ 该入口**无法匿名直连**：不带门户登录态时恒返回
      `302 → /account/open-api/index.html → 404`，加 token/sign/ticket/各类 header 都无效（已系统性验证）。
-   - 获取 ssoToken 的三条路（按优先级）：
-     ① **门户账号自动签发** `python scripts/xmyz_login.py login -u <账号> -p <密码>`（已打通，见下节）；
-     ② 用户从自己浏览器的成功跳转 URL 里复制；③ 用已登录的浏览器 profile 复跑。
+   - **获取 ssoToken 的四种登录方式**（统一入口 `scripts/login.py`，输出同一个 token）：
+     ① **账号密码（推荐）** `python scripts/login.py password -u <账号> -p <密码>`
+     （门户登录 + 验证码 OCR，见下节）；
+     ② **原站 JSESSIONID** `python scripts/login.py jsessionid --jsessionid <JSESSIONID>`
+     （浏览器已登录门户时复制会话 id，免输验证码；会话失效则回落 `302→index.html→404`）；
+     ③ **591iq 302 跳转链接** `python scripts/login.py redirect "<含 token= 的完整链接>"`；
+     ④ **591iq token** `python scripts/login.py token <32hex>`（仅校验）。
+     每种都打印 `ssoToken` + `mock_login` 链接 + `verify: OK/FAIL`（`loginBySSOToken`）。
    - ssoToken 在有效期内**可重复使用**（同一个 token 连续调用多次均 `code:0`）。
 
 2. **换 session**（可选，纯 API 模式下每次都能重新换）：
@@ -69,6 +74,12 @@ python scripts/xmyz_login.py login -u <学号> -p <密码> --interactive  # 人�
 ## 快速使用
 
 ```bash
+# 0) 先拿 token（四种方式任选其一，见「鉴权模型」）
+python scripts/login.py password -u <学号> -p <密码>     # ① 账号密码（推荐）
+python scripts/login.py jsessionid --jsessionid <JSESSIONID>
+python scripts/login.py redirect "<含 token= 的完整链接>"
+python scripts/login.py token <32hex>
+
 # 1) 验证 token 并打印摘要（login + 任务 + 记录 + 报告）
 python scripts/iq_client.py <ssoToken>
 
