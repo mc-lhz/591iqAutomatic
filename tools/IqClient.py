@@ -7,15 +7,18 @@
 """
 import json
 
-from account.Account import AccountMixin
 from core.Http import Http, IQError
-from grow.Grow import GrowMixin
-from publish.Publish import PublishMixin
-from records.Records import RecordsMixin
-from tasks.Tasks import TasksMixin
+from grow.Report import ReportMixin
+from grow.Stats import StatsMixin
+from meta.Options import OptionsMixin
+from profile.Profile import ProfileMixin
+from record.Query import QueryMixin
+from record.Write import WriteMixin
+from workbench.Workbench import WorkbenchMixin
 
 
-class IQClient(AccountMixin, TasksMixin, RecordsMixin, GrowMixin, PublishMixin, Http):
+class IQClient(ProfileMixin, OptionsMixin, WorkbenchMixin, QueryMixin, WriteMixin,
+               ReportMixin, StatsMixin, Http):
     pass
 
 
