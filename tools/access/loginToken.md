@@ -1,4 +1,4 @@
-# Login（登录模块）
+# loginToken（登录取 token）
 
 管：获取 591iq sso Token 的四种方式 + 门户探测工具。
 不管：业务接口（拿到 token 后交给 `IqClient`）。
@@ -17,8 +17,8 @@
 ## 用法
 
 ```bash
-python Login.py password -u <学号> -p <密码> [--retry 3] [--interactive]
-python Login.py token <32hex>          # 输出 ssoToken + mock_login 链接 + verify 结果
+python loginToken.py password -u <学号> -p <密码> [--retry 3] [--interactive]
+python loginToken.py token <32hex>          # 输出 ssoToken + mock_login 链接 + verify 结果
 ```
 
 ## 注意事项

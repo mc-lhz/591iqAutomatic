@@ -1,4 +1,4 @@
-# Write（写实记录·写）
+# recordWrite（写实记录·写）
 
 管：图片上传、写实记录发布（活动 / 荣誉 / 其余 19 种 recordType）。
 ⚠️ **全是写操作**：记录进本校可见 feed，学生端无删除接口，调用前必须向用户确认。
@@ -35,6 +35,6 @@ c.publishActivity(semesterCode="3", name="研究性学习", labelId=29, level="0
 - **顶层槽位 key 必须是组件名**（`recordActivityFJ`/`recordHonor`…），数字只写在
   `recordContent.recordType` 里；传数字 key → `999999 发布失败`。
 - 图片必须自己上传（`uploadImage`）；复用他人 fs URL 是否触发 999999 未证实。
-- `labelId` / `typeId` / `levelId` 取值查 `dictOptions/Options.py`，不要硬编码。
+- `labelId` / `typeId` / `levelId` 取值查 `studentBase/dictOptions.py`，不要硬编码。
 - **成功判据 = 读回执**：返回 `{"list":"操作成功"}` 不代表生效，要读回列表/统计核对。
 - 活动总结（`/evaluateActivity/submitSummary`）不在此模块，见 reference/api.md「写入接口②」。

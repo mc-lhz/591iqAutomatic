@@ -7,14 +7,14 @@
   4) token        591iq token：已有 32 位 sso Token，只做校验
 
 门户工具：
-  python Login.py check                            # 无凭据探测各端点可达性
-  python Login.py captcha [--out jcaptcha.jpg]     # 取验证码图片
+  python loginToken.py check                            # 无凭据探测各端点可达性
+  python loginToken.py captcha [--out jcaptcha.jpg]     # 取验证码图片
 
 用法：
-  python Login.py password -u <学号> -p <密码> [--retry 3] [--interactive]
-  python Login.py jsessionid --jsessionid <JSESSIONID>
-  python Login.py redirect "https://www.591iq.cn/#/mock_login?...&token=<32hex>&userType=2"
-  python Login.py token <32hex>
+  python loginToken.py password -u <学号> -p <密码> [--retry 3] [--interactive]
+  python loginToken.py jsessionid --jsessionid <JSESSIONID>
+  python loginToken.py redirect "https://www.591iq.cn/#/mock_login?...&token=<32hex>&userType=2"
+  python loginToken.py token <32hex>
 
 登录契约参考 github.com/mc-lhz/XMYZAutoChooseClass（POST /j_spring_security_check，
 j_password = sha1(明文)，j_captcha 手输），补上它没有的 iqboard!login.action 换 token 后半段。

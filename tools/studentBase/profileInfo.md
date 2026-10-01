@@ -1,7 +1,7 @@
-# Profile（学生档案域）
+# profileInfo（学生档案）
 
 管：当前登录学生的档案详情、家长、兴趣特长。
-不管：平台字典（见 `dictOptions/Options.py`）、任务（`homeWorkbench/`）、记录（`recordCenter/`）。
+不管：平台字典（见 `studentBase/dictOptions.py`）、任务（`homeWorkbench/`）、记录（`recordCenter/`）。
 
 ## 对应端点（reference/api.md）
 
