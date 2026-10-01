@@ -1,20 +1,20 @@
-"""591iq ssoToken 获取统一入口 —— 四种登录方式 + 门户工具
+"""591iq sso Token 获取统一入口 —— 四种登录方式 + 门户工具
 
 四种登录方式（最终输出同一个 ssoToken，业务调用完全一致）：
   1) password     账号密码（推荐）：门户登录 + 验证码 OCR 自动换 token
   2) jsessionid   原站 JSESSIONID：浏览器已登录门户时复制会话 id，免输验证码
   3) redirect     591iq 302 跳转链接：贴完整 mock_login / authority 链接直接取 token
-  4) token        591iq token：已有 32 位 ssoToken，只做校验
+  4) token        591iq token：已有 32 位 sso Token，只做校验
 
 门户工具：
-  python login.py check                            # 无凭据探测各端点可达性
-  python login.py captcha [--out jcaptcha.jpg]     # 取验证码图片
+  python Login.py check                            # 无凭据探测各端点可达性
+  python Login.py captcha [--out jcaptcha.jpg]     # 取验证码图片
 
 用法：
-  python login.py password -u <学号> -p <密码> [--retry 3] [--interactive]
-  python login.py jsessionid --jsessionid <JSESSIONID>
-  python login.py redirect "https://www.591iq.cn/#/mock_login?...&token=<32hex>&userType=2"
-  python login.py token <32hex>
+  python Login.py password -u <学号> -p <密码> [--retry 3] [--interactive]
+  python Login.py jsessionid --jsessionid <JSESSIONID>
+  python Login.py redirect "https://www.591iq.cn/#/mock_login?...&token=<32hex>&userType=2"
+  python Login.py token <32hex>
 
 登录契约参考 github.com/mc-lhz/XMYZAutoChooseClass（POST /j_spring_security_check，
 j_password = sha1(明文)，j_captcha 手输），补上它没有的 iqboard!login.action 换 token 后半段。
@@ -43,7 +43,7 @@ def sha1(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8")).hexdigest()
 
 
-def new_session() -> requests.Session:
+def newSession() -> requests.Session:
     s = requests.Session()
     s.headers.update({
         "Accept": "*/*",
@@ -56,12 +56,12 @@ def new_session() -> requests.Session:
     return s
 
 
-def server_time(s) -> int:
+def serverTime(s) -> int:
     r = s.get(BASE + "/system/system!currentTime.action", timeout=10)
     return int(r.text.strip())
 
 
-def fetch_captcha(s, out="jcaptcha.jpg") -> str:
+def fetchCaptcha(s, out="jcaptcha.jpg") -> str:
     r = s.get(BASE + "/security/jcaptcha.jpg?_dc=%d" % int(time.time() * 1000),
               timeout=10)
     r.raise_for_status()
@@ -70,12 +70,12 @@ def fetch_captcha(s, out="jcaptcha.jpg") -> str:
     return out
 
 
-def portal_login(s, username, password, captcha_code) -> bool:
+def portalLogin(s, username, password, captchaCode) -> bool:
     """Spring Security 表单登录；成功判据是拿到 JSESSIONID 且菜单树可取。"""
     r = s.post(BASE + "/j_spring_security_check",
                data={"j_username": username,
                      "j_password": sha1(password),
-                     "j_captcha": captcha_code},
+                     "j_captcha": captchaCode},
                timeout=15, allow_redirects=True)
     if "loginFailure" in r.url or "error=" in r.url:
         print("[login] 被拒:", r.url, file=sys.stderr)
@@ -93,7 +93,7 @@ def portal_login(s, username, password, captcha_code) -> bool:
     return True
 
 
-def get_sso_token(s) -> str:
+def getSsoToken(s) -> str:
     """带门户会话访问 iqboard!login.action，从跳转链里抓 32 位 token。"""
     url = (BASE + "/account/open-api/iqboard!login.action"
            "?terminal=computer&service=CQES")
@@ -124,7 +124,7 @@ def preprocess(path, out=None, scale=3, threshold=160):
     return out
 
 
-def ocr_captcha(path):
+def ocrCaptcha(path):
     """验证码识别，返回 [0-9a-z]+；识别失败返回 ''。"""
     prep = preprocess(path)
     try:
@@ -153,32 +153,32 @@ def ocr_captcha(path):
     return re.sub(r"[^0-9a-z]", "", texts[0].lower())
 
 
-def login_for_token(username, password, retry=3, captcha_file="jcaptcha.jpg",
-                    interactive=False):
-    """门户账号登录 → 抓 ssoToken。失败抛 SystemExit。"""
-    s = new_session()
-    server_time(s)
+def loginForToken(username, password, retry=3, captchaFile="jcaptcha.jpg",
+                  interactive=False):
+    """门户账号登录 → 抓 sso Token。失败抛 SystemExit。"""
+    s = newSession()
+    serverTime(s)
     if interactive:
-        fetch_captcha(s, captcha_file)
-        print("验证码:", captcha_file, "（用系统看图工具打开查看）")
+        fetchCaptcha(s, captchaFile)
+        print("验证码:", captchaFile, "（用系统看图工具打开查看）")
         code = input("请输入验证码: ").strip()
-        if not portal_login(s, username, password, code):
+        if not portalLogin(s, username, password, code):
             sys.exit(1)
     else:
         # 必须在同一会话里先取验证码再登录（j_captcha 与 JSESSIONID 绑定）
         for attempt in range(1, (retry or 3) + 1):
-            fetch_captcha(s, captcha_file)
-            code = ocr_captcha(captcha_file)
+            fetchCaptcha(s, captchaFile)
+            code = ocrCaptcha(captchaFile)
             print(f"[ocr] 第{attempt}次 验证码={code or '(识别失败)'} "
-                  f"图={captcha_file}")
+                  f"图={captchaFile}")
             if not code:
                 continue
-            if portal_login(s, username, password, code):
+            if portalLogin(s, username, password, code):
                 break
         else:
             print("[login] 多次尝试均失败", file=sys.stderr)
             sys.exit(1)
-    token = get_sso_token(s)
+    token = getSsoToken(s)
     if not token:
         print("[sso] 未从跳转链中抓到 token", file=sys.stderr)
         sys.exit(2)
@@ -186,7 +186,7 @@ def login_for_token(username, password, retry=3, captcha_file="jcaptcha.jpg",
 
 
 # ------------------------------------------------------------- 统一入口 ----
-def extract_token(text: str) -> str:
+def extractToken(text: str) -> str:
     m = TOKEN_RE.search(text or "")
     return m.group(1).lower() if m else ""
 
@@ -208,36 +208,36 @@ def verify(token: str):
     return True, who or "code:0"
 
 
-def emit(token: str, how: str, no_verify: bool = False) -> int:
+def emit(token: str, how: str, noVerify: bool = False) -> int:
     if not token:
         print("[x] 未取得 ssoToken", file=sys.stderr)
         return 2
     print(f"ssoToken = {token}")
     print(f"mock_login = {MOCK_TMPL.format(token=token)}")
     print(f"[method] {how}")
-    if no_verify:
+    if noVerify:
         return 0
     ok, info = verify(token)
     print("verify:", "OK" if ok else "FAIL", "-", info)
     return 0 if ok else 3
 
 
-def m_password(a) -> int:
-    tok = login_for_token(a.username, a.password, retry=a.retry,
-                          captcha_file=a.captcha_file,
-                          interactive=a.interactive)
+def mPassword(a) -> int:
+    tok = loginForToken(a.username, a.password, retry=a.retry,
+                        captchaFile=a.captchaFile,
+                        interactive=a.interactive)
     return emit(tok, "1 账号密码(门户登录+OCR)")
 
 
-def m_jsessionid(a) -> int:
+def mJsessionid(a) -> int:
     """拿浏览器的门户会话 id 直接换 token（不再输验证码）。"""
     raw = a.jsessionid.strip().strip('"').strip("'")
     if "JSESSIONID=" in raw:
         raw = raw.split("JSESSIONID=", 1)[1].split(";", 1)[0].strip()
-    s = new_session()
+    s = newSession()
     s.cookies.set("JSESSIONID", raw, domain="xmyz.xmedu.cn", path="/")
     print(f"[jsessionid] 用会话 {raw[:8]}… 访问 iqboard!login.action")
-    tok = get_sso_token(s)
+    tok = getSsoToken(s)
     if not tok:
         print("[x] 未从跳转链抓到 token：会话可能已失效/过期，"
               "请重新从浏览器复制 JSESSIONID", file=sys.stderr)
@@ -245,9 +245,9 @@ def m_jsessionid(a) -> int:
     return emit(tok, "2 原站 JSESSIONID")
 
 
-def m_redirect(a) -> int:
+def mRedirect(a) -> int:
     url = (a.url or "").strip()
-    tok = extract_token(url)
+    tok = extractToken(url)
     if not tok:
         print("[x] 链接里没有 token=<32hex>；"
               "请贴完整 mock_login 或 sso/authority 跳转链接", file=sys.stderr)
@@ -255,7 +255,7 @@ def m_redirect(a) -> int:
     return emit(tok, "3 591iq 302 跳转链接")
 
 
-def m_token(a) -> int:
+def mToken(a) -> int:
     tok = (a.token or "").strip().lower()
     if not re.fullmatch(r"[0-9a-f]{32}", tok):
         print("[x] 不是 32 位 hex token", file=sys.stderr)
@@ -264,8 +264,8 @@ def m_token(a) -> int:
 
 
 # --------------------------------------------------------------- 门户工具 ----
-def cmd_check(a=None):
-    s = new_session()
+def cmdCheck(a=None):
+    s = newSession()
     checks = [
         ("serverTime", "GET", "/system/system!currentTime.action"),
         ("captcha", "GET", "/security/jcaptcha.jpg?_dc=%d"
@@ -288,10 +288,10 @@ def cmd_check(a=None):
     return 0
 
 
-def cmd_captcha(a):
-    s = new_session()
-    server_time(s)
-    print(fetch_captcha(s, a.out))
+def cmdCaptcha(a):
+    s = newSession()
+    serverTime(s)
+    print(fetchCaptcha(s, a.out))
     print("验证码图片已保存，请查看后输入（未登录状态下也会发放会话）")
     return 0
 
@@ -306,32 +306,32 @@ def main():
     p.add_argument("-p", "--password", default="")
     p.add_argument("--retry", type=int, default=3)
     p.add_argument("--interactive", action="store_true", help="人工看图输验证码")
-    p.add_argument("--captcha-file", default="jcaptcha.jpg")
-    p.add_argument("--no-verify", action="store_true")
-    p.set_defaults(func=m_password)
+    p.add_argument("--captchaFile", default="jcaptcha.jpg")
+    p.add_argument("--noVerify", action="store_true")
+    p.set_defaults(func=mPassword)
 
     p = sub.add_parser("jsessionid", help="2 原站 JSESSIONID")
     p.add_argument("--jsessionid", required=True,
                    help="JSESSIONID 值，或整段 Cookie")
-    p.add_argument("--no-verify", action="store_true")
-    p.set_defaults(func=m_jsessionid)
+    p.add_argument("--noVerify", action="store_true")
+    p.set_defaults(func=mJsessionid)
 
     p = sub.add_parser("redirect", help="3 591iq 302 跳转链接")
     p.add_argument("url", nargs="?", help="含 token= 的完整链接")
-    p.add_argument("--no-verify", action="store_true")
-    p.set_defaults(func=m_redirect)
+    p.add_argument("--noVerify", action="store_true")
+    p.set_defaults(func=mRedirect)
 
     p = sub.add_parser("token", help="4 591iq token")
     p.add_argument("token")
-    p.add_argument("--no-verify", action="store_true")
-    p.set_defaults(func=m_token)
+    p.add_argument("--noVerify", action="store_true")
+    p.set_defaults(func=mToken)
 
     p = sub.add_parser("check", help="无凭据探测门户端点可达性")
-    p.set_defaults(func=cmd_check)
+    p.set_defaults(func=cmdCheck)
 
     p = sub.add_parser("captcha", help="取验证码图片")
     p.add_argument("--out", default="jcaptcha.jpg")
-    p.set_defaults(func=cmd_captcha)
+    p.set_defaults(func=cmdCaptcha)
 
     a = ap.parse_args()
     sys.exit(a.func(a))
