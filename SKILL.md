@@ -16,13 +16,13 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
    `https://www.591iq.cn/#/mock_login?logoutDisable=1&from=third&token=<32位小写hex>&userType=2`
    - ⚠️ 该入口**无法匿名直连**：不带门户登录态时恒返回
      `302 → /account/open-api/index.html → 404`，加 token/sign/ticket/各类 header 都无效（已系统性验证）。
-   - **获取 ssoToken 的四种登录方式**（统一入口 `scripts/login.py`，输出同一个 token）：
-     ① **账号密码（推荐）** `python scripts/login.py password -u <账号> -p <密码>`
+   - **获取 ssoToken 的四种登录方式**（统一入口 `scripts/Login.py`，输出同一个 token）：
+     ① **账号密码（推荐）** `python scripts/Login.py password -u <账号> -p <密码>`
      （门户登录 + 验证码 OCR，见下节）；
-     ② **原站 JSESSIONID** `python scripts/login.py jsessionid --jsessionid <JSESSIONID>`
+     ② **原站 JSESSIONID** `python scripts/Login.py jsessionid --jsessionid <JSESSIONID>`
      （浏览器已登录门户时复制会话 id，免输验证码；会话失效则回落 `302→index.html→404`）；
-     ③ **591iq 302 跳转链接** `python scripts/login.py redirect "<含 token= 的完整链接>"`；
-     ④ **591iq token** `python scripts/login.py token <32hex>`（仅校验）。
+     ③ **591iq 302 跳转链接** `python scripts/Login.py redirect "<含 token= 的完整链接>"`；
+     ④ **591iq token** `python scripts/Login.py token <32hex>`（仅校验）。
      每种都打印 `ssoToken` + `mock_login` 链接 + `verify: OK/FAIL`（`loginBySSOToken`）。
    - ssoToken 在有效期内**可重复使用**（同一个 token 连续调用多次均 `code:0`）。
 
@@ -43,7 +43,7 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
 
 ### 源站门户登录（xmyz.xmedu.cn → ssoToken，✅ 已全链路打通）
 
-实现全部内置于 `scripts/login.py`（`password` 子命令）。不必人工复制 ssoToken：
+实现全部内置于 `scripts/Login.py`（`password` 子命令）。不必人工复制 ssoToken：
 门户账号 + 验证码 OCR 即可自动签发。登录契约参考
 `github.com/mc-lhz/XMYZAutoChooseClass`（补上了它没有的换 token 后半段）：
 
@@ -60,10 +60,10 @@ GET  /account/open-api/iqboard!login.action?terminal=computer&service=CQES
 ```
 
 ```bash
-python scripts/login.py check                                # 无凭据探测门户端点可达性
-python scripts/login.py captcha --out jcaptcha.jpg           # 取验证码图片
-python scripts/login.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
-python scripts/login.py password -u <学号> -p <密码> --interactive  # 人工看图输码
+python scripts/Login.py check                                # 无凭据探测门户端点可达性
+python scripts/Login.py captcha --out jcaptcha.jpg           # 取验证码图片
+python scripts/Login.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
+python scripts/Login.py password -u <学号> -p <密码> --interactive  # 人工看图输码
 ```
 
 - **验证码 OCR**：`rapidocr-onnxruntime` + 灰度阈值 160 + 3 倍放大（预处理是关键，
@@ -77,24 +77,24 @@ python scripts/login.py password -u <学号> -p <密码> --interactive  # 人工
 
 ```bash
 # 0) 先拿 token（四种方式任选其一，见「鉴权模型」）
-python scripts/login.py password -u <学号> -p <密码>     # ① 账号密码（推荐）
-python scripts/login.py jsessionid --jsessionid <JSESSIONID>
-python scripts/login.py redirect "<含 token= 的完整链接>"
-python scripts/login.py token <32hex>
+python scripts/Login.py password -u <学号> -p <密码>     # ① 账号密码（推荐）
+python scripts/Login.py jsessionid --jsessionid <JSESSIONID>
+python scripts/Login.py redirect "<含 token= 的完整链接>"
+python scripts/Login.py token <32hex>
 
 # 1) 验证 token 并打印摘要（login + 任务 + 记录 + 报告）
-python scripts/iq_client.py <ssoToken>
+python scripts/IqClient.py <ssoToken>
 
 # 2) 在代码里
-from iq_client import IQClient
+from IqClient import IQClient
 c = IQClient("<ssoToken>"); c.profile = c.login()
 c.tasks(status="0")          # 待办任务
 c.records(limit=10)          # 写实记录（本校 266 条）
-c.record_statistics()        # 记录按标签统计
-c.grow_reports()             # 成长报告列表
-c.grow_report_detail(growReportStuId)   # 列表里取
+c.recordStatistics()        # 记录按标签统计
+c.growReports()             # 成长报告列表
+c.growReportDetail(growReportStuId)   # 列表里取
 c.semesters()                # 21 个学期
-c.user_info(); c.honor_statistics(); c.activity_stats(); c.interests()
+c.userInfo(); c.honorStatistics(); c.activityStats(); c.interests()
 ```
 
 全流程纯 HTTP，**不需要浏览器**；学生端也没有可自动化的额外交互入口。
@@ -105,32 +105,32 @@ c.user_info(); c.honor_statistics(); c.activity_stats(); c.interests()
 `request={"data":{"recordContent":{...},"recordActivityFJ":{...}}}`。
 ⚠️ **顶层槽位 key 是组件名**（`recordActivityFJ`/`recordHonor`…），数字只在
 `recordContent.recordType` 里；传数字 key → `999999 发布失败`（踩坑）。
-⚠️ **图片用 `c.upload_image(path)` 自己传**（187ms，返回 fs URL）。999999 的**已确证原因**
+⚠️ **图片用 `c.uploadImage(path)` 自己传**（187ms，返回 fs URL）。999999 的**已确证原因**
 只有「槽位 key 用数字」；复用他人 fs URL 是否也触发 999999 **尚未单独证实**。
 
 ```python
-from iq_client import IQClient
+from IqClient import IQClient
 c = IQClient("<ssoToken>"); c.login()
 
 # 可用枚举（只读）
-c.semester_options()        # {'1':'高一上',...,'6':'高三下'}
-c.activity_labels(17)       # 活动类型（思想品德维度）
-c.honor_types()             # 5739先进个人 / 7999校内获奖 / 5737科技创新成果 ...
-c.sys_dict("RecordHonorOrder")  # 1一等奖 / 13优秀 / 14良好 ...
+c.semesterOptions()        # {'1':'高一上',...,'6':'高三下'}
+c.activityLabels(17)       # 活动类型（思想品德维度）
+c.honorTypes()             # 5739先进个人 / 7999校内获奖 / 5737科技创新成果 ...
+c.sysDict("RecordHonorOrder")  # 1一等奖 / 13优秀 / 14良好 ...
 
-img = c.upload_image("photo.jpg")          # → https://fs.591iq.cn/...
+img = c.uploadImage("photo.jpg")          # → https://fs.591iq.cn/...
 
 # 发布活动记录（recordType=17）：所有必填项与前端 validate 一致，images 必须非空
-c.publish_activity(semester_code="3", name="研究性学习", label_id=29, level="01",
-                   begin_time="2026-10-01", end_time="2026-10-02",
-                   address="厦门一中", duration=2, role_id=3,
-                   content="……", images=[img], dimension_id="17")
+c.publishActivity(semesterCode="3", name="研究性学习", labelId=29, level="01",
+                   beginTime="2026-10-01", endTime="2026-10-02",
+                   address="厦门一中", duration=2, roleId=3,
+                   content="……", images=[img], dimensionId="17")
 
 # 发布荣誉记录（recordType=1）
-c.publish_honor(semester_code="3", type_id=7999, type_name="校内获奖（不入档）",
-                honor_time="2026-09-04", sponsor="德育处", level_id="01",
-                level_name="校级", item_name="勤毅奖", content="……",
-                honor_images=[img], order_name="优秀")
+c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档）",
+                honorTime="2026-09-04", sponsor="德育处", levelId="01",
+                levelName="校级", itemName="勤毅奖", content="……",
+                honorImages=[img], orderName="优秀")
 ```
 
 ⚠️ 提交前必须向用户确认：记录进入**本校可见** feed，且**未发现学生端删除接口**，提交后可能无法自行撤销。
@@ -163,15 +163,15 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 
 回归自测：
 ```bash
-python scripts/test_records.py <ssoToken>               # 写实记录业务 13 项断言
-python scripts/test_endpoints.py -u <学号> -p <密码>      # 全量 39 项：门户登录→所有只读端点→上传
-python scripts/test_endpoints.py --token <ssoToken>      # 已有 token 直接跑
-python scripts/test_endpoints.py --token <t> --dump      # 额外落盘每个接口的真实返回
+python scripts/TestRecords.py <ssoToken>               # 写实记录业务 13 项断言
+python scripts/TestEndpoints.py -u <学号> -p <密码>      # 全量 42 项：门户登录→所有只读端点→上传
+python scripts/TestEndpoints.py --token <ssoToken>      # 已有 token 直接跑
+python scripts/TestEndpoints.py --token <t> --dump      # 额外落盘每个接口的真实返回
 ```
 全量结果（2026-10-01）：**PASS=41 FAIL=0 WARN=1 SKIP=0**，6.5s，共 **42 项**
 （含新增只读：`task/get`、`evaluateActivity/get_config`、`evaluateActivity/querySummary`）；
-产物 `scripts/test_endpoints_report.json`（逐项状态，保留）；
-原始返回用 `--dump` 随时重新生成 `test_endpoints_dump.txt`（约 245KB，临时文件已清理）。
+产物 `scripts/TestEndpointsReport.json`（逐项状态，保留）；
+原始返回用 `--dump` 随时重新生成 `TestEndpointsDump.txt`（约 245KB，临时文件已清理）。
 唯一 WARN 是 `/apps/integral/rank/integralRecord/account_integral` → `code=1 找不到对应的积分配置`（学校侧未配置，接口本身可达）。
 
 ## 关键业务语义

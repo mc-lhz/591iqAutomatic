@@ -139,7 +139,7 @@ wire：`request={"data":{...payload}}`，payload 结构：
 > 数字（17/1/0）只写在 `recordContent.recordType` 里。传数字 key → `code=999999 发布失败`（实测踩坑）。
 > 成功返回 `{"list":"操作成功"}`；服务端自动补 userId/classId/gradeId/schId/semesterId/createTime。
 
-**图片上传**（Python：`IQClient.upload_image(path_or_bytes)` → imageUrl，实测 187ms）：
+**图片上传**（Python：`IQClient.uploadImage(pathOrBytes)` → imageUrl，实测 187ms）：
 
 ```
 POST https://service.591iq.cn/announcement/upload
@@ -261,7 +261,7 @@ statistics_total_class statistics_total_student submitHonor submitSummary update
 
 （前缀均为 `/evaluateActivity/`；同族 `/task/*` 4 条：`count_task` `get` `list` `list_label`）
 
-## 返回结构速查（2026-10-01 `test_endpoints.py --dump` 实测真实值）
+## 返回结构速查（2026-10-01 `TestEndpoints.py --dump` 实测真实值）
 
 | 接口 | 真实返回（节选） |
 |---|---|
