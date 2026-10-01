@@ -16,13 +16,13 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
    `https://www.591iq.cn/#/mock_login?logoutDisable=1&from=third&token=<32位小写hex>&userType=2`
    - ⚠️ 该入口**无法匿名直连**：不带门户登录态时恒返回
      `302 → /account/open-api/index.html → 404`，加 token/sign/ticket/各类 header 都无效（已系统性验证）。
-   - **获取 ssoToken 的四种登录方式**（统一入口 `scripts/Login.py`，输出同一个 token）：
-     ① **账号密码（推荐）** `python scripts/Login.py password -u <账号> -p <密码>`
+   - **获取 ssoToken 的四种登录方式**（统一入口 `scripts/auth/Login.py`，输出同一个 token）：
+     ① **账号密码（推荐）** `python scripts/auth/Login.py password -u <账号> -p <密码>`
      （门户登录 + 验证码 OCR，见下节）；
-     ② **原站 JSESSIONID** `python scripts/Login.py jsessionid --jsessionid <JSESSIONID>`
+     ② **原站 JSESSIONID** `python scripts/auth/Login.py jsessionid --jsessionid <JSESSIONID>`
      （浏览器已登录门户时复制会话 id，免输验证码；会话失效则回落 `302→index.html→404`）；
-     ③ **591iq 302 跳转链接** `python scripts/Login.py redirect "<含 token= 的完整链接>"`；
-     ④ **591iq token** `python scripts/Login.py token <32hex>`（仅校验）。
+     ③ **591iq 302 跳转链接** `python scripts/auth/Login.py redirect "<含 token= 的完整链接>"`；
+     ④ **591iq token** `python scripts/auth/Login.py token <32hex>`（仅校验）。
      每种都打印 `ssoToken` + `mock_login` 链接 + `verify: OK/FAIL`（`loginBySSOToken`）。
    - ssoToken 在有效期内**可重复使用**（同一个 token 连续调用多次均 `code:0`）。
 
@@ -43,7 +43,7 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
 
 ### 源站门户登录（xmyz.xmedu.cn → ssoToken，✅ 已全链路打通）
 
-实现全部内置于 `scripts/Login.py`（`password` 子命令）。不必人工复制 ssoToken：
+实现全部内置于 `scripts/auth/Login.py`（`password` 子命令）。不必人工复制 ssoToken：
 门户账号 + 验证码 OCR 即可自动签发。登录契约参考
 `github.com/mc-lhz/XMYZAutoChooseClass`（补上了它没有的换 token 后半段）：
 
@@ -60,10 +60,10 @@ GET  /account/open-api/iqboard!login.action?terminal=computer&service=CQES
 ```
 
 ```bash
-python scripts/Login.py check                                # 无凭据探测门户端点可达性
-python scripts/Login.py captcha --out jcaptcha.jpg           # 取验证码图片
-python scripts/Login.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
-python scripts/Login.py password -u <学号> -p <密码> --interactive  # 人工看图输码
+python scripts/auth/Login.py check                                # 无凭据探测门户端点可达性
+python scripts/auth/Login.py captcha --out jcaptcha.jpg           # 取验证码图片
+python scripts/auth/Login.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
+python scripts/auth/Login.py password -u <学号> -p <密码> --interactive  # 人工看图输码
 ```
 
 - **验证码 OCR**：`rapidocr-onnxruntime` + 灰度阈值 160 + 3 倍放大（预处理是关键，
@@ -77,10 +77,10 @@ python scripts/Login.py password -u <学号> -p <密码> --interactive  # 人工
 
 ```bash
 # 0) 先拿 token（四种方式任选其一，见「鉴权模型」）
-python scripts/Login.py password -u <学号> -p <密码>     # ① 账号密码（推荐）
-python scripts/Login.py jsessionid --jsessionid <JSESSIONID>
-python scripts/Login.py redirect "<含 token= 的完整链接>"
-python scripts/Login.py token <32hex>
+python scripts/auth/Login.py password -u <学号> -p <密码>     # ① 账号密码（推荐）
+python scripts/auth/Login.py jsessionid --jsessionid <JSESSIONID>
+python scripts/auth/Login.py redirect "<含 token= 的完整链接>"
+python scripts/auth/Login.py token <32hex>
 
 # 1) 验证 token 并打印摘要（login + 任务 + 记录 + 报告）
 python scripts/IqClient.py <ssoToken>
@@ -163,14 +163,14 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 
 回归自测：
 ```bash
-python scripts/TestRecords.py <ssoToken>               # 写实记录业务 13 项断言
-python scripts/TestEndpoints.py -u <学号> -p <密码>      # 全量 42 项：门户登录→所有只读端点→上传
-python scripts/TestEndpoints.py --token <ssoToken>      # 已有 token 直接跑
-python scripts/TestEndpoints.py --token <t> --dump      # 额外落盘每个接口的真实返回
+python scripts/tests/TestRecords.py <ssoToken>               # 写实记录业务 13 项断言
+python scripts/tests/TestEndpoints.py -u <学号> -p <密码>      # 全量 42 项：门户登录→所有只读端点→上传
+python scripts/tests/TestEndpoints.py --token <ssoToken>      # 已有 token 直接跑
+python scripts/tests/TestEndpoints.py --token <t> --dump      # 额外落盘每个接口的真实返回
 ```
 全量结果（2026-10-01）：**PASS=41 FAIL=0 WARN=1 SKIP=0**，6.5s，共 **42 项**
 （含新增只读：`task/get`、`evaluateActivity/get_config`、`evaluateActivity/querySummary`）；
-产物 `scripts/TestEndpointsReport.json`（逐项状态，保留）；
+产物 `scripts/tests/TestEndpointsReport.json`（逐项状态，保留）；
 原始返回用 `--dump` 随时重新生成 `TestEndpointsDump.txt`（约 245KB，临时文件已清理）。
 唯一 WARN 是 `/apps/integral/rank/integralRecord/account_integral` → `code=1 找不到对应的积分配置`（学校侧未配置，接口本身可达）。
 
