@@ -35,6 +35,6 @@ c.publishActivity(semesterCode="3", name="研究性学习", labelId=29, level="0
 - **顶层槽位 key 必须是组件名**（`recordActivityFJ`/`recordHonor`…），数字只写在
   `recordContent.recordType` 里；传数字 key → `999999 发布失败`。
 - 图片必须自己上传（`uploadImage`）；复用他人 fs URL 是否触发 999999 未证实。
-- `labelId` / `typeId` / `levelId` 取值查 `meta/Options.py`，不要硬编码。
+- `labelId` / `typeId` / `levelId` 取值查 `dictOptions/Options.py`，不要硬编码。
 - **成功判据 = 读回执**：返回 `{"list":"操作成功"}` 不代表生效，要读回列表/统计核对。
 - 活动总结（`/evaluateActivity/submitSummary`）不在此模块，见 reference/api.md「写入接口②」。

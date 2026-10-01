@@ -16,7 +16,7 @@ TOOLS = os.path.dirname(HERE)                                          # toolsï¼
 sys.path.insert(0, TOOLS)
 
 from IqClient import IQClient                     # noqa: E402
-from auth.Login import loginForToken           # noqa: E402
+from authLogin.Login import loginForToken           # noqa: E402
 
 def _pick_image():
     cand = [os.path.join(os.environ.get("TEMP", ""), "opencode", "iq",

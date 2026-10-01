@@ -9,7 +9,7 @@
 import json
 import urllib.request
 
-from core.Http import BASE, IQError
+from coreHttp.Http import BASE, IQError
 
 # recordType 数字 -> 前端组件/数据槽位（模块 ecf4）
 RECORD_TYPE_MAP = {
