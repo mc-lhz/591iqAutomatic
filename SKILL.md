@@ -136,9 +136,30 @@ c.publish_honor(semester_code="3", type_id=7999, type_name="校内获奖（不�
 ⚠️ 提交前必须向用户确认：记录进入**本校可见** feed，且**未发现学生端删除接口**，提交后可能无法自行撤销。
 字段/枚举/校验细节见 `reference/api.md`「写入接口」章节。
 
+### 第二类写入：提交活动总结（✅ 已实测，风险低于写实记录）
+
+`POST /evaluateActivity/submitSummary` —— 表单只有 `summary[0].content` 必填（**无字数校验**），
+荣誉/图片/附件全可选；`editAuth=1` 时带 `summaryId` 复用同一接口即可重新提交；
+bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验证**。
+⚠️ 仍需逐次确认：总结同样进入**本校可见** feed。
+
+待办任务 → 提交总结的 **6 步闭环**（实测清掉首页 1 条待办）：
+
+```
+/login 鉴权 → GET /task/list status=0 发现待办
+            → 读行内 pcUrl（自带 taskId & moduleId，不用猜）
+            → GET /task/get {taskId} 取 eventId
+            → 前端 transferPage 按 moduleId 分流（本次 moduleId=14 → /activity/info?eventId=…）
+            → POST /evaluateActivity/submitSummary {content 必填}
+            → 回执校验：querySummary.pdlist 变有值 + count_task.unfinished 减少
+```
+
+细节见 `reference/api.md`「任务详情与路由解析」「写入接口②·活动总结」。
+
 ## 接口清单
 
-见 `reference/api.md`（25 个已抓包验证的端点，含 payload 样例）。
+见 `reference/api.md`（25+ 个已抓包验证端点 + 任务路由解析 moduleId 映射表 +
+`evaluateActivity` 全族 48 条一览，含 payload 样例）。
 
 回归自测：
 ```bash
@@ -147,7 +168,8 @@ python scripts/test_endpoints.py -u <学号> -p <密码>      # 全量 39 项：
 python scripts/test_endpoints.py --token <ssoToken>      # 已有 token 直接跑
 python scripts/test_endpoints.py --token <t> --dump      # 额外落盘每个接口的真实返回
 ```
-全量结果（2026-10-01）：**PASS=38 FAIL=0 WARN=1 SKIP=0**，15.4s；
+全量结果（2026-10-01）：**PASS=41 FAIL=0 WARN=1 SKIP=0**，6.5s，共 **42 项**
+（含新增只读：`task/get`、`evaluateActivity/get_config`、`evaluateActivity/querySummary`）；
 产物 `scripts/test_endpoints_report.json`（逐项状态，保留）；
 原始返回用 `--dump` 随时重新生成 `test_endpoints_dump.txt`（约 245KB，临时文件已清理）。
 唯一 WARN 是 `/apps/integral/rank/integralRecord/account_integral` → `code=1 找不到对应的积分配置`（学校侧未配置，接口本身可达）。
@@ -162,8 +184,13 @@ python scripts/test_endpoints.py --token <t> --dump      # 额外落盘每个接
 - **账号信息不入库**：姓名 / 班级 / userId / schoolId 等以调用方自己的
   `loginBySSOToken`、`getUserInfoDetail` 返回为准，ssoToken 只走命令行参数或环境变量。
 - 读接口全部实测通过；写接口已**真实提交验证**（2026-10-01 军事训练记录，id 已脱敏，
-  本人 3→4、本校 265→266、statistics 活动 2→3），此后**每次写入仍需逐次征得用户确认**。
+  本人 3→4、本校 265→266、statistics 活动 2→3；同日活动总结提交后
+  `count_task.unfinished 1→0`、`finished 33→34`），此后**每次写入仍需逐次征得用户确认**。
   其余 19 种 recordType 结构同构、槽位名查 `RECORD_TYPE_MAP`，字段以各自 chunk 的 validate 为准。
+- **写操作成功判据 = 读回执，不看返回值**：`submitSummary` 返回 `{"list":null}`、
+  `updateRecord` 返回 `{"list":"操作成功"}`，都不足以证明已生效；必须读回
+  （`querySummary.pdlist` / `queryRecordList`）并核对计数变化
+  （`count_task.unfinished`、`queryRecordStatistics`）。
 - `record/queryRecordList` 的 payload 必须为
   `{"type":"2","recordType":"","labelId":"","offset":0,"limit":10}`；
   字段不全会导致请求挂起超时。

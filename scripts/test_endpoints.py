@@ -144,6 +144,35 @@ def main():
          lambda: c.get("/announcement/listPopupAnnouncementRead"),
          check=lambda v: v is not None)
 
+    # ---- 任务详情 / 路由解析（只读） ----
+    tid = ev = None
+    for st in ("0", "2"):
+        for r in (c.tasks(status=st, limit=5).get("list") or []):
+            _tid = r.get("taskId")
+            if not _tid:
+                continue
+            _g = c.get("/task/get", {"taskId": str(_tid), "messageId": ""})
+            if tid is None:
+                tid = _tid
+            if isinstance(_g, dict) and _g.get("eventId"):
+                ev = _g["eventId"]
+                break
+        if ev:
+            break
+    if tid:
+        case("task/get", lambda: c.get("/task/get", {"taskId": str(tid), "messageId": ""}))
+    else:
+        results.append(("task/get", "SKIP", 0, "无任务可取 taskId"))
+    if ev:
+        case("evaluateActivity/get_config", lambda: c.get("/evaluateActivity/get_config", {}))
+        case("evaluateActivity/querySummary",
+             lambda: c.get("/evaluateActivity/querySummary",
+                           {"offset": 0, "limit": 1, "eventId": str(ev),
+                            "studentId": uid, "summaryType": "1"}))
+    else:
+        results.append(("evaluateActivity/get_config", "SKIP", 0, "无 eventId"))
+        results.append(("evaluateActivity/querySummary", "SKIP", 0, "无 eventId"))
+
     # ---- 写实记录 ----
     case("record/queryRecordList type=1",
          lambda: c.records(limit=10, type_="1"))
