@@ -6,7 +6,7 @@
 import json
 import urllib.request
 
-from Client import BASE, IQError
+from core.Client import BASE, IQError
 
 # recordType 数字 -> 前端组件/数据槽位（模块 ecf4）
 RECORD_TYPE_MAP = {
