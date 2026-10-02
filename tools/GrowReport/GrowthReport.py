@@ -1,7 +1,7 @@
 """成长评价域（报告）：成长报告列表与详情。
 
 对应端点：/growReport/summary/listGrowReportStuByStudentId、/growReport/summary/detail
-统计见同目录 Stats.py。
+统计见同目录 GrowthStatistics.py。
 """
 
 

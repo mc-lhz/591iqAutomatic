@@ -2,7 +2,7 @@
 
 对应端点：/record/queryRecordList、/record/queryLabelList、/record/group_type、
           /record/queryRecordStatistics、/record/queryRecord
-写入见同目录 Write.py。
+写入见同目录 RecordWrite.py。
 """
 
 
