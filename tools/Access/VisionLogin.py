@@ -242,7 +242,11 @@ def main():
     sub = ap.add_subparsers(dest="step", required=True)
 
     p = sub.add_parser("new", help="① 取验证码图片（无需凭据）")
-    p.add_argument("--state", help="会话状态文件路径（默认 %TEMP%%\\591iq_scratch）")
+    # help 里的 % 会被 argparse 无条件当格式符（_expand_help 里做 help % params），
+    # 裸 %TEMP% 会抛 ValueError: unsupported format character 'T'。
+    # 用 SCRATCH 常量在传入前就格式化掉；replace 是防临时目录名里含 % 的复发。
+    p.add_argument("--state", help="会话状态文件路径（不传则用 %s 下带时间戳的默认名）"
+               % SCRATCH.replace("%", "%%"))
     p.set_defaults(func=cmdNew)
 
     p = sub.add_parser("submit", help="② 提交验证码，换 ssoToken")
