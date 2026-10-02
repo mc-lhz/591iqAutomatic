@@ -133,9 +133,16 @@ def loadState(s, path):
 
 
 def newState(s, hint=None):
-    """定位可用的 state 路径：优先 hint 所在目录的默认名，否则新建带时间戳的。"""
+    """定位可用的 state 路径：优先 hint（自定义），否则用 SCRATCH 下带时间戳的默认名。
+
+    自定义路径的父目录可能不存在，必须先建——否则 fetchCaptcha 写图会 FileNotFoundError。
+    """
     if hint:
-        return hint if os.path.isabs(hint) else os.path.abspath(hint)
+        p = hint if os.path.isabs(hint) else os.path.abspath(hint)
+        parent = os.path.dirname(p)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        return p
     return _scratch("vl_%s.state.json" % time.strftime("%Y%m%d_%H%M%S"))
 
 
