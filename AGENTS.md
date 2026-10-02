@@ -69,7 +69,10 @@ tools/
 
 ```bash
 # 从仓库根目录执行
-python tools/Access/LoginToken.py password -u <学号> -p <密码>   # 账号密码换 token（推荐）
+# —— 门户登录：有读图能力走 VisionLogin（实测 100%），否则走 LoginToken 的 OCR（50%）
+python tools/Access/VisionLogin.py new                               # ① 取验证码图（无需凭据）
+python tools/Access/VisionLogin.py submit -u <学号> -p <密码> --code ab12   # ② 看图识别后提交
+python tools/Access/LoginToken.py password -u <学号> -p <密码>      # 无读图能力时的 OCR 路径
 python tools/Access/LoginToken.py token <32hex>                  # 校验已有 token
 python tools/IqClient.py <ssoToken>                       # 验证并打印摘要
 python tools/TestCases/TestApiReadOnly.py --token <ssoToken>    # 只读全量 41 项
@@ -88,6 +91,13 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
 - `querySummary` / `sysDict` 返回 `{list:[…]}` 或 `{pdlist:[…]}`，不是裸数组；
   **不可对返回值直接 `.get(code)`** —— 需要 code→name 映射时遍历 `["list"]`（见 `RecordWrite._semesterName`）
 - `records()` 的 `type_` 参数带下划线（避免遮蔽内置 `type`），用关键字传
+- **门户登录必须先判断自身有无读图能力，再选路径**：
+  有 → `Access/VisionLogin.py new` → 读「识图推荐」PNG → `submit --code`（实测 6/6）；
+  无 → `Access/LoginToken.py password`（OCR 4/8，靠 `--retry` 兜底）。
+  **有读图能力却去用 OCR 是浪费**；无读图能力却去用 VisionLogin 则会卡在 `--code`。
+  退出码按契约分支：0 成功 / 2 验证码错（换图重试）/ 3 凭据或网络错（**换验证码无用**）。
+  `--interactive` 用 `input()` 阻塞，**仅真人终端可用，agent 不得使用**。
+  验证码**长度 4 或 5 位不定**，不要按固定 4 位处理。
 - **查未知槽位结构按优先级链走**（详见 `reference/api.md`「未知槽位结构怎么查」）：
   ① 反查本校 feed 样本 → ② 查 `api.md` + `RECORD_TYPE_MAP` → ③ 由前端模块映射定位单个 chunk
   → ④ 全量搜 564 个 chunk（串行下载约 2.5 min，**仅在前三步全失败时**）。

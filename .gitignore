@@ -8,3 +8,7 @@ _tiny.jpg
 test_endpoints_report.json
 *.xlsx
 591iq_*.json
+# 验证码会话状态与图片（含 JSESSIONID，严禁入库）
+*.state.json
+*.vision.png
+vl_*

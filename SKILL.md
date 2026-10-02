@@ -43,15 +43,39 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
 
 ### 源站门户登录（xmyz.xmedu.cn → ssoToken，✅ 已全链路打通）
 
-实现全部内置于 `tools/Access/LoginToken.py`（`password` 子命令）。不必人工复制 ssoToken：
-门户账号 + 验证码 OCR 即可自动签发。登录契约参考
+#### ⚠️ AI agent 先选路径：看图 or OCR
+
+**执行门户登录前，先判断自身是否具备读图能力，然后二选一：**
+
+| 自身能力 | 走哪条 | 实测通过率 |
+|---|---|---|
+| **能读图**（可打开图片文件） | `tools/Access/VisionLogin.py` 两步（推荐） | **6/6 = 100%** |
+| **不能读图** | `tools/Access/LoginToken.py password`（OCR 自动重试） | 4/8 = 50%（`--retry 3` → 约 87%） |
+
+```bash
+# A. 有读图能力 —— VisionLogin（推荐）
+python tools/Access/VisionLogin.py new                      # ① 取验证码图（无需凭据）
+#   → 打印「识图推荐」PNG 路径；读那张图，识别 4~5 位验证码
+python tools/Access/VisionLogin.py submit -u <学号> -p <密码> --code ab12   # ② 提交换 token
+#   退出码：0 成功 / 2 验证码错（回 new 换图）/ 3 凭据或网络错（换验证码无用）
+
+# B. 无读图能力 —— LoginToken 的 OCR 路径
+python tools/Access/LoginToken.py password -u <学号> -p <密码> [--retry 3]
+```
+
+细节见 `tools/Access/VisionLogin.md`。
+
+#### 门户侧契约与工具
+
+实现内置于 `tools/Access/LoginToken.py`（`password` 子命令）与
+`tools/Access/VisionLogin.py`（看图路径）。登录契约参考
 `github.com/mc-lhz/XMYZAutoChooseClass`（补上了它没有的换 token 后半段）：
 
 ```
 GET  /system/system!currentTime.action          # 服务器时间
-GET  /security/jcaptcha.jpg?_dc=<ms>            # 验证码（与 JSESSIONID 绑定，必须同会话取）
+GET  /security/jcaptcha.jpg?_dc=<ms>            # 验证码（与 JSESSIONID 强绑定，必须同会话取）
 POST /j_spring_security_check                   # j_username=<账号> j_password=sha1(明文) j_captcha=<码>
-     失败 → /account/user!loginFailure.action?error=2
+     失败 → /account/user!loginFailure.action?error=2（验证码错）
 POST /account/user!getGrantedMenuTree.action    # 登录判据：非空菜单树
 GET  /account/open-api/iqboard!login.action?terminal=computer&service=CQES
      → 302 https://integrate.tianwayun.com/sso/authority?supplier=XMYZ&supplierProject=prod
@@ -62,12 +86,15 @@ GET  /account/open-api/iqboard!login.action?terminal=computer&service=CQES
 ```bash
 python tools/Access/LoginToken.py check                                # 无凭据探测门户端点可达性
 python tools/Access/LoginToken.py captcha --out jcaptcha.jpg           # 取验证码图片
-python tools/Access/LoginToken.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
-python tools/Access/LoginToken.py password -u <学号> -p <密码> --interactive  # 人工看图输码
+python tools/Access/LoginToken.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录
+python tools/Access/LoginToken.py password -u <学号> -p <密码> --interactive  # 人工看图输码（真人终端专用，agent 勿用）
 ```
 
+- **验证码特征**：**长度 4 或 5 位不定**（实测两种都出现过），仅小写字母与数字，一次性。
 - **验证码 OCR**：`rapidocr-onnxruntime` + 灰度阈值 160 + 3 倍放大（预处理是关键，
   否则 `d/o` 会被读成 `p/0`）。单次识别率不足时靠 `--retry`（默认 3 次）重取重试。
+- **看图路径的关键增益**：`new` 会把 250×100 原图裁到墨迹外接框、反相成白字黑底、
+  按宽度归一化放大再交给 agent；不预处理时原始小图容易误读。
 - 实测 2026-10-01：第 1 次 OCR 误识别 → `error=2`，第 2 次登录成功，
   产出 32 位 ssoToken，用它调 `loginBySSOToken` 与记录接口全部 `code:0`。
 - 已实测端点：serverTime / captcha / loginCheck(error=2) / iqboard!validate / 菜单树 / 完整换 token。

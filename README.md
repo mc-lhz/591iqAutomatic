@@ -15,6 +15,7 @@ tools/
   IqClient.py                     门面：组合各业务 mixin，业务调用唯一入口
   Access/HttpTransport.py         HTTP 传输层（get/post/login）+ IQError
   Access/LoginToken.py            四种登录方式统一入口（门户登录引擎 + 验证码 OCR）
+  Access/VisionLogin.py           看图识别验证码登录（面向有读图能力的 AI，两步式）
   StudentBase/ProfileInfo.py      本人档案、家长、兴趣特长
   StudentBase/DictOptions.py      平台字典、学期、活动/荣誉类型枚举
   HomeWorkbench/TaskAndMessage.py 待办任务、未读消息、公告
@@ -37,12 +38,17 @@ tools/
 
    | # | 方式 | 命令 |
    |---|---|---|
-   | 1 | 账号密码（推荐） | `python tools/Access/LoginToken.py password -u <学号> -p <密码>` |
+   | 1 | 账号密码（**AI 有读图能力用这条**） | `python tools/Access/VisionLogin.py new` → 读图 → `submit -u <学号> -p <密码> --code ab12` |
+   | 1' | 账号密码（无读图能力/OCR 兜底） | `python tools/Access/LoginToken.py password -u <学号> -p <密码>` |
    | 2 | 原站 JSESSIONID | `python tools/Access/LoginToken.py jsessionid --jsessionid <JSESSIONID>` |
    | 3 | 591iq 302 跳转链接 | `python tools/Access/LoginToken.py redirect "<含 token= 的完整链接>"` |
    | 4 | 591iq token | `python tools/Access/LoginToken.py token <32hex>` |
 
-   ① 门户 `xmyz.xmedu.cn` 登录 + 验证码 OCR（`--retry` 默认 3，`--interactive` 人工输码）；
+   ① 门户 `xmyz.xmedu.cn` 登录 + 验证码识别：验证码与 JSESSIONID 强绑定，必须同会话提交，
+   故看图路径分两步（`new` 落盘会话 → agent 读图 → `submit`）；
+   **实测通过率：看图 6/6 = 100%，OCR 4/8 = 50%**（`--retry` 默认 3 可提到约 87%）。
+   验证码**长度 4 或 5 位不定**；`new` 会产出裁剪+反相+放大的「识图推荐」PNG，明显更易读。
+   `VisionLogin` 退出码：0 成功 / 2 验证码错（换图）/ 3 凭据或网络错（换验证码无用）。
    ② 浏览器里已登录门户时，直接复制 Cookie 里的 `JSESSIONID` 换 token，不必再输验证码；
    ③ 从自己浏览器的 302/mock_login 完整链接里提取 token；④ 已有 token 只做校验。
    每种方式都会打印 `ssoToken`、`mock_login` 链接和 `verify: OK/FAIL`（走 `loginBySSOToken`）。
