@@ -185,13 +185,16 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 回归自测：
 ```bash
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录业务 13 项断言
-python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 全量 42 项：门户登录→所有只读端点→上传
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 41 项
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 41 项
 python tools/TestCases/TestApiReadOnly.py --token <t> --dump     # 额外落盘每个接口的真实返回
+python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 42 项：追加 announcement/upload（会落一个文件）
 ```
-全量结果（2026-10-01）：**PASS=41 FAIL=0 WARN=1 SKIP=0**，6.5s，共 **42 项**
+全量结果（2026-10-02 实测）：**PASS=41 FAIL=0 WARN=1 SKIP=0**，共 **42 项**（20.9s，`-u -p --upload`）；
+只跑只读端点（不加 `--upload`）为 **41 项 / PASS=40 FAIL=0 WARN=1**——第 42 项
+`announcement/upload` 只在显式 `--upload` 时才计入，**`-u -p` 本身不含上传**。
 （含新增只读：`task/get`、`evaluateActivity/get_config`、`evaluateActivity/querySummary`）；
-产物 `tools/TestCases/TestApiReadOnlyReport.json`（逐项状态，保留）；
+产物 `tools/TestCases/TestApiReadOnlyReport.json`（逐项状态，由本次运行生成，gitignore）；
 原始返回用 `--dump` 随时重新生成 `TestApiDump.txt`（约 245KB，临时文件已清理）。
 唯一 WARN 是 `/apps/integral/rank/integralRecord/account_integral` → `code=1 找不到对应的积分配置`（学校侧未配置，接口本身可达）。
 
@@ -219,7 +222,8 @@ python tools/TestCases/TestApiReadOnly.py --token <t> --dump     # 额外落盘�
 - **Windows 编码坑**：PowerShell 5.1 默认 GBK 代码页，Python 输出中文前先
   `$env:PYTHONIOENCODING='utf-8'`；UTF-8 中文文件用文件工具/Python 读写，
   不要用 `Get-Content`/`Set-Content`（会整文件乱码）。
-- **扩展本 skill 时**：新功能先在 `%TEMP%\opencode\` 原型化（探索脚本、探针、dump 放那里），
-  确认有用后再整理成符合 `AGENTS.md` 契约的模块移入 `tools/`，补同名 `.md` 并同步
-  README/SKILL/AGENTS；**不要把半成品、临时产物直接写进 skill 源码目录**。
+- **扩展本 skill 时**：新功能先在 `%TEMP%\591iq_scratch\` 原型化（探索脚本、探针、dump 放那里，
+  该目录自建、不依赖任何特定 AI 工具或 IDE），确认有用后再整理成符合 `AGENTS.md` 契约的模块
+  移入 `tools/`，补同名 `.md` 并同步 README/SKILL/AGENTS；**不要把半成品、临时产物直接写进
+  skill 源码目录**，也不要写死任何工具私有路径（`%TEMP%\opencode\`、`.opencode/` 等）。
 - 教育系统数据含学生个人信息，仅限授权使用，不要外传。
