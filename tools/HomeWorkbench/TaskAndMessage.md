@@ -1,4 +1,4 @@
-# taskAndMessage（首页工作台）
+# TaskAndMessage（首页工作台）
 
 管：待办/逾期/已办任务、未读消息、公告。
 不管：任务详情与路由解析（`GET /task/get` + moduleId 映射，见 reference/api.md

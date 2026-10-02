@@ -1,7 +1,7 @@
-# dictOptions（平台字典）
+# DictOptions（平台字典）
 
 管：全局枚举与选项——字典、学期、活动类型、荣誉类型。
-不管：任何写入（见 `recordCenter/recordWrite.py`）、统计（见 `growReport/growthStatistics.py`）。
+不管：任何写入（见 `RecordCenter/RecordWrite.py`）、统计（见 `GrowReport/GrowthStatistics.py`）。
 
 发布写实记录前，槽位取值都来自本模块。
 

@@ -1,7 +1,7 @@
-# growthReport（成长评价·报告）
+# GrowthReport（成长评价·报告）
 
 管：成长报告列表与详情（含学生/教师/家长评语）。
-不管：荣誉与活动统计（见同目录 Stats.py）、学期列表（`studentBase/dictOptions.py`）。
+不管：荣誉与活动统计（见同目录 GrowthStatistics.py）、学期列表（`StudentBase/DictOptions.py`）。
 
 ## 对应端点
 
