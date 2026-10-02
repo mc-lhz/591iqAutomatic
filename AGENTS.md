@@ -114,8 +114,8 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
 - **`reference/` 体积上限 100 KB**（2026-10-02 已用 91.6 KB：`api.md` 24.6 +
   `frontend.md` 19.7 + `recordForms.json` 47.3）：只放提炼后的结论，
   **原始前端代码、chunk、映射中间产物一律留在 `%TEMP%\591iq_scratch`，不入库**。
-  要加内容先减：表格按类聚合、不要逐字段成行；`frontend.md` 的表格由
-  `recordForms.json` 生成，改 JSON 后重新生成，别手改 md 里的表
+  要加内容先减：表格按类聚合、不要逐字段成行；`frontend.md` 的表格以
+  `recordForms.json` 为准（生成脚本未入库），改 JSON 后要同步改 md 里的表
 - PowerShell 5.1：不要用 Get-Content/Set-Content 处理 UTF-8 中文（会乱码），用文件工具或 python
 - **导出（`Export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%\591iq_*.xlsx`，
   已 gitignore `*.xlsx`；不要把导出文件或含真实姓名的 json 提交进仓库
