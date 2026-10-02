@@ -16,13 +16,13 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
    `https://www.591iq.cn/#/mock_login?logoutDisable=1&from=third&token=<32位小写hex>&userType=2`
    - ⚠️ 该入口**无法匿名直连**：不带门户登录态时恒返回
      `302 → /account/open-api/index.html → 404`，加 token/sign/ticket/各类 header 都无效（已系统性验证）。
-   - **获取 ssoToken 的四种登录方式**（统一入口 `tools/access/loginToken.py`，输出同一个 token）：
-     ① **账号密码（推荐）** `python tools/access/loginToken.py password -u <账号> -p <密码>`
+   - **获取 ssoToken 的四种登录方式**（统一入口 `tools/Access/LoginToken.py`，输出同一个 token）：
+     ① **账号密码（推荐）** `python tools/Access/LoginToken.py password -u <账号> -p <密码>`
      （门户登录 + 验证码 OCR，见下节）；
-     ② **原站 JSESSIONID** `python tools/access/loginToken.py jsessionid --jsessionid <JSESSIONID>`
+     ② **原站 JSESSIONID** `python tools/Access/LoginToken.py jsessionid --jsessionid <JSESSIONID>`
      （浏览器已登录门户时复制会话 id，免输验证码；会话失效则回落 `302→index.html→404`）；
-     ③ **591iq 302 跳转链接** `python tools/access/loginToken.py redirect "<含 token= 的完整链接>"`；
-     ④ **591iq token** `python tools/access/loginToken.py token <32hex>`（仅校验）。
+     ③ **591iq 302 跳转链接** `python tools/Access/LoginToken.py redirect "<含 token= 的完整链接>"`；
+     ④ **591iq token** `python tools/Access/LoginToken.py token <32hex>`（仅校验）。
      每种都打印 `ssoToken` + `mock_login` 链接 + `verify: OK/FAIL`（`loginBySSOToken`）。
    - ssoToken 在有效期内**可重复使用**（同一个 token 连续调用多次均 `code:0`）。
 
@@ -43,7 +43,7 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
 
 ### 源站门户登录（xmyz.xmedu.cn → ssoToken，✅ 已全链路打通）
 
-实现全部内置于 `tools/access/loginToken.py`（`password` 子命令）。不必人工复制 ssoToken：
+实现全部内置于 `tools/Access/LoginToken.py`（`password` 子命令）。不必人工复制 ssoToken：
 门户账号 + 验证码 OCR 即可自动签发。登录契约参考
 `github.com/mc-lhz/XMYZAutoChooseClass`（补上了它没有的换 token 后半段）：
 
@@ -60,10 +60,10 @@ GET  /account/open-api/iqboard!login.action?terminal=computer&service=CQES
 ```
 
 ```bash
-python tools/access/loginToken.py check                                # 无凭据探测门户端点可达性
-python tools/access/loginToken.py captcha --out jcaptcha.jpg           # 取验证码图片
-python tools/access/loginToken.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
-python tools/access/loginToken.py password -u <学号> -p <密码> --interactive  # 人工看图输码
+python tools/Access/LoginToken.py check                                # 无凭据探测门户端点可达性
+python tools/Access/LoginToken.py captcha --out jcaptcha.jpg           # 取验证码图片
+python tools/Access/LoginToken.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录，打印 ssoToken
+python tools/Access/LoginToken.py password -u <学号> -p <密码> --interactive  # 人工看图输码
 ```
 
 - **验证码 OCR**：`rapidocr-onnxruntime` + 灰度阈值 160 + 3 倍放大（预处理是关键，
@@ -77,10 +77,10 @@ python tools/access/loginToken.py password -u <学号> -p <密码> --interactive
 
 ```bash
 # 0) 先拿 token（四种方式任选其一，见「鉴权模型」）
-python tools/access/loginToken.py password -u <学号> -p <密码>     # ① 账号密码（推荐）
-python tools/access/loginToken.py jsessionid --jsessionid <JSESSIONID>
-python tools/access/loginToken.py redirect "<含 token= 的完整链接>"
-python tools/access/loginToken.py token <32hex>
+python tools/Access/LoginToken.py password -u <学号> -p <密码>     # ① 账号密码（推荐）
+python tools/Access/LoginToken.py jsessionid --jsessionid <JSESSIONID>
+python tools/Access/LoginToken.py redirect "<含 token= 的完整链接>"
+python tools/Access/LoginToken.py token <32hex>
 
 # 1) 验证 token 并打印摘要（login + 任务 + 记录 + 报告）
 python tools/IqClient.py <ssoToken>
@@ -102,18 +102,18 @@ c.userInfo(); c.honorStatistics(); c.activityStats(); c.interests()
 ## 导出：彩色 xlsx（纯标准库，无 pandas/openpyxl）
 
 ```bash
-python tools/export/exportXlsx.py --token <ssoToken> [--school]   # 个人综评全量，13 sheet
-python tools/export/exportSummaryList.py --token <ssoToken>       # 活动课程总结清单
-python tools/export/exportXlsx.py -u <学号> -p <密码>              # 内部自动门户登录
+python tools/Export/ExportXlsx.py --token <ssoToken> [--school]   # 个人综评全量，13 sheet
+python tools/Export/ExportSummaryList.py --token <ssoToken>    # 活动课程总结清单
+python tools/Export/ExportXlsx.py -u <学号> -p <密码>              # 内部自动门户登录
 ```
 
-- `exportXlsx.py` sheet：`总览` `学生档案` `我的写实记录` `本校可见记录` `记录-图片与原文`
+- `ExportXlsx.py` sheet：`总览` `学生档案` `我的写实记录` `本校可见记录` `记录-图片与原文`
   `荣誉与活动统计` `活动维度统计` `任务` `成长报告` `家长信息` `兴趣特长` `学期与字典` `原始返回`；
   `--school` 额外拉「本校可见」写实记录（含他人）。
-- `exportSummaryList.py` sheet：`总览` `未提交总结` `已提交总结` `可编辑重交` `全量原始`；
+- `ExportSummaryList.py` sheet：`总览` `未提交总结` `已提交总结` `可编辑重交` `全量原始`；
   口径 `/task/list` 三种 status 中 `type=3` → `/task/get` → `/evaluateActivity/querySummary`。
 - 全程只读，异常不中断（原文落在 `原始返回`/`全量原始`），默认输出 `%TEMP%\591iq_*.xlsx`。
-- 细节见 `tools/export/exportXlsx.md`。
+- 细节见 `tools/Export/ExportXlsx.md`。
 
 ## 写入：发布写实记录（✅ 已实测提交成功，仍需逐次确认）
 
@@ -184,14 +184,14 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 
 回归自测：
 ```bash
-python tools/testCases/testRecordRead.py <ssoToken>               # 写实记录业务 13 项断言
-python tools/testCases/testApiReadOnly.py -u <学号> -p <密码>      # 全量 42 项：门户登录→所有只读端点→上传
-python tools/testCases/testApiReadOnly.py --token <ssoToken>      # 已有 token 直接跑
-python tools/testCases/testApiReadOnly.py --token <t> --dump      # 额外落盘每个接口的真实返回
+python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录业务 13 项断言
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 全量 42 项：门户登录→所有只读端点→上传
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑
+python tools/TestCases/TestApiReadOnly.py --token <t> --dump     # 额外落盘每个接口的真实返回
 ```
 全量结果（2026-10-01）：**PASS=41 FAIL=0 WARN=1 SKIP=0**，6.5s，共 **42 项**
 （含新增只读：`task/get`、`evaluateActivity/get_config`、`evaluateActivity/querySummary`）；
-产物 `tools/testCases/testApiReadOnlyReport.json`（逐项状态，保留）；
+产物 `tools/TestCases/TestApiReadOnlyReport.json`（逐项状态，保留）；
 原始返回用 `--dump` 随时重新生成 `TestApiDump.txt`（约 245KB，临时文件已清理）。
 唯一 WARN 是 `/apps/integral/rank/integralRecord/account_integral` → `code=1 找不到对应的积分配置`（学校侧未配置，接口本身可达）。
 

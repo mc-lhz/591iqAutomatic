@@ -1,4 +1,4 @@
-# httpTransport（HTTP 传输层）
+# HttpTransport（HTTP 传输层）
 
 管：591iq 网关的请求封装（鉴权头 + `request={"data":{...}}`）。
 不管：任何业务语义（各域 mixin 组合在 `IqClient`）。

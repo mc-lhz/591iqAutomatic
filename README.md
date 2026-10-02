@@ -13,52 +13,52 @@ AGENTS.md                开发契约（命名、结构、命令、敏感数据�
 reference/api.md         25+ 已抓包验证的端点、payload、返回结构速查、错误码
 tools/
   IqClient.py                     门面：组合各业务 mixin，业务调用唯一入口
-  access/httpTransport.py         HTTP 传输层（get/post/login）+ IQError
-  access/loginToken.py            四种登录方式统一入口（门户登录引擎 + 验证码 OCR）
-  studentBase/profileInfo.py      本人档案、家长、兴趣特长
-  studentBase/dictOptions.py      平台字典、学期、活动/荣誉类型枚举
-  homeWorkbench/taskAndMessage.py 待办任务、未读消息、公告
-  recordCenter/recordQuery.py     写实记录读取（列表/标签/统计/详情）
-  recordCenter/recordWrite.py     图片上传、发布写实记录（活动/荣誉）
-  growReport/growthReport.py      成长报告列表与详情
-  growReport/growthStatistics.py  荣誉统计、活动维度统计
-  export/exportXlsx.py           个人综评全量数据导出 xlsx（13 sheet，纯标准库）
-  export/exportSummaryList.py    活动课程总结清单导出（已交/未交/可编辑重交）
-  export/xlsxWriter.py           共用的最小 xlsx 写出器（彩色样式）
-  testCases/testApiReadOnly.py    42 项全量只读测试（`--dump` 落盘真实返回）
-  testCases/testRecordRead.py     写实记录业务 13 项断言回归
+  Access/HttpTransport.py         HTTP 传输层（get/post/login）+ IQError
+  Access/LoginToken.py            四种登录方式统一入口（门户登录引擎 + 验证码 OCR）
+  StudentBase/ProfileInfo.py      本人档案、家长、兴趣特长
+  StudentBase/DictOptions.py      平台字典、学期、活动/荣誉类型枚举
+  HomeWorkbench/TaskAndMessage.py 待办任务、未读消息、公告
+  RecordCenter/RecordQuery.py     写实记录读取（列表/标签/统计/详情）
+  RecordCenter/RecordWrite.py     图片上传、发布写实记录（活动/荣誉）
+  GrowReport/GrowthReport.py      成长报告列表与详情
+  GrowReport/GrowthStatistics.py  荣誉统计、活动维度统计
+  Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet，纯标准库）
+  Export/ExportSummaryList.py     活动课程总结清单导出（已交/未交/可编辑重交）
+  Export/XlsxWriter.py            共用的最小 xlsx 写出器（彩色样式）
+  TestCases/TestApiReadOnly.py    42 项全量只读测试（`--dump` 落盘真实返回）
+  TestCases/TestRecordRead.py     写实记录业务 13 项断言回归
 ```
 
-目录 = 业务域（小驼峰），文件 = 域内职责（小驼峰）；每个 `.py` 都有同名 `.md` 说明文档。
+目录 = 业务域（大驼峰），文件 = 域内职责（大驼峰）；每个 `.py` 都有同名 `.md` 说明文档。
 
 ## 鉴权（两层）
 
-1. **换 token —— 四种登录方式**（统一入口 `tools/access/loginToken.py`，输出同一个 `ssoToken`）：
+1. **换 token —— 四种登录方式**（统一入口 `tools/Access/LoginToken.py`，输出同一个 `ssoToken`）：
 
    | # | 方式 | 命令 |
    |---|---|---|
-   | 1 | 账号密码（推荐） | `python tools/access/loginToken.py password -u <学号> -p <密码>` |
-   | 2 | 原站 JSESSIONID | `python tools/access/loginToken.py jsessionid --jsessionid <JSESSIONID>` |
-   | 3 | 591iq 302 跳转链接 | `python tools/access/loginToken.py redirect "<含 token= 的完整链接>"` |
-   | 4 | 591iq token | `python tools/access/loginToken.py token <32hex>` |
+   | 1 | 账号密码（推荐） | `python tools/Access/LoginToken.py password -u <学号> -p <密码>` |
+   | 2 | 原站 JSESSIONID | `python tools/Access/LoginToken.py jsessionid --jsessionid <JSESSIONID>` |
+   | 3 | 591iq 302 跳转链接 | `python tools/Access/LoginToken.py redirect "<含 token= 的完整链接>"` |
+   | 4 | 591iq token | `python tools/Access/LoginToken.py token <32hex>` |
 
    ① 门户 `xmyz.xmedu.cn` 登录 + 验证码 OCR（`--retry` 默认 3，`--interactive` 人工输码）；
    ② 浏览器里已登录门户时，直接复制 Cookie 里的 `JSESSIONID` 换 token，不必再输验证码；
    ③ 从自己浏览器的 302/mock_login 完整链接里提取 token；④ 已有 token 只做校验。
    每种方式都会打印 `ssoToken`、`mock_login` 链接和 `verify: OK/FAIL`（走 `loginBySSOToken`）。
-   附带工具：`python tools/access/loginToken.py check`（无凭据探测门户端点）、
-   `python tools/access/loginToken.py captcha --out cap.jpg`（取验证码图片）。
+   附带工具：`python tools/Access/LoginToken.py check`（无凭据探测门户端点）、
+   `python tools/Access/LoginToken.py captcha --out cap.jpg`（取验证码图片）。
 2. **业务网关**：`service.591iq.cn`，header `AccessToken: <ssoToken>`，
    参数统一 `request={"data":{...}}`（GET 拼 query、POST form body）。
    `ssoToken` 有效期内可重复使用，脚本一律从命令行参数取，不写死。
 
 ```bash
-python tools/IqClient.py <ssoToken>              # 验证并打印账号摘要
-python tools/testCases/testApiReadOnly.py --token <ssoToken> # 全量 42 项
-python tools/testCases/testApiReadOnly.py -u <学号> -p <密码>  # 登录 → 全量 → 上传
-python tools/testCases/testRecordRead.py <ssoToken>           # 写实记录 13 项断言
-python tools/export/exportXlsx.py --token <ssoToken>         # 综评全量导出 xlsx（13 sheet）
-python tools/export/exportSummaryList.py --token <ssoToken>  # 活动总结清单导出 xlsx
+python tools/IqClient.py <ssoToken>                      # 验证并打印账号摘要
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken> # 全量 42 项
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>  # 登录 → 全量 → 上传
+python tools/TestCases/TestRecordRead.py <ssoToken>          # 写实记录 13 项断言
+python tools/Export/ExportXlsx.py --token <ssoToken>        # 综评全量导出 xlsx（13 sheet）
+python tools/Export/ExportSummaryList.py --token <ssoToken> # 活动总结清单导出 xlsx
 ```
 
 ## 实测结论（2026-10-01）

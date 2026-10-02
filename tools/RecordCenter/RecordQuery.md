@@ -1,7 +1,7 @@
-# recordQuery（写实记录·读）
+# RecordQuery（写实记录·读）
 
 管：写实记录的列表 / 标签 / 分组 / 统计 / 详情回填。
-不管：发布（见同目录 Write.py）、活动总结（见 reference/api.md「写入接口②」）。
+不管：发布（见同目录 RecordWrite.py）、活动总结（见 reference/api.md「写入接口②」）。
 
 ## 对应端点
 

@@ -9,20 +9,20 @@
 ```
 tools/
   IqClient.py                     门面：组合下列各域 mixin，对外 API 就是 IQClient
-  access/httpTransport.py         传输层：_call / get / post / login / userId + IQError
-  access/loginToken.py            登录（获取 sso Token 的四种方式）
-  studentBase/profileInfo.py      本人档案、家长、兴趣特长
-  studentBase/dictOptions.py      平台字典、学期、活动/荣誉类型枚举
-  homeWorkbench/taskAndMessage.py 待办任务、未读消息、公告
-  recordCenter/recordQuery.py     写实记录读取（列表/标签/统计/详情）
-  recordCenter/recordWrite.py     图片上传、发布写实记录
-  growReport/growthReport.py      成长报告列表与详情
-  growReport/growthStatistics.py  荣誉统计、活动维度统计
-  export/exportXlsx.py           个人综评全量数据导出 xlsx（13 sheet）
-  export/exportSummaryList.py    活动课程总结清单导出（已交/未交/可编辑重交）
-  export/xlsxWriter.py           共用的最小 xlsx 写出器（纯标准库 zipfile）
-  testCases/testApiReadOnly.py    42 项只读
-  testCases/testRecordRead.py     13 项
+  Access/HttpTransport.py         传输层：_call / get / post / login / userId + IQError
+  Access/LoginToken.py            登录（获取 sso Token 的四种方式）
+  StudentBase/ProfileInfo.py      本人档案、家长、兴趣特长
+  StudentBase/DictOptions.py      平台字典、学期、活动/荣誉类型枚举
+  HomeWorkbench/TaskAndMessage.py 待办任务、未读消息、公告
+  RecordCenter/RecordQuery.py     写实记录读取（列表/标签/统计/详情）
+  RecordCenter/RecordWrite.py     图片上传、发布写实记录
+  GrowReport/GrowthReport.py      成长报告列表与详情
+  GrowReport/GrowthStatistics.py  荣誉统计、活动维度统计
+  Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet）
+  Export/ExportSummaryList.py     活动课程总结清单导出（已交/未交/可编辑重交）
+  Export/XlsxWriter.py            共用的最小 xlsx 写出器（纯标准库 zipfile）
+  TestCases/TestApiReadOnly.py    42 项只读
+  TestCases/TestRecordRead.py     13 项
 ```
 
 - `reference/api.md` — 端点清单；`SKILL.md` — skill 定义
@@ -30,7 +30,7 @@ tools/
 - 每个业务目录有 `__init__.py`（**必需**：否则会退化成 namespace package，
   与标准库同名目录冲突时会被标准库抢先）
 - 拆分依据：目录 = 端点前缀聚类 + 业务语义（**只放一个文件的域应合并进更宽的目录**，
-  如档案与字典同属学生端基础数据 → `studentBase/`）；文件 = 域内职责（读/写、报告/统计）
+  如档案与字典同属学生端基础数据 → `StudentBase/`）；文件 = 域内职责（读/写、报告/统计）
 
 ## 开发契约
 
@@ -59,23 +59,23 @@ tools/
 
 ```bash
 # 从仓库根目录执行
-python tools/access/loginToken.py password -u <学号> -p <密码>   # 账号密码换 token（推荐）
-python tools/access/loginToken.py token <32hex>                  # 校验已有 token
+python tools/Access/LoginToken.py password -u <学号> -p <密码>   # 账号密码换 token（推荐）
+python tools/Access/LoginToken.py token <32hex>                  # 校验已有 token
 python tools/IqClient.py <ssoToken>                       # 验证并打印摘要
-python tools/testCases/testApiReadOnly.py --token <ssoToken>         # 42 项只读测试
-python tools/testCases/testApiReadOnly.py -u <学号> -p <密码>         # 登录 + 全量
-python tools/testCases/testRecordRead.py <ssoToken>               # 写实记录 13 项断言
-python tools/export/exportXlsx.py --token <ssoToken>             # 综评全量导出 xlsx（13 sheet）
-python tools/export/exportSummaryList.py --token <ssoToken>      # 活动总结清单导出 xlsx
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>    # 42 项只读测试
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>    # 登录 + 全量
+python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录 13 项断言
+python tools/Export/ExportXlsx.py --token <ssoToken>            # 综评全量导出 xlsx（13 sheet）
+python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结清单导出 xlsx
 ```
 
 ## 关键注意事项
 
 - 请求体必须是 `request={"data":{...}}` form 编码；发 JSON 会 `code:10`
-- 写操作（`recordCenter/recordWrite.py`）调用前必须向用户确认；成功判据 = 读回执
+- 写操作（`RecordCenter/RecordWrite.py`）调用前必须向用户确认；成功判据 = 读回执
   （如 `querySummary.pdlist` + `count_task.unfinished`），不看返回值
 - `querySummary` / `sysDict` 返回 `{list:[…]}` 或 `{pdlist:[…]}`，不是裸数组；
-  **不可对返回值直接 `.get(code)`** —— 需要 code→name 映射时遍历 `["list"]`（见 `recordWrite._semesterName`）
+  **不可对返回值直接 `.get(code)`** —— 需要 code→name 映射时遍历 `["list"]`（见 `RecordWrite._semesterName`）
 - `records()` 的 `type_` 参数带下划线（避免遮蔽内置 `type`），用关键字传
 - **查未知槽位结构按优先级链走**（详见 `reference/api.md`「未知槽位结构怎么查」）：
   ① 反查本校 feed 样本 → ② 查 `api.md` + `RECORD_TYPE_MAP` → ③ 由前端模块映射定位单个 chunk
@@ -85,7 +85,7 @@ python tools/export/exportSummaryList.py --token <ssoToken>      # 活动总结�
 - **导出（`export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%\591iq_*.xlsx`，
   已 gitignore `*.xlsx`；不要把导出文件或含真实姓名的 json 提交进仓库
 - 提交前脱敏：不得包含 token / 密码 / 姓名 / userId / 班级
-- 测试需要有效 ssoToken；无 token 时 `testApiReadOnly.py` 的登录步骤会失败
+- 测试需要有效 ssoToken；无 token 时 `TestApiReadOnly.py` 的登录步骤会失败
 
 ## 依赖
 
