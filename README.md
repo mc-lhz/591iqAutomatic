@@ -54,16 +54,19 @@ tools/
 
 ```bash
 python tools/IqClient.py <ssoToken>                      # 验证并打印账号摘要
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken> # 全量 42 项
-python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>  # 登录 → 全量 → 上传
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken> # 只读全量 41 项
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>  # 门户登录（OCR 换 token）→ 只读 41 项
+python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload # 42 项：追加 announcement/upload
 python tools/TestCases/TestRecordRead.py <ssoToken>          # 写实记录 13 项断言
 python tools/Export/ExportXlsx.py --token <ssoToken>        # 综评全量导出 xlsx（13 sheet）
 python tools/Export/ExportSummaryList.py --token <ssoToken> # 活动总结清单导出 xlsx
 ```
 
-## 实测结论（2026-10-01）
+## 实测结论（2026-10-02）
 
-- 只读端点 **PASS=41 / FAIL=0 / WARN=1**（42 项；唯一 WARN：积分接口学校侧未配置）。
+- 只读端点 **PASS=40 / FAIL=0 / WARN=1**（**41 项**，约 6.5s）；加 `--upload` 跑满
+  **42 项 / PASS=41 / FAIL=0 / WARN=1**（约 21s）。上传项只在显式 `--upload` 时计入，
+  `-u -p` 只负责门户登录换 token。唯一 WARN：积分接口学校侧未配置。
 - `record/queryRecordList` 的 `type` 决定范围：`1`=本人、`2`=本校、空=全平台（约 14.6 万条）。
 - 写入 `POST /record/updateRecord` 已真实提交验证；**顶层槽位 key 必须是组件名**
   （`recordActivityFJ`…），传数字会 `999999 发布失败`。

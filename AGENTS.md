@@ -21,7 +21,7 @@ tools/
   Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet）
   Export/ExportSummaryList.py     活动课程总结清单导出（已交/未交/可编辑重交）
   Export/XlsxWriter.py            共用的最小 xlsx 写出器（纯标准库 zipfile）
-  TestCases/TestApiReadOnly.py    42 项只读
+  TestCases/TestApiReadOnly.py    只读 41 项（加 `--upload` 满 42 项）
   TestCases/TestRecordRead.py     13 项
 ```
 
@@ -48,11 +48,16 @@ tools/
   JSON 字段（`recordType`/`recordContent`）、方法名（`records()`）里的
   `record`/`grow` 等词**不受目录改名影响**，不要一起替换
 - **禁止用正则批量替换目录名**——会误伤 API 路径与字段名；逐条精确替换并做内容完好性断言
-- **新功能一律先在 `%TEMP%` 原型化，不得直接写进 skill 源码目录**：
-  探索脚本、一次性探针、dump 文件一律放 `%TEMP%\opencode\`；
+- **新功能一律先在系统临时目录原型化，不得直接写进 skill 源码目录**：
+  探索脚本、一次性探针、dump 文件一律放 `%TEMP%\591iq_scratch\`（自建，不依赖任何
+  特定 AI 工具/编辑器的私有目录约定）；
   确认「确实有用且要长期维护」后，才整理成符合本契约的模块移入 `tools/`，
   并补同名 `.md`、加入 `README`/`SKILL`/`AGENTS`。**不要让半成品、临时产物、
-  未验证脚本长期盘踞源 skill 目录**（`%TEMP%\opencode` 里的东西含凭据，严禁入库）
+  未验证脚本长期盘踞源 skill 目录**（`%TEMP%\591iq_scratch` 里的东西含凭据，严禁入库）
+- **代码与文档不得绑定特定 AI 工具 / IDE**：不写死 `%TEMP%\opencode\`、`%TEMP%\claude\`、
+  `.opencode/`、`.cursor/` 等工具私有路径与配置名；工具专属约定只允许出现在 `SKILL.md`
+  的调用说明里，工具无关的行为（临时目录、缓存、产物路径）一律用项目自己的名字
+  （本项目为 `591iq_scratch` / `591iq_*.xlsx`）
 - **Git 大小写**：仓库已设 `core.ignorecase=false`；仅改大小写必须 `git rm --cached` + `git add` 两步登记。
   Windows 上文件系统大小写不敏感，`git mv A a` 可能「假成功」，**必须走临时名两段式**
   （`git mv A A__tmp && git mv A__tmp a`），改完用 `git ls-files` 复核索引里的真实大小写。
@@ -67,8 +72,9 @@ tools/
 python tools/Access/LoginToken.py password -u <学号> -p <密码>   # 账号密码换 token（推荐）
 python tools/Access/LoginToken.py token <32hex>                  # 校验已有 token
 python tools/IqClient.py <ssoToken>                       # 验证并打印摘要
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>    # 42 项只读测试
-python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>    # 登录 + 全量
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>    # 只读全量 41 项
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>    # 门户登录换 token → 只读 41 项
+python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload  # 42 项（追加上传项，会落一个文件）
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录 13 项断言
 python tools/Export/ExportXlsx.py --token <ssoToken>            # 综评全量导出 xlsx（13 sheet）
 python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结清单导出 xlsx
@@ -87,7 +93,7 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   → ④ 全量搜 564 个 chunk（串行下载约 2.5 min，**仅在前三步全失败时**）。
   禁止从第 ④ 步起手；翻 bundle 必须先映射定位、并发下载、落盘建索引，并区分发布态/查看态 chunk
 - PowerShell 5.1：不要用 Get-Content/Set-Content 处理 UTF-8 中文（会乱码），用文件工具或 python
-- **导出（`export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%\591iq_*.xlsx`，
+- **导出（`Export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%\591iq_*.xlsx`，
   已 gitignore `*.xlsx`；不要把导出文件或含真实姓名的 json 提交进仓库
 - 提交前脱敏：不得包含 token / 密码 / 姓名 / userId / 班级
 - 测试需要有效 ssoToken；无 token 时 `TestApiReadOnly.py` 的登录步骤会失败
@@ -96,5 +102,5 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
 
 requests、rapidocr-onnxruntime（验证码 OCR）、numpy + Pillow（预处理）
 
-`export/` **只用标准库**（`zipfile` + SpreadsheetML），不要引入 pandas / openpyxl——
+`Export/` **只用标准库**（`zipfile` + SpreadsheetML），不要引入 pandas / openpyxl——
 保持「无重依赖即可导出」。
