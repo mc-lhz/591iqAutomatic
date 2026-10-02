@@ -217,17 +217,25 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
 
 | # | 手段 | 成本 | 产出 | 适用 |
 |---|---|---|---|---|
-| 1 | 反查本校 feed：`records(type_="2")` 翻页取行，看行里哪个 `recordXXX` 槽位非空 → `queryRecord(id)` | ~27 次 API，秒级 | **真实样本结构**，含服务端回填字段 | 该类型本校已有记录时最快最准 |
-| 2 | 查本文档 + `RECORD_TYPE_MAP` | 0 | 槽位名、已知必填项 | 槽位名一定在这里 |
-| 3 | 由前端模块映射**定位** chunk：`recordRelease.components` → 模块 id → chunk 文件名，读那 1 个文件 | 读 1 个文件 | 该类型的 `validate()` 与表单默认值 | 本校无样本时走这条 |
-| 4 | 全量关键词搜前端 bundle | **564 chunk / 13 MB 串行下载 ≈ 2.5 min** | 兜底 | 只在 1-3 全失败时 |
+| 1 | 查 `reference/frontend.md` + `recordForms.json` | 0，本地查表 | **22 类全覆盖**：槽位名、载荷对象、全部字段、必填项 + 平台中文提示 | 绝大多数情况到这里就够 |
+| 2 | 反查本校 feed：`records(type_="2")` 翻页取行，看行里哪个 `recordXXX` 槽位非空 → `queryRecord(id)` | ~27 次 API，秒级 | **真实样本结构**，含服务端回填字段 | 需要确认服务端实际存了哪些键 |
+| 3 | 查本文档 + `RECORD_TYPE_MAP` | 0 | 槽位名、已知必填项 | 槽位名一定在这里 |
+| 4 | 按 `recordForms.json` 里记的 `chunk` + `moduleId` **定位**那一个 chunk 读原件 | 下载全量后读 1 个文件 | 表单默认值、label 原文、提交逻辑 | 查表结果对不上时 |
+| 5 | 全量关键词搜前端 bundle | **564 chunk / 13 MB 串行下载 ≈ 2.5 min** | 兜底 | 只在 1-4 全失败时 |
 
-2026-10-02 查 `recordGrow`（recordType=0）的教训：直接从第 4 步起手，浪费约 2.5 min 下载；
-而第 1 步（`findslots`）本校只查到 6 个槽位
+2026-10-02 已把第 4 步的成果固化下来：`recordForms.json` 记着 22 类各自的
+`chunk` / `moduleId` / 字段归属 / 必填项与平台提示语，所以现在**绝大多数情况不用再下载前端**。
+
+2026-10-02 查 `recordGrow`（recordType=0）的教训：直接从第 5 步起手，浪费约 2.5 min 下载；
+而第 2 步本校只查到 6 个槽位
 （`recordCase`/`recordSubject`/`recordArt`/`recordRead`/`recordLaborResult`/`recordLaborAbility`），
-**不含 recordGrow** —— 本校无该类型样本，所以第 3 步才是正解。
+**不含 recordGrow** —— 本校无该类型样本，所以当时只能定位 chunk。
 最终顺着 `recordRelease.components` 映射定位到 chunk-3a29ec67（发布态模块 3792）拿到表单结构；
 注意 chunk-98eb46fe 是**查看态**组件，结构不同，别读错。
+
+该次顺带查清并已写入 `frontend.md` 的结论：
+组件里叫 `form` 的对象，线上键名 = 槽位名（`e[recordType]=this.form`）；
+读回的详情会多一个 `userInf`（服务端补的用户信息，不属于表单）。
 
 前端 bundle 检索的工程要点：
 

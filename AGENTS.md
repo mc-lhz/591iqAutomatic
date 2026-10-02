@@ -26,7 +26,9 @@ tools/
   TestCases/TestRecordRead.py     13 项
 ```
 
-- `reference/api.md` — 端点清单；`SKILL.md` — skill 定义
+- `reference/api.md` — 端点清单；`reference/frontend.md` + `reference/recordForms.json` —
+  学生端 22 类写实记录的字段/必填/平台提示（由前端组件提取，只存结论不存原始代码）；
+  `SKILL.md` — skill 定义
 - 每个 `.py` 都有同名 `.md` 说明
 - 每个业务目录有 `__init__.py`（**必需**：否则会退化成 namespace package，
   与标准库同名目录冲突时会被标准库抢先）
@@ -104,9 +106,16 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   `--interactive` 用 `input()` 阻塞，**仅真人终端可用，agent 不得使用**。
   验证码**长度 4 或 5 位不定**，不要按固定 4 位处理。
 - **查未知槽位结构按优先级链走**（详见 `reference/api.md`「未知槽位结构怎么查」）：
-  ① 反查本校 feed 样本 → ② 查 `api.md` + `RECORD_TYPE_MAP` → ③ 由前端模块映射定位单个 chunk
-  → ④ 全量搜 564 个 chunk（串行下载约 2.5 min，**仅在前三步全失败时**）。
-  禁止从第 ④ 步起手；翻 bundle 必须先映射定位、并发下载、落盘建索引，并区分发布态/查看态 chunk
+  ① 查 `reference/frontend.md` + `recordForms.json`（22 类已全覆盖，本地查表）
+  → ② 反查本校 feed 样本 → ③ 查 `api.md` + `RECORD_TYPE_MAP`
+  → ④ 按 `recordForms.json` 里的 `chunk`/`moduleId` 定位那一个 chunk
+  → ⑤ 全量搜 564 个 chunk（串行下载约 2.5 min，**仅在前四步全失败时**）。
+  禁止从第 ⑤ 步起手；翻 bundle 必须先映射定位、并发下载、落盘建索引，并区分发布态/查看态 chunk
+- **`reference/` 体积上限 100 KB**（2026-10-02 已用 91.6 KB：`api.md` 24.6 +
+  `frontend.md` 19.7 + `recordForms.json` 47.3）：只放提炼后的结论，
+  **原始前端代码、chunk、映射中间产物一律留在 `%TEMP%\591iq_scratch`，不入库**。
+  要加内容先减：表格按类聚合、不要逐字段成行；`frontend.md` 的表格由
+  `recordForms.json` 生成，改 JSON 后重新生成，别手改 md 里的表
 - PowerShell 5.1：不要用 Get-Content/Set-Content 处理 UTF-8 中文（会乱码），用文件工具或 python
 - **导出（`Export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%\591iq_*.xlsx`，
   已 gitignore `*.xlsx`；不要把导出文件或含真实姓名的 json 提交进仓库

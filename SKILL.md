@@ -207,10 +207,12 @@ c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档
 ⚠️ 提交前必须向用户确认：记录进入**本校可见** feed，且**未发现学生端删除接口**，提交后可能无法自行撤销。
 字段/枚举/校验细节见 `reference/api.md`「写入接口」章节。
 
-> **填 `recordContent` 前先查已有结论**：槽位名查 `RECORD_TYPE_MAP`，表单结构查
-> `reference/api.md`「未知槽位结构怎么查」的优先级链。
-> 只有 `api.md` 与映射表都缺时，才去翻前端 bundle，且**必须先由模块映射定位 chunk 再搜索**——
-> 全站 564 个 chunk 串行下载约 2.5 min，且注意发布态与查看态是两个不同 chunk。
+> **填 `recordContent` 前先查已有结论**：**22 类记录的字段、必填项、平台原话提示已经全部查清**，
+> 查 `reference/frontend.md`（人看）与 `reference/recordForms.json`（程序读，含每类的
+> `chunk`/`moduleId` 出处）即可；槽位名查 `RECORD_TYPE_MAP`。
+> 只有查表结果对不上时，才按 `reference/api.md`「未知槽位结构怎么查」的优先级链往下走，
+> 且**必须先映射定位那一个 chunk 再读**——全站 564 个 chunk 串行下载约 2.5 min，
+> 原始代码一律不入库（`reference/` 体积上限 100 KB，现已用 91.6 KB）。
 
 ### 第二类写入：提交活动总结（✅ 已实测，风险低于写实记录）
 
@@ -236,6 +238,7 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 
 见 `reference/api.md`（25+ 个已抓包验证端点 + 任务路由解析 moduleId 映射表 +
 `evaluateActivity` 全族 48 条一览，含 payload 样例）。
+表单/字段层面查 `reference/frontend.md` 与 `reference/recordForms.json`（22 类全覆盖）。
 
 回归自测：
 ```bash
