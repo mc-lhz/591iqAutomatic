@@ -49,8 +49,8 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
 
 | 自身能力 | 走哪条 | 实测通过率 |
 |---|---|---|
-| **能读图**（可打开图片文件） | `tools/Access/VisionLogin.py` 两步（推荐） | **6/6 = 100%** |
-| **不能读图** | `tools/Access/LoginToken.py password`（OCR 自动重试） | 4/8 = 50%（`--retry 3` → 约 87%） |
+| **能读图**（可打开图片文件） | `tools/Access/VisionLogin.py` 两步（推荐） | **10/10 = 100%**（累计 16/16） |
+| **不能读图** | `tools/Access/LoginToken.py password`（OCR 自动重试） | 14/20 = 70%，方差大（90% / 50% 两轮） |
 
 ```bash
 # A. 有读图能力 —— VisionLogin（推荐）
@@ -60,7 +60,7 @@ python tools/Access/VisionLogin.py submit -u <学号> -p <密码> --code ab12   
 #   退出码：0 成功 / 2 验证码错（回 new 换图）/ 3 凭据或网络错（换验证码无用）
 
 # B. 无读图能力 —— LoginToken 的 OCR 路径
-python tools/Access/LoginToken.py password -u <学号> -p <密码> [--retry 3]
+python tools/Access/LoginToken.py password -u <学号> -p <密码> [--retry 6]
 ```
 
 细节见 `tools/Access/VisionLogin.md`。
@@ -86,13 +86,14 @@ GET  /account/open-api/iqboard!login.action?terminal=computer&service=CQES
 ```bash
 python tools/Access/LoginToken.py check                                # 无凭据探测门户端点可达性
 python tools/Access/LoginToken.py captcha --out jcaptcha.jpg           # 取验证码图片
-python tools/Access/LoginToken.py password -u <学号> -p <密码> [--retry 3]   # OCR 自动登录
+python tools/Access/LoginToken.py password -u <学号> -p <密码> [--retry 6]   # OCR 自动登录
 python tools/Access/LoginToken.py password -u <学号> -p <密码> --interactive  # 人工看图输码（真人终端专用，agent 勿用）
 ```
 
-- **验证码特征**：**长度 4 或 5 位不定**（实测两种都出现过），仅小写字母与数字，一次性。
+- **验证码特征**：**长度 4 或 5 位不定**（实测两轮 OCR 里 3/4/5/6/7 位都出现过，真值只有 4~5 位），仅小写字母与数字，一次性。
 - **验证码 OCR**：`rapidocr-onnxruntime` + 灰度阈值 160 + 3 倍放大（预处理是关键，
-  否则 `d/o` 会被读成 `p/0`）。单次识别率不足时靠 `--retry`（默认 3 次）重取重试。
+  否则 `d/o` 会被读成 `p/0`）。**单次通过率仅约 70% 且方差大**，失败模式是
+  `1`↔`l`、`0`↔`o` 混淆与长度读错；靠 `--retry`（默认 6）重取重试兜底。
 - **看图路径的关键增益**：`new` 会把 250×100 原图裁到墨迹外接框、反相成白字黑底、
   按宽度归一化放大再交给 agent；不预处理时原始小图容易误读。
 - 实测 2026-10-01：第 1 次 OCR 误识别 → `error=2`，第 2 次登录成功，
