@@ -93,7 +93,7 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
 - `records()` 的 `type_` 参数带下划线（避免遮蔽内置 `type`），用关键字传
 - **门户登录必须先判断自身有无读图能力，再选路径**：
   有 → `Access/VisionLogin.py new` → 读「识图推荐」PNG → `submit --code`（实测 10/10，累计 16/16）；
-  无 → `Access/LoginToken.py password`（OCR 14/20 ≈ 70%，靠 `--retry` 兜底）。
+  无 → `Access/LoginToken.py password`（OCR 25/40 ≈ 63%，靠 `--retry` 兜底）。
   **有读图能力却去用 OCR 是浪费**；无读图能力却去用 VisionLogin 则会卡在 `--code`。
   退出码按契约分支：0 成功 / 2 验证码错（换图重试）/ 3 凭据或网络错（**换验证码无用**）。
   `--interactive` 用 `input()` 阻塞，**仅真人终端可用，agent 不得使用**。

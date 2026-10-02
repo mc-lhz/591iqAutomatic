@@ -23,8 +23,8 @@ python tools/Access/LoginToken.py token <32hex>    # 输出 ssoToken + mock_logi
 
 ## 注意事项
 
-- 验证码 OCR 靠 `rapidocr-onnxruntime` + 灰度阈值 160 + 3 倍放大；**单次通过率约 70%**
-  （实测 14/20，两轮分别 90% / 50%，方差大），失败模式是 `1`↔`l`、`0`↔`o` 混淆与长度读错
+- 验证码 OCR 靠 `rapidocr-onnxruntime` + 灰度阈值 160 + 3 倍放大；**单次通过率约 63%**
+  （实测 25/40，四轮分别 90% / 50% / 55% / 50%，方差极大），失败模式是 `1`↔`l`、`0`↔`o` 混淆与长度读错
   （真值恒为 4~5 位小写字母数字），靠 `--retry`（**默认 6**）重取重试兜底。
 - **有读图能力的 agent 请改用 `VisionLogin.py`**（看图识别，实测 10/10），见 `VisionLogin.md`。
 - 换 token 那步依赖门户登录态，未登录时 `iqboard!login.action` 恒 `302→index.html→404`。
