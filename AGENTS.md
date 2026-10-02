@@ -34,9 +34,10 @@ tools/
 
 ## 开发契约
 
-- 命名：**目录小驼峰**（`recordCenter/`），**模块文件小驼峰**（`recordQuery.py`），
-  **方法小驼峰**（`taskStats()`），常量 UPPER_SNAKE；门面例外（`IqClient.py`）
-- **文件名不得重复目录名**（不要出现 `studentBase/studentBase.py` 这类冗余）
+- 命名（对齐 Java 命名，2026-10-02 起）：**目录大驼峰**（`RecordCenter/`），
+  **模块文件大驼峰**（`RecordQuery.py`），类大驼峰（`IQClient`/`QueryMixin`），
+  **方法小驼峰**（`taskStats()`），常量 UPPER_SNAKE；禁止下划线与短横线做目录/模块名
+- **文件名不得重复目录名**（不要出现 `StudentBase/StudentBase.py` 这类冗余）
 - **目录名禁止与标准库同名**（`profile`、`types`、`code`、`json`… 会冲突），
   复合名同时解决可读性与冲突
 - 每业务一个目录 + 每个 py 一个同名 .md 说明；说明含：职责、对应端点、方法清单、最小用法、注意事项
@@ -52,7 +53,11 @@ tools/
   确认「确实有用且要长期维护」后，才整理成符合本契约的模块移入 `tools/`，
   并补同名 `.md`、加入 `README`/`SKILL`/`AGENTS`。**不要让半成品、临时产物、
   未验证脚本长期盘踞源 skill 目录**（`%TEMP%\opencode` 里的东西含凭据，严禁入库）
-- **Git 大小写**：仓库已设 `core.ignorecase=false`；仅改大小写必须 `git rm --cached` + `git add` 两步登记
+- **Git 大小写**：仓库已设 `core.ignorecase=false`；仅改大小写必须 `git rm --cached` + `git add` 两步登记。
+  Windows 上文件系统大小写不敏感，`git mv A a` 可能「假成功」，**必须走临时名两段式**
+  （`git mv A A__tmp && git mv A__tmp a`），改完用 `git ls-files` 复核索引里的真实大小写。
+  ⚠️ Windows 上 Python 导入也不敏感，改错大小写测试仍可能全绿——改名后必须跑一次
+  **大小写审计**（按 `git ls-files` 校验每个 import 路径按原样大小写可命中），别只信测试结果
 - 提交：一次一个 commit，按步骤提交（用户要求）；每个 commit 后推送
 
 ## 常用命令
