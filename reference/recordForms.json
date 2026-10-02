@@ -1,0 +1,2798 @@
+{
+ "source": {
+  "buildId": {
+   "appAsset": "app.025c7c4d.js",
+   "appAssetFingerprint": "025c7c4d",
+   "note": "index.html 无 build/version meta；构建标识只能用 app.js 资源指纹近似"
+  },
+  "fetchedAt": "2026-10-02T13:51:14",
+  "primaryComponent": "recordRelease",
+  "method": "顶层 data() 键分流载荷/界面状态 + validate() 别名反查必填",
+  "caveat": "字段名与默认值来自前端组件，非服务端契约；labels 按出现顺序，与字段非一一对应；只在本校已有样本的 recordType 上做过接口交叉验证。"
+ },
+ "forms": [
+  {
+   "slot": "recordGrow",
+   "recordType": 0,
+   "chunk": "chunk-3a29ec67",
+   "moduleId": "3792",
+   "payloadObjects": [
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "labelId",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择标签"
+    },
+    {
+     "name": "labelName",
+     "default": "\"请选择\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"0\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "",
+     "in": [
+      "recordContent"
+     ]
+    }
+   ],
+   "required": [
+    "labelId"
+   ],
+   "rules": [],
+   "labels": [
+    "成长记录标签",
+    "内容"
+   ]
+  },
+  {
+   "slot": "recordHonor",
+   "recordType": 1,
+   "chunk": "chunk-ab58fd94",
+   "moduleId": "8687",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordHonor"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "honorImages",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请上传荣誉证书"
+    },
+    {
+     "name": "honorTime",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择获奖时间"
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "itemName",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写获奖项目"
+    },
+    {
+     "name": "levelId",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择获奖级别"
+    },
+    {
+     "name": "levelName",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "orderId",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "orderName",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择名次或等第"
+    },
+    {
+     "name": "recordType",
+     "default": "\"1\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写主办单位"
+    },
+    {
+     "name": "typeId",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择获奖类型"
+    },
+    {
+     "name": "typeName",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "honorImages",
+    "orderName",
+    "itemName",
+    "levelId",
+    "sponsor",
+    "honorTime",
+    "typeId",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "获奖类型",
+    "获奖级别",
+    "获奖时间",
+    "荣誉名称",
+    "主办单位",
+    "名次或等第",
+    "荣誉证书",
+    "荣誉内容"
+   ]
+  },
+  {
+   "slot": "recordRead",
+   "recordType": 2,
+   "chunk": "chunk-01e45984",
+   "moduleId": "63a9",
+   "payloadObjects": [
+    "recordBook",
+    "recordContent",
+    "recordRead"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "recordBook": "recordBook",
+    "recordRead": "recordRead"
+   },
+   "fields": [
+    {
+     "name": "bigImgUrl",
+     "default": "\"\"",
+     "in": [
+      "recordBook"
+     ]
+    },
+    {
+     "name": "classifyId",
+     "default": "\"\"",
+     "in": [
+      "recordRead"
+     ],
+     "requiredMsg": "请选择书籍分类"
+    },
+    {
+     "name": "classifyName",
+     "default": "\"\"",
+     "in": [
+      "recordRead"
+     ]
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "id",
+     "default": "\"\"",
+     "in": [
+      "recordBook"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "intro",
+     "default": "\"",
+     "in": [
+      "recordBook"
+     ]
+    },
+    {
+     "name": "isbn",
+     "default": "\"\"",
+     "in": [
+      "recordBook",
+      "recordRead"
+     ]
+    },
+    {
+     "name": "littleImgUrl",
+     "default": "\"\"",
+     "in": [
+      "recordBook"
+     ]
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "recordBook"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"2\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "writer",
+     "default": "\"\"",
+     "in": [
+      "recordBook"
+     ]
+    }
+   ],
+   "required": [
+    "classifyId",
+    "isbn"
+   ],
+   "rules": [],
+   "labels": []
+  },
+  {
+   "slot": "recordSport",
+   "recordType": 3,
+   "chunk": "chunk-001c38da",
+   "moduleId": "15bc",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordSport"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传运动员国家技术等级证书"
+    },
+    {
+     "name": "item",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写运动项目"
+    },
+    {
+     "name": "level",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择运动员国家技术等级"
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"3\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写颁证单位"
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择颁证时间"
+    }
+   ],
+   "required": [
+    "images",
+    "time",
+    "sponsor",
+    "level",
+    "item",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "运动员国家技术等级",
+    "运动项目",
+    "颁证单位",
+    "颁证时间",
+    "运动员国家等级证书",
+    "国家运动员等级介绍"
+   ]
+  },
+  {
+   "slot": "recordInvent",
+   "recordType": 4,
+   "chunk": "chunk-54824948",
+   "moduleId": "3394",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordInvent"
+   },
+   "fields": [
+    {
+     "name": "code",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写专利号"
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传专利证书"
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写创造发明成果名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"4\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择专利申请时间"
+    },
+    {
+     "name": "type",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择专利类型"
+    },
+    {
+     "name": "typeDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "images",
+    "time",
+    "type",
+    "code",
+    "name",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "专利类",
+    "专利申请时间",
+    "创造发明成果名称",
+    "专利号",
+    "专利证书",
+    "创造发明成果介绍"
+   ]
+  },
+  {
+   "slot": "recordArt",
+   "recordType": 5,
+   "chunk": "chunk-21269d4e",
+   "moduleId": "99a6",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordArt"
+   },
+   "fields": [
+    {
+     "name": "beginTime",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择起始时间"
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "endTime",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择结束时间"
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ]
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写学生艺术团队名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"5\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "situation",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写考核情况"
+    },
+    {
+     "name": "situationDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写组织单位"
+    }
+   ],
+   "required": [
+    "semesterCode",
+    "name",
+    "sponsor",
+    "beginTime",
+    "endTime",
+    "situation"
+   ],
+   "rules": [
+    "开始时间不能大于结束时间"
+   ],
+   "labels": [
+    "归属学期",
+    "学生艺术团队名称",
+    "组织单位",
+    "起止时间",
+    "考核情况",
+    "图片佐证",
+    "描述"
+   ]
+  },
+  {
+   "slot": "recordCase",
+   "recordType": 6,
+   "chunk": "chunk-62f48e5c",
+   "moduleId": "8165",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordCase"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请填写典型案例材料内容"
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ]
+    },
+    {
+     "name": "level",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择获奖/发表级别"
+    },
+    {
+     "name": "levelDesc",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "proleDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"6\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "role",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择参与角色"
+    },
+    {
+     "name": "roleDesc",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "task",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写具体任务"
+    },
+    {
+     "name": "time",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择案例日期"
+    },
+    {
+     "name": "title",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写作品标题"
+    },
+    {
+     "name": "tutor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写指导老师"
+    },
+    {
+     "name": "type",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择材料类别"
+    },
+    {
+     "name": "typeDesc",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "user",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写参与学生"
+    }
+   ],
+   "required": [
+    "time",
+    "level",
+    "content",
+    "task",
+    "user",
+    "tutor",
+    "role",
+    "title",
+    "type",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "材料类别",
+    "作品标题",
+    "参与角色",
+    "指导老师",
+    "参与学生",
+    "具体任务",
+    "典型案例材料内容",
+    "获奖/发表级别",
+    "案例日期",
+    "获奖等第",
+    "主办单位",
+    "获奖佐证"
+   ]
+  },
+  {
+   "slot": "recordSubject",
+   "recordType": 7,
+   "chunk": "chunk-0645dd5c",
+   "moduleId": "708f",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordSubject"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传图片佐证"
+    },
+    {
+     "name": "item",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择项目"
+    },
+    {
+     "name": "itemDesc",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "level",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择级别"
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "order",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写等第"
+    },
+    {
+     "name": "period",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择届数"
+    },
+    {
+     "name": "periodDesc",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"7\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写主办单位"
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择获奖时间"
+    }
+   ],
+   "required": [
+    "images",
+    "order",
+    "level",
+    "time",
+    "item",
+    "period",
+    "sponsor",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "类型",
+    "级别",
+    "届数",
+    "获奖时间",
+    "主办方名称",
+    "名次等第",
+    "图片佐证",
+    "学科竞赛介绍"
+   ]
+  },
+  {
+   "slot": "recordLife",
+   "recordType": 8,
+   "chunk": "chunk-209f4bac",
+   "moduleId": "804b",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordLife"
+   },
+   "fields": [
+    {
+     "name": "beginTime",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择开始时间"
+    },
+    {
+     "name": "category",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择类别"
+    },
+    {
+     "name": "categoryDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "endTime",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择结束时间"
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请填写名称"
+    },
+    {
+     "name": "level",
+     "default": "\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择级别"
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "name",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"8\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "type",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择类型"
+    },
+    {
+     "name": "typeDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "semesterCode",
+    "type",
+    "category",
+    "level",
+    "beginTime",
+    "endTime",
+    "images",
+    "name"
+   ],
+   "rules": [
+    "开始时间不能大于结束时间"
+   ],
+   "labels": [
+    "归属学期",
+    "类型",
+    "类别",
+    "级别",
+    "起止时间",
+    "图片材料",
+    "文字介绍"
+   ]
+  },
+  {
+   "slot": "recordPrize",
+   "recordType": 9,
+   "chunk": "chunk-3836c6cb",
+   "moduleId": "79b5",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordPrize"
+   },
+   "fields": [
+    {
+     "name": "artDuty",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "conditional": true,
+     "condition": "type==4 时必填"
+    },
+    {
+     "name": "artDutyDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请选择获奖类型"
+    },
+    {
+     "name": "item",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "level",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "levelDesc",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "order",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"9\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "studyType",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "conditional": true,
+     "condition": "type==2 时必填"
+    },
+    {
+     "name": "studyTypeDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "techType",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "conditional": true,
+     "condition": "type==5 时必填"
+    },
+    {
+     "name": "techTypeDesc",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "time",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "type",
+     "default": "\"1\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "images",
+    "studyType",
+    "artDuty",
+    "techType",
+    "semesterCode",
+    "level",
+    "time",
+    "item",
+    "sponsor",
+    "order",
+    "type"
+   ],
+   "rules": [
+    "type==2 → studyType",
+    "type==4 → artDuty",
+    "type==5 → techType",
+    "请选择归属学期"
+   ],
+   "labels": [
+    "归属学期",
+    "获奖类型",
+    "职责",
+    "获奖级别",
+    "获奖时间",
+    "获奖项目",
+    "主办单位",
+    "获奖等第",
+    "图片材料",
+    "文字介绍"
+   ]
+  },
+  {
+   "slot": "recordBody",
+   "recordType": 10,
+   "chunk": "chunk-77b9a53a",
+   "moduleId": "933e",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordBody"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "honorImages",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传图片材料"
+    },
+    {
+     "name": "labelId",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "labelName",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "level",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择级别"
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"10\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写主办单位"
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择记录时间"
+    },
+    {
+     "name": "type",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择类型"
+    },
+    {
+     "name": "typeDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "images",
+    "sponsor",
+    "name",
+    "time",
+    "level",
+    "type",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "类型",
+    "级别",
+    "记录时间",
+    "名称",
+    "主办单位",
+    "图片材料",
+    "文字介绍"
+   ]
+  },
+  {
+   "slot": "recordFeature",
+   "recordType": 11,
+   "chunk": "chunk-d61483f8",
+   "moduleId": "c211",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordFeature"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "duty",
+     "default": "\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择职责"
+    },
+    {
+     "name": "dutyDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传图片材料"
+    },
+    {
+     "name": "level",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择级别"
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "name",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"11\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写主办单位"
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择记录时间"
+    },
+    {
+     "name": "type",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择类型"
+    },
+    {
+     "name": "typeDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "images",
+    "sponsor",
+    "name",
+    "duty",
+    "time",
+    "level",
+    "type",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "类型",
+    "级别",
+    "记录时间",
+    "职责",
+    "名称",
+    "主办单位",
+    "图片材料",
+    "文字介绍"
+   ]
+  },
+  {
+   "slot": "recordStudy",
+   "recordType": 12,
+   "chunk": "chunk-3e9b9978",
+   "moduleId": "a7a4",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordStudy"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传图片材料"
+    },
+    {
+     "name": "level",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择级别"
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"12\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写主办单位"
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择记录时间"
+    },
+    {
+     "name": "type",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择类型"
+    },
+    {
+     "name": "typeDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "images",
+    "sponsor",
+    "name",
+    "time",
+    "level",
+    "type",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "类型",
+    "级别",
+    "记录时间",
+    "名称",
+    "主办单位",
+    "图片材料",
+    "文字介绍"
+   ]
+  },
+  {
+   "slot": "recordActivity",
+   "recordType": 13,
+   "chunk": "chunk-eeb4d33a",
+   "moduleId": "a1e7",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordActivity"
+   },
+   "fields": [
+    {
+     "name": "beginTime",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择开始时间"
+    },
+    {
+     "name": "category",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择活动类型"
+    },
+    {
+     "name": "categoryDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "endTime",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择结束时间"
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请选择组织机构"
+    },
+    {
+     "name": "labelId",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "labelName",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "level",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "name",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写活动名称"
+    },
+    {
+     "name": "orderId",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "orderName",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "org",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"13\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "type",
+     "default": "\"1\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "semesterCode",
+    "name",
+    "category",
+    "beginTime",
+    "endTime",
+    "images",
+    "org",
+    "level"
+   ],
+   "rules": [
+    "开始时间不能大于结束时间"
+   ],
+   "labels": [
+    "归属学期",
+    "活动名称",
+    "活动类型",
+    "级别",
+    "组织机构",
+    "起止时间",
+    "图片材料",
+    "文字描述"
+   ]
+  },
+  {
+   "slot": "recordLaborAbility",
+   "recordType": 14,
+   "chunk": "chunk-451b9bce",
+   "moduleId": "0a4e",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordLaborAbility"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传图片"
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请输入特长技术名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"14\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择获得时间"
+    }
+   ],
+   "required": [
+    "images",
+    "time",
+    "name",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "特长技术名称",
+    "获得时间",
+    "图片佐证",
+    "项目概述"
+   ]
+  },
+  {
+   "slot": "recordLaborResult",
+   "recordType": 15,
+   "chunk": "chunk-197c260e",
+   "moduleId": "c1b6",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordLaborResult"
+   },
+   "fields": [
+    {
+     "name": "address",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写产生地点"
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传劳动成果图片"
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写成果名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"15\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择产生时间"
+    }
+   ],
+   "required": [
+    "images",
+    "address",
+    "time",
+    "name",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "劳动成果名称",
+    "劳动成果产生时间",
+    "地点",
+    "劳动成果图片",
+    "劳动成果简介"
+   ]
+  },
+  {
+   "slot": "recordLaborRace",
+   "recordType": 16,
+   "chunk": "chunk-275d634e",
+   "moduleId": "09c4",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordLaborRace"
+   },
+   "fields": [
+    {
+     "name": "address",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写项目地点"
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传劳动竞赛图片"
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写项目名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"16\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写组织单位"
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择项目时间"
+    }
+   ],
+   "required": [
+    "images",
+    "sponsor",
+    "address",
+    "time",
+    "name",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "项目名称",
+    "项目时间",
+    "项目地址",
+    "组织单位名称",
+    "劳动竞赛图片",
+    "竞赛内容及获奖情况"
+   ]
+  },
+  {
+   "slot": "recordActivityFJ",
+   "recordType": 17,
+   "chunk": "chunk-48ac70fe",
+   "moduleId": "c13e",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordActivityFJ"
+   },
+   "fields": [
+    {
+     "name": "address",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写活动地点"
+    },
+    {
+     "name": "addressDesc",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "addressId",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择活动地点"
+    },
+    {
+     "name": "beginTime",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择开始时间"
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "count",
+     "default": "1",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "dimensionId",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "duration",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择活动时长"
+    },
+    {
+     "name": "endTime",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择结束时间"
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传图片材料"
+    },
+    {
+     "name": "labelId",
+     "default": "0",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择活动类型"
+    },
+    {
+     "name": "labelName",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "level",
+     "default": "\"01\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择活动级别"
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"校级\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "name",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写活动名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"17\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "role",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "roleId",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择承担角色"
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "type",
+     "default": "\"1\"",
+     "in": [
+      "form"
+     ]
+    }
+   ],
+   "required": [
+    "semesterCode",
+    "name",
+    "labelId",
+    "level",
+    "beginTime",
+    "endTime",
+    "addressId",
+    "address",
+    "duration",
+    "roleId",
+    "images"
+   ],
+   "rules": [
+    "开始时间不能大于结束时间"
+   ],
+   "labels": [
+    "归属学期",
+    "活动名称",
+    "活动类型",
+    "活动级别",
+    "起止时间",
+    "活动地点",
+    "具体地点",
+    "累计活动时长",
+    "活动次数",
+    "承担角色",
+    "图片材料",
+    "文字描述"
+   ]
+  },
+  {
+   "slot": "recordSkill",
+   "recordType": 18,
+   "chunk": "chunk-1bd71c41",
+   "moduleId": "44c0",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordSkill"
+   },
+   "fields": [
+    {
+     "name": "certificateNo",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写证书编号"
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传证书"
+    },
+    {
+     "name": "level",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择证书级别"
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写证书名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"18\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写颁证单位"
+    },
+    {
+     "name": "time",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择颁证时间"
+    },
+    {
+     "name": "type",
+     "default": "",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "typeDesc",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择证书种类"
+    }
+   ],
+   "required": [
+    "images",
+    "certificateNo",
+    "time",
+    "sponsor",
+    "name",
+    "levelDesc",
+    "typeDesc",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "证书种类",
+    "证书级别",
+    "证书名称",
+    "颁证单位",
+    "颁证时间",
+    "证书编号",
+    "证书图片",
+    "描述"
+   ]
+  },
+  {
+   "slot": "recordEvaluate",
+   "recordType": 19,
+   "chunk": "chunk-0f3372ea",
+   "moduleId": "464f",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordEvaluate"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "gradeAliasId",
+     "default": "null",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"19\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "",
+     "in": [
+      "recordContent"
+     ]
+    }
+   ],
+   "required": [],
+   "rules": [],
+   "labels": [
+    "年级",
+    "劳动表现自我评价"
+   ]
+  },
+  {
+   "slot": "recordReport",
+   "recordType": 20,
+   "chunk": "chunk-14410af8",
+   "moduleId": "70a3",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordReport"
+   },
+   "fields": [
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "recordType",
+     "default": "\"20\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "",
+     "in": [
+      "recordContent"
+     ]
+    }
+   ],
+   "required": [],
+   "rules": [],
+   "labels": [
+    "实训报告"
+   ]
+  },
+  {
+   "slot": "recordCertificate",
+   "recordType": 21,
+   "chunk": "chunk-92a5792e",
+   "moduleId": "d3cc",
+   "payloadObjects": [
+    "form",
+    "recordContent"
+   ],
+   "wireKeys": {
+    "recordContent": "recordContent",
+    "form": "recordCertificate"
+   },
+   "fields": [
+    {
+     "name": "certificateNo",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写证书编号"
+    },
+    {
+     "name": "content",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "images",
+     "default": "[]",
+     "in": [
+      "recordContent",
+      "form"
+     ],
+     "requiredMsg": "请上传证书"
+    },
+    {
+     "name": "level",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "levelDesc",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择证书级别"
+    },
+    {
+     "name": "name",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写证书名称"
+    },
+    {
+     "name": "recordType",
+     "default": "\"21\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "semesterCode",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ],
+     "requiredMsg": "请选择归属学期"
+    },
+    {
+     "name": "semesterName",
+     "default": "\"\"",
+     "in": [
+      "recordContent"
+     ]
+    },
+    {
+     "name": "sponsor",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请填写颁证单位"
+    },
+    {
+     "name": "time",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择颁证时间"
+    },
+    {
+     "name": "type",
+     "default": "\"\"",
+     "in": [
+      "form"
+     ]
+    },
+    {
+     "name": "typeDesc",
+     "default": "",
+     "in": [
+      "form"
+     ],
+     "requiredMsg": "请选择证书种类"
+    }
+   ],
+   "required": [
+    "images",
+    "certificateNo",
+    "time",
+    "sponsor",
+    "name",
+    "levelDesc",
+    "typeDesc",
+    "semesterCode"
+   ],
+   "rules": [],
+   "labels": [
+    "归属学期",
+    "材料类别",
+    "证书种类",
+    "证书级别",
+    "证书名称",
+    "颁证单位",
+    "颁证时间",
+    "证书编号",
+    "证书",
+    "描述"
+   ]
+  }
+ ]
+}
