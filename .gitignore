@@ -6,3 +6,5 @@ _tiny.jpg
 *Dump.txt
 testApiReadOnlyReport.json
 test_endpoints_report.json
+*.xlsx
+591iq_*.json

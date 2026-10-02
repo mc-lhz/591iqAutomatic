@@ -18,6 +18,9 @@ tools/
   recordCenter/recordWrite.py     图片上传、发布写实记录
   growReport/growthReport.py      成长报告列表与详情
   growReport/growthStatistics.py  荣誉统计、活动维度统计
+  export/exportXlsx.py           个人综评全量数据导出 xlsx（13 sheet）
+  export/exportSummaryList.py    活动课程总结清单导出（已交/未交/可编辑重交）
+  export/xlsxWriter.py           共用的最小 xlsx 写出器（纯标准库 zipfile）
   testCases/testApiReadOnly.py    42 项只读
   testCases/testRecordRead.py     13 项
 ```
@@ -44,6 +47,11 @@ tools/
   JSON 字段（`recordType`/`recordContent`）、方法名（`records()`）里的
   `record`/`grow` 等词**不受目录改名影响**，不要一起替换
 - **禁止用正则批量替换目录名**——会误伤 API 路径与字段名；逐条精确替换并做内容完好性断言
+- **新功能一律先在 `%TEMP%` 原型化，不得直接写进 skill 源码目录**：
+  探索脚本、一次性探针、dump 文件一律放 `%TEMP%\opencode\`；
+  确认「确实有用且要长期维护」后，才整理成符合本契约的模块移入 `tools/`，
+  并补同名 `.md`、加入 `README`/`SKILL`/`AGENTS`。**不要让半成品、临时产物、
+  未验证脚本长期盘踞源 skill 目录**（`%TEMP%\opencode` 里的东西含凭据，严禁入库）
 - **Git 大小写**：仓库已设 `core.ignorecase=false`；仅改大小写必须 `git rm --cached` + `git add` 两步登记
 - 提交：一次一个 commit，按步骤提交（用户要求）；每个 commit 后推送
 
@@ -57,6 +65,8 @@ python tools/IqClient.py <ssoToken>                       # 验证并打印摘�
 python tools/testCases/testApiReadOnly.py --token <ssoToken>         # 42 项只读测试
 python tools/testCases/testApiReadOnly.py -u <学号> -p <密码>         # 登录 + 全量
 python tools/testCases/testRecordRead.py <ssoToken>               # 写实记录 13 项断言
+python tools/export/exportXlsx.py --token <ssoToken>             # 综评全量导出 xlsx（13 sheet）
+python tools/export/exportSummaryList.py --token <ssoToken>      # 活动总结清单导出 xlsx
 ```
 
 ## 关键注意事项
@@ -72,9 +82,14 @@ python tools/testCases/testRecordRead.py <ssoToken>               # 写实记录
   → ④ 全量搜 564 个 chunk（串行下载约 2.5 min，**仅在前三步全失败时**）。
   禁止从第 ④ 步起手；翻 bundle 必须先映射定位、并发下载、落盘建索引，并区分发布态/查看态 chunk
 - PowerShell 5.1：不要用 Get-Content/Set-Content 处理 UTF-8 中文（会乱码），用文件工具或 python
+- **导出（`export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%\591iq_*.xlsx`，
+  已 gitignore `*.xlsx`；不要把导出文件或含真实姓名的 json 提交进仓库
 - 提交前脱敏：不得包含 token / 密码 / 姓名 / userId / 班级
 - 测试需要有效 ssoToken；无 token 时 `testApiReadOnly.py` 的登录步骤会失败
 
 ## 依赖
 
 requests、rapidocr-onnxruntime（验证码 OCR）、numpy + Pillow（预处理）
+
+`export/` **只用标准库**（`zipfile` + SpreadsheetML），不要引入 pandas / openpyxl——
+保持「无重依赖即可导出」。

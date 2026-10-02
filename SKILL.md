@@ -99,6 +99,22 @@ c.userInfo(); c.honorStatistics(); c.activityStats(); c.interests()
 
 全流程纯 HTTP，**不需要浏览器**；学生端也没有可自动化的额外交互入口。
 
+## 导出：彩色 xlsx（纯标准库，无 pandas/openpyxl）
+
+```bash
+python tools/export/exportXlsx.py --token <ssoToken> [--school]   # 个人综评全量，13 sheet
+python tools/export/exportSummaryList.py --token <ssoToken>       # 活动课程总结清单
+python tools/export/exportXlsx.py -u <学号> -p <密码>              # 内部自动门户登录
+```
+
+- `exportXlsx.py` sheet：`总览` `学生档案` `我的写实记录` `本校可见记录` `记录-图片与原文`
+  `荣誉与活动统计` `活动维度统计` `任务` `成长报告` `家长信息` `兴趣特长` `学期与字典` `原始返回`；
+  `--school` 额外拉「本校可见」写实记录（含他人）。
+- `exportSummaryList.py` sheet：`总览` `未提交总结` `已提交总结` `可编辑重交` `全量原始`；
+  口径 `/task/list` 三种 status 中 `type=3` → `/task/get` → `/evaluateActivity/querySummary`。
+- 全程只读，异常不中断（原文落在 `原始返回`/`全量原始`），默认输出 `%TEMP%\591iq_*.xlsx`。
+- 细节见 `tools/export/exportXlsx.md`。
+
 ## 写入：发布写实记录（✅ 已实测提交成功，仍需逐次确认）
 
 端点 `POST /record/updateRecord`（新建/编辑同接口），wire：
@@ -203,4 +219,7 @@ python tools/testCases/testApiReadOnly.py --token <t> --dump      # 额外落盘
 - **Windows 编码坑**：PowerShell 5.1 默认 GBK 代码页，Python 输出中文前先
   `$env:PYTHONIOENCODING='utf-8'`；UTF-8 中文文件用文件工具/Python 读写，
   不要用 `Get-Content`/`Set-Content`（会整文件乱码）。
+- **扩展本 skill 时**：新功能先在 `%TEMP%\opencode\` 原型化（探索脚本、探针、dump 放那里），
+  确认有用后再整理成符合 `AGENTS.md` 契约的模块移入 `tools/`，补同名 `.md` 并同步
+  README/SKILL/AGENTS；**不要把半成品、临时产物直接写进 skill 源码目录**。
 - 教育系统数据含学生个人信息，仅限授权使用，不要外传。
