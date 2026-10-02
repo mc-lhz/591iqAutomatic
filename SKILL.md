@@ -131,17 +131,18 @@ c.userInfo(); c.honorStatistics(); c.activityStats(); c.interests()
 ## 导出：彩色 xlsx（纯标准库，无 pandas/openpyxl）
 
 ```bash
-python tools/Export/ExportXlsx.py --token <ssoToken> [--school]   # 个人综评全量，13 sheet
+python tools/Export/ExportXlsx.py --token <ssoToken> [--out <路径>]   # 个人综评全量，13 sheet
 python tools/Export/ExportSummaryList.py --token <ssoToken>    # 活动课程总结清单
 python tools/Export/ExportXlsx.py -u <学号> -p <密码>              # 内部自动门户登录
 ```
 
-- `ExportXlsx.py` sheet：`总览` `学生档案` `我的写实记录` `本校可见记录` `记录-图片与原文`
-  `荣誉与活动统计` `活动维度统计` `任务` `成长报告` `家长信息` `兴趣特长` `学期与字典` `原始返回`；
-  `--school` 额外拉「本校可见」写实记录（含他人）。
+- `ExportXlsx.py` 产出 **13 个定制 sheet**（按阅读顺序编号，**不含原始 JSON**）：
+  `1-总览` `2-基本信息` `3-学业成绩` `4-学期总评` `5-荣誉成就` `6-活动课程` `7-写实记录`
+  `8-记录正文` `9-任务` `10-成长报告` `11-体质健康` `12-心理与评语` `13-统计汇总`。
+  其中 3/4/5/6/10/11/12 全部来自 `growReport/summary/detail`（逐份报告展开），**无需额外端点**。
 - `ExportSummaryList.py` sheet：`总览` `未提交总结` `已提交总结` `可编辑重交` `全量原始`；
   口径 `/task/list` 三种 status 中 `type=3` → `/task/get` → `/evaluateActivity/querySummary`。
-- 全程只读，异常不中断（原文落在 `原始返回`/`全量原始`），默认输出 `%TEMP%\591iq_*.xlsx`。
+- 全程只读，空值统一显示 `--`，默认输出 `%TEMP%\591iq_*.xlsx`。
 - 细节见 `tools/Export/ExportXlsx.md`。
 
 ## 写入：发布写实记录（✅ 已实测提交成功，仍需逐次确认）

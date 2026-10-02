@@ -132,8 +132,7 @@ def build_sheets(wb, rows, c):
              json.dumps(c.taskStats(), ensure_ascii=False))]):
         s.row([k, v], zebra(i))
     s.blank()
-    s.row(["口径：/task/list 三种 status 中 type=3 的任务 → /task/get → "
-           "/evaluateActivity/querySummary"], S_SECTION)
+    s.row(["口径：/task/list 三种status 中 type=3 → /task/get → /evaluateActivity/querySummary"], S_SECTION)
     s.freeze(1)
 
     head = ["状态", "taskId", "eventId", "活动名称", "标签", "截止时间",
@@ -141,13 +140,13 @@ def build_sheets(wb, rows, c):
     spec = [("状态", 14), ("taskId", 12), ("eventId", 12), ("活动名称", 42),
             ("标签", 14), ("截止时间", 18), ("已过期", 8), ("已提交", 8),
             ("summaryId", 12), ("可编辑", 8), ("提交时间", 18),
-            ("正文", 90), ("原文JSON", 90)]
+            ("正文", 90)]
 
     for name, data in (("未提交总结", todo), ("已提交总结", done),
                        ("可编辑重交", editable)):
         sh = wb.sheet(name)
         sh.columns(spec)
-        sh.head(head + ["原文JSON"])
+        sh.head(head)
         for i, r in enumerate(data):
             sh.row([r.get("statusName", ""), r.get("taskId", ""),
                     r.get("eventId", ""),
@@ -159,9 +158,7 @@ def build_sheets(wb, rows, c):
                     r.get("summaryId", ""),
                     "是" if str(r.get("editAuth")) == "1" else "否",
                     r.get("submitTime", ""),
-                    r.get("content", ""),
-                    json.dumps({k: v for k, v in r.items() if k != "content"},
-                               ensure_ascii=False)], zebra_wrap(i))
+                    r.get("content", "")], zebra_wrap(i))
         sh.blank()
         sh.row(["合计", len(data)], S_SECTION)
         sh.freeze(1)
@@ -170,16 +167,14 @@ def build_sheets(wb, rows, c):
     raw = wb.sheet("全量原始")
     raw.columns([("状态", 14), ("taskId", 12), ("eventId", 12),
                  ("任务标题", 56), ("活动名称", 40), ("截止时间", 18),
-                 ("enable", 8), ("pcUrl", 46), ("原文JSON", 90)])
+                 ("enable", 8), ("pcUrl", 46)])
     raw.head(["状态", "taskId", "eventId", "任务标题", "活动名称", "截止时间",
-              "enable", "pcUrl", "原文JSON"])
+              "enable", "pcUrl"])
     for i, r in enumerate(rows):
         raw.row([r.get("statusName", ""), r.get("taskId", ""),
                  r.get("eventId", ""), r.get("title", ""),
                  r.get("eventTitle", ""), r.get("deadline", ""),
-                 r.get("enable", ""), r.get("pcUrl", ""),
-                 json.dumps({k: v for k, v in r.items() if k != "content"},
-                            ensure_ascii=False)], zebra_wrap(i))
+                 r.get("enable", ""), r.get("pcUrl", "")], zebra_wrap(i))
     raw.freeze(1)
     raw.auto_filter(1)
     return len(rows), len(done), len(todo), len(editable), len(alive)
