@@ -22,6 +22,9 @@ tools/
   recordCenter/recordWrite.py     图片上传、发布写实记录（活动/荣誉）
   growReport/growthReport.py      成长报告列表与详情
   growReport/growthStatistics.py  荣誉统计、活动维度统计
+  export/exportXlsx.py           个人综评全量数据导出 xlsx（13 sheet，纯标准库）
+  export/exportSummaryList.py    活动课程总结清单导出（已交/未交/可编辑重交）
+  export/xlsxWriter.py           共用的最小 xlsx 写出器（彩色样式）
   testCases/testApiReadOnly.py    42 项全量只读测试（`--dump` 落盘真实返回）
   testCases/testRecordRead.py     写实记录业务 13 项断言回归
 ```
@@ -54,6 +57,8 @@ python tools/IqClient.py <ssoToken>              # 验证并打印账号摘要
 python tools/testCases/testApiReadOnly.py --token <ssoToken> # 全量 42 项
 python tools/testCases/testApiReadOnly.py -u <学号> -p <密码>  # 登录 → 全量 → 上传
 python tools/testCases/testRecordRead.py <ssoToken>           # 写实记录 13 项断言
+python tools/export/exportXlsx.py --token <ssoToken>         # 综评全量导出 xlsx（13 sheet）
+python tools/export/exportSummaryList.py --token <ssoToken>  # 活动总结清单导出 xlsx
 ```
 
 ## 实测结论（2026-10-01）
