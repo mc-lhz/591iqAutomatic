@@ -1,7 +1,7 @@
 """成长评价域（统计）：荣誉统计、活动统计。
 
 对应端点：/officeHonor/queryHonorStatistics、/eventTwo/listActivityStatisticsByDimension
-报告见同目录 Report.py；学期列表见 studentBase/dictOptions.py。
+报告见同目录 GrowthReport.py；学期列表见 StudentBase/DictOptions.py。
 """
 
 

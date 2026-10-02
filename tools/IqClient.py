@@ -1,20 +1,20 @@
 """591iq 综合素质评价 - 纯 API 客户端（门面）。
 
-按业务域拆分为 studentBase / homeWorkbench / recordCenter / growReport 四个域
+按业务域拆分为 StudentBase / HomeWorkbench / RecordCenter / GrowReport 四个域
 （域内按职责分子模块，每个模块带同名 .md 说明），
-接入层为 access/httpTransport.py（传输层）与 access/loginToken.py（登录）。
+接入层为 Access/HttpTransport.py（传输层）与 Access/LoginToken.py（登录）。
 本文件只负责组合，对外保持 IQClient API 不变。
 """
 import json
 
-from access.httpTransport import Http, IQError
-from growReport.growthReport import ReportMixin
-from growReport.growthStatistics import StatsMixin
-from studentBase.dictOptions import OptionsMixin
-from studentBase.profileInfo import ProfileMixin
-from recordCenter.recordQuery import QueryMixin
-from recordCenter.recordWrite import WriteMixin
-from homeWorkbench.taskAndMessage import WorkbenchMixin
+from Access.HttpTransport import Http, IQError
+from GrowReport.GrowthReport import ReportMixin
+from GrowReport.GrowthStatistics import StatsMixin
+from StudentBase.DictOptions import OptionsMixin
+from StudentBase.ProfileInfo import ProfileMixin
+from RecordCenter.RecordQuery import QueryMixin
+from RecordCenter.RecordWrite import WriteMixin
+from HomeWorkbench.TaskAndMessage import WorkbenchMixin
 
 
 class IQClient(ProfileMixin, OptionsMixin, WorkbenchMixin, QueryMixin, WriteMixin,

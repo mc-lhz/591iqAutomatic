@@ -1,9 +1,9 @@
 """591iq 全量接口测试：账号密码登录 → 跑全部只读端点 → PASS/FAIL 汇总。
 
 用法：
-  python testApiReadOnly.py -u <学号> -p <密码>          # 门户登录换 token 后全量测试
-  python testApiReadOnly.py --token <ssoToken>          # 直接用已有 token
-  python testApiReadOnly.py -u .. -p .. --upload        # 附带图片上传端点（会落一个文件）
+  python TestApiReadOnly.py -u <学号> -p <密码>          # 门户登录换 token 后全量测试
+  python TestApiReadOnly.py --token <ssoToken>          # 直接用已有 token
+  python TestApiReadOnly.py -u .. -p .. --upload        # 附带图片上传端点（会落一个文件）
 """
 import argparse
 import json
@@ -15,8 +15,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))                      # tools/t
 TOOLS = os.path.dirname(HERE)                                          # tools（import 根）
 sys.path.insert(0, TOOLS)
 
-from IqClient import IQClient                     # noqa: E402
-from access.loginToken import loginForToken           # noqa: E402
+from IqClient import IQClient                          # noqa: E402
+from Access.LoginToken import loginForToken           # noqa: E402
 
 def _pick_image():
     cand = [os.path.join(os.environ.get("TEMP", ""), "opencode", "iq",
@@ -256,7 +256,7 @@ def main():
           f"SKIP={counts['SKIP']} 共 {len(results)} 项 "
           f"总耗时 {total}ms  token={token[:16]}…")
 
-    out = os.path.join(HERE, "testApiReadOnlyReport.json")
+    out = os.path.join(HERE, "TestApiReadOnlyReport.json")
     with open(out, "w", encoding="utf-8") as f:
         json.dump([{"name": n, "status": s, "ms": m, "note": b}
                    for n, s, m, b in results], f, ensure_ascii=False, indent=1)

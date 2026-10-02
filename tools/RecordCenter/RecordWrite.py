@@ -4,12 +4,12 @@
 调用前必须向用户确认。成功判据 = 读回执，不看返回值。
 
 对应端点：/announcement/upload、/record/updateRecord
-读取见同目录 Query.py。
+读取见同目录 RecordQuery.py。
 """
 import json
 import urllib.request
 
-from access.httpTransport import BASE, IQError
+from Access.HttpTransport import BASE, IQError
 
 # recordType 数字 -> 前端组件/数据槽位（模块 ecf4）
 RECORD_TYPE_MAP = {

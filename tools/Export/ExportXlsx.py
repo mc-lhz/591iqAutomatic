@@ -1,8 +1,8 @@
 """导出 591iq 个人综评全量数据为彩色 xlsx（纯标准库）。
 
 用法：
-    python tools/export/exportXlsx.py --token <ssoToken> [--out <路径>] [--school]
-    python tools/export/exportXlsx.py -u <学号> -p <密码>
+    python tools/Export/ExportXlsx.py --token <ssoToken> [--out <路径>] [--school]
+    python tools/Export/ExportXlsx.py -u <学号> -p <密码>
 
 --school 额外拉取「本校可见」写实记录（type=2，默认只导出本人）。
 token 也可以走环境变量 IQ_SSO_TOKEN。
@@ -18,8 +18,8 @@ sys.path.insert(0, _HERE)
 sys.path.insert(1, os.path.abspath(os.path.join(_HERE, "..")))
 
 from IqClient import IQClient, IQError                      # noqa: E402
-from recordCenter.recordWrite import RECORD_TYPE_NAME       # noqa: E402
-from xlsxWriter import (Workbook, S_DATA, S_ZEBRA, S_WRAP,  # noqa: E402
+from RecordCenter.RecordWrite import RECORD_TYPE_NAME     # noqa: E402
+from XlsxWriter import (Workbook, S_DATA, S_ZEBRA, S_WRAP,  # noqa: E402
                         S_WRAP_ZEBRA, S_KEY, S_TITLE, S_SECTION, S_CENTER,
                         S_CENTER_ZEBRA)
 
@@ -545,7 +545,7 @@ def main():
 
     token = a.token or os.environ.get("IQ_SSO_TOKEN", "")
     if not token and a.user and a.password:
-        from access.loginToken import loginForToken
+        from Access.LoginToken import loginForToken
         token = loginForToken(a.user, a.password)
     if not token:
         ap.error("需要 --token / -u -p / 环境变量 IQ_SSO_TOKEN 之一")

@@ -4,8 +4,8 @@
   /task/get → eventId → /evaluateActivity/querySummary → 已交/未交、可编辑性、正文。
 
 用法：
-    python tools/export/exportSummaryList.py --token <ssoToken> [--out <路径>]
-    python tools/export/exportSummaryList.py -u <学号> -p <密码>
+    python tools/Export/ExportSummaryList.py --token <ssoToken> [--out <路径>]
+    python tools/Export/ExportSummaryList.py -u <学号> -p <密码>
 """
 import argparse
 import json
@@ -18,7 +18,7 @@ sys.path.insert(0, _HERE)
 sys.path.insert(1, os.path.abspath(os.path.join(_HERE, "..")))
 
 from IqClient import IQClient, IQError                      # noqa: E402
-from xlsxWriter import (Workbook, S_DATA, S_ZEBRA, S_WRAP,  # noqa: E402
+from XlsxWriter import (Workbook, S_DATA, S_ZEBRA, S_WRAP,  # noqa: E402
                         S_WRAP_ZEBRA, S_SECTION, S_TITLE)
 
 STATUS = {"0": "待办", "1": "逾期未完成", "2": "已办"}
@@ -196,7 +196,7 @@ def main():
 
     token = a.token or os.environ.get("IQ_SSO_TOKEN", "")
     if not token and a.user and a.password:
-        from access.loginToken import loginForToken
+        from Access.LoginToken import loginForToken
         token = loginForToken(a.user, a.password)
     if not token:
         ap.error("需要 --token / -u -p / 环境变量 IQ_SSO_TOKEN 之一")
