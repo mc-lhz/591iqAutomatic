@@ -16,6 +16,7 @@ tools/
   HomeWorkbench/TaskAndMessage.py 待办任务、未读消息、公告
   RecordCenter/RecordQuery.py     写实记录读取（列表/标签/统计/详情）
   RecordCenter/RecordWrite.py     图片上传、发布写实记录
+  RecordCenter/PublishActivity.py 活动记录发布/编辑 CLI（--yes 才写，--dry-run 只读）
   GrowReport/GrowthReport.py      成长报告列表与详情
   GrowReport/GrowthStatistics.py  荣誉统计、活动维度统计
   Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet）
@@ -88,6 +89,10 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
 - 请求体必须是 `request={"data":{...}}` form 编码；发 JSON 会 `code:10`
 - 写操作（`RecordCenter/RecordWrite.py`）调用前必须向用户确认；成功判据 = 读回执
   （如 `querySummary.pdlist` + `count_task.unfinished`），不看返回值
+- **发布活动记录走 `RecordCenter/PublishActivity.py` CLI，不要写一次性脚本**：
+  登录/上传/定位 id/回读校验每次都一样，脚本不沉淀等于每次重抄；
+  写入必须显式 `--yes`（代表已确认），只读预览用 `--dry-run`（连图片都不上传）；
+  退出码 0 成功 / 2 服务端拒绝 / 3 回执不一致 / 4 token 失效 / 5 前置校验失败。
 - `querySummary` / `sysDict` 返回 `{list:[…]}` 或 `{pdlist:[…]}`，不是裸数组；
   **不可对返回值直接 `.get(code)`** —— 需要 code→name 映射时遍历 `["list"]`（见 `RecordWrite._semesterName`）
 - `records()` 的 `type_` 参数带下划线（避免遮蔽内置 `type`），用关键字传

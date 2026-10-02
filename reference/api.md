@@ -196,6 +196,21 @@ body: file=<二进制>, objType=25, id=WU_FILE_1, type=image/jpeg
 
 **③ 其余 19 种 recordType** 结构同构，槽位名查 `RECORD_TYPE_MAP`（0 recordGrow、2 recordRead、6 recordCase、7 recordSubject、14/15/16 劳动类…），字段以对应 chunk 的 `validate()` 为准。
 
+**发布/编辑走 CLI，不要手写请求**：
+
+```bash
+python tools/RecordCenter/PublishActivity.py --title "标题" --content-file body.txt ^
+    --image a.png --image b.png --duration 8 --label 40 --dimension 5 --yes
+python tools/RecordCenter/PublishActivity.py --edit-id <recordId> --title "新标题" ^
+    --content-file body.txt --yes          # 未传字段与图片沿用原记录
+python tools/RecordCenter/PublishActivity.py --title "标题" --content-file body.txt --dry-run
+```
+
+- 上传 → 发布 → **读回执校验**（三口径条数变化、按标题定位 id、`queryRecord` 核对正文逐字与图片数）。
+- 退出码：`0` 成功 / `2` 服务端拒绝 / `3` 回执不一致 / `4` token 失效 / `5` 前置校验失败。
+- 编辑时 `recordContent` 必须带 `id`，否则被当成新建；`semesterName` 客户端传了也会被服务端丢弃。
+- 细节见 `tools/RecordCenter/PublishActivity.md`。
+
 ### 未知槽位结构怎么查（优先级链，务必按序）
 
 填 `recordContent` 前需要某 recordType 的表单结构时，**按下面顺序走，前一步够用就不要走后一步**：

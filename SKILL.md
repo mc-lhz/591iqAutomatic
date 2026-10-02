@@ -154,6 +154,31 @@ python tools/Export/ExportXlsx.py -u <学号> -p <密码>              # 内部�
 ⚠️ **图片用 `c.uploadImage(path)` 自己传**（187ms，返回 fs URL）。999999 的**已确证原因**
 只有「槽位 key 用数字」；复用他人 fs URL 是否也触发 999999 **尚未单独证实**。
 
+### 命令行入口：发布活动记录（优先用这个，别写一次性脚本）
+
+```bash
+# 新建（正文走文件，避免长中文与换行被 shell 吃掉）
+python tools/RecordCenter/PublishActivity.py --title "标题" ^
+    --content-file body.txt --image arch.png --image shot.png ^
+    --duration 8 --label 40 --dimension 5 --yes
+
+# 编辑已发布记录：只改要改的字段，未传的沿用原记录（图片也沿用）
+python tools/RecordCenter/PublishActivity.py --edit-id <recordId> ^
+    --title "新标题" --content-file body.txt --yes
+
+# 预览：打印条数快照与最终载荷，不写入、不上传
+python tools/RecordCenter/PublishActivity.py --title "标题" --content-file body.txt --dry-run
+```
+
+- 自动完成：本地图片上传 → 发布/编辑 → **读回执校验**（本人/活动/本校三口径条数变化、
+  按标题定位 `recordId`、`queryRecord` 核对标题与正文逐字、图片数量）。
+- 退出码：`0` 成功且回执一致 / `2` 服务端拒绝（含 999999）/ `3` 回执不一致需人工核查 /
+  `4` token 失效 / `5` 前置校验失败 / `6` 其他异常。
+- **写入必须显式 `--yes`**（即「已向用户确认」）；只读预览用 `--dry-run`。
+- 细节见 `tools/RecordCenter/PublishActivity.md`。
+
+### 直接调库（需要自定义表单时）
+
 ```python
 from IqClient import IQClient
 c = IQClient("<ssoToken>"); c.login()
