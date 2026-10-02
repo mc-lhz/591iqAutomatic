@@ -19,13 +19,13 @@ from IqClient import IQClient                          # noqa: E402
 from Access.LoginToken import loginForToken           # noqa: E402
 
 def _pick_image():
-    cand = [os.path.join(os.environ.get("TEMP", ""), "opencode", "iq",
-                         "junxun.jpg"),
-            os.path.join(HERE, "jcaptcha.jpg")]
+    """挑一张可上传的测试图：环境变量 > 本目录 fixture > 现场生成 1x1 JPEG。"""
+    cand = [os.environ.get("IQ_TEST_IMAGE", ""),
+            os.path.join(HERE, "fixture.jpg")]
     for p in cand:
-        if os.path.exists(p):
+        if p and os.path.exists(p):
             return p
-    # 兜底：本地生成一张 1x1 JPEG
+    # 兜底：本地生成一张 4x4 JPEG
     out = os.path.join(HERE, "_tiny.jpg")
     if not os.path.exists(out):
         from PIL import Image
