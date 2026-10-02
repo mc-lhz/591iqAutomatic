@@ -21,6 +21,7 @@ tools/
   HomeWorkbench/TaskAndMessage.py 待办任务、未读消息、公告
   RecordCenter/RecordQuery.py     写实记录读取（列表/标签/统计/详情）
   RecordCenter/RecordWrite.py     图片上传、发布写实记录（活动/荣誉）
+  RecordCenter/PublishActivity.py 活动记录发布/编辑命令行（上传+发布+回执校验）
   GrowReport/GrowthReport.py      成长报告列表与详情
   GrowReport/GrowthStatistics.py  荣誉统计、活动维度统计
   Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet，纯标准库）
