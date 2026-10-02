@@ -49,7 +49,7 @@ def main():
     ap.add_argument("--token", default="")
     ap.add_argument("-u", "--username", default="")
     ap.add_argument("-p", "--password", default="")
-    ap.add_argument("--retry", type=int, default=3)
+    ap.add_argument("--retry", type=int, default=6)
     ap.add_argument("--upload", action="store_true",
                     help="测试 /announcement/upload（会写入一个文件）")
     ap.add_argument("--dump", action="store_true",

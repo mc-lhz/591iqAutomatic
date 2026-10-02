@@ -11,7 +11,7 @@
   python loginToken.py captcha [--out jcaptcha.jpg]     # 取验证码图片
 
 用法：
-  python loginToken.py password -u <学号> -p <密码> [--retry 3] [--interactive]
+  python loginToken.py password -u <学号> -p <密码> [--retry 6] [--interactive]
   python loginToken.py jsessionid --jsessionid <JSESSIONID>
   python loginToken.py redirect "https://www.591iq.cn/#/mock_login?...&token=<32hex>&userType=2"
   python loginToken.py token <32hex>
@@ -153,7 +153,7 @@ def ocrCaptcha(path):
     return re.sub(r"[^0-9a-z]", "", texts[0].lower())
 
 
-def loginForToken(username, password, retry=3, captchaFile="jcaptcha.jpg",
+def loginForToken(username, password, retry=6, captchaFile="jcaptcha.jpg",
                   interactive=False):
     """门户账号登录 → 抓 sso Token。失败抛 SystemExit。"""
     s = newSession()
@@ -166,7 +166,7 @@ def loginForToken(username, password, retry=3, captchaFile="jcaptcha.jpg",
             sys.exit(1)
     else:
         # 必须在同一会话里先取验证码再登录（j_captcha 与 JSESSIONID 绑定）
-        for attempt in range(1, (retry or 3) + 1):
+        for attempt in range(1, (retry or 6) + 1):
             fetchCaptcha(s, captchaFile)
             code = ocrCaptcha(captchaFile)
             print(f"[ocr] 第{attempt}次 验证码={code or '(识别失败)'} "
@@ -304,7 +304,8 @@ def main():
     p = sub.add_parser("password", help="1 账号密码（推荐）")
     p.add_argument("-u", "--username", default="")
     p.add_argument("-p", "--password", default="")
-    p.add_argument("--retry", type=int, default=3)
+    p.add_argument("--retry", type=int, default=6,
+                   help="OCR 验证码重取重试次数（单次约 70%% 通过，默认 6）")
     p.add_argument("--interactive", action="store_true", help="人工看图输验证码")
     p.add_argument("--captchaFile", default="jcaptcha.jpg")
     p.add_argument("--noVerify", action="store_true")
