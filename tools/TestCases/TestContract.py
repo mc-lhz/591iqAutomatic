@@ -42,6 +42,14 @@ CLI_ENTRIES = [
 MD_EXEMPT = {"IqClient.py", "XlsxWriter.py"}
 
 # 敏感串：只写通用形态，**绝不把真实凭据写进仓库**（否则扫描器自己就泄密）
+# 乱码残留特征：**必须用码点构造**。第一版把乱码样本当字面量写在源码里，
+# 结果扫描器把自己判成乱码，CI 两个平台一起红——这类「检测器自指」坑过一次就记住。
+MOJIBAKE = [
+    chr(0x951F) + chr(0x65A4) + chr(0x62F7),   # GBK 误解码 UTF-8 的典型产物
+    chr(0xFFFD),                               # 解码失败的替换符
+    chr(0xEF) + chr(0xBF) + chr(0xBD),         # U+FFFD 被按 latin-1 二次显示
+]
+
 SENSITIVE = [
     ("32 位 hex（token / recordId）", r"(?<![0-9a-fA-F])[0-9a-f]{32}(?![0-9a-fA-F])"),
     ("手机号", r"(?<!\d)1[3-9]\d{9}(?!\d)"),
@@ -158,9 +166,9 @@ def checkHygiene(files):
             bom.append(rel)
         if b"\t" in raw:
             tab.append(rel)
-        for token in ("锟斤拷", "�", "ï¿½"):
+        for token in MOJIBAKE:
             if token in raw.decode("utf-8", "replace"):
-                mojibake.append("%s(%s)" % (rel, token))
+                mojibake.append("%s(U+%04X)" % (rel, ord(token[0])))
     bad = []
     if bom:
         bad.append("含 BOM: %s" % "、".join(bom[:3]))
