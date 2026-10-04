@@ -250,6 +250,36 @@ def checkImport():
     add("模块可导入（无副作用）", OK, "IQClient 与写域 mixin 导入正常")
 
 
+def checkEntryHelp():
+    """逐个跑 `<入口> --help`，退出码必须为 0 且无 Traceback。
+
+    为什么值得单独查：argparse 的 help 字符串里一个裸 `%` 就会让 `-h` 崩
+    （2026-10-04 的 `new -h` 就是这么炸的），而顶层 `import requests` / 顶层生成图片
+    这类**重依赖**也会让裸环境的 `--help` 打不开——本地装了依赖看不出来，
+    只有 CI 这种干净环境才照得出来。用子进程跑，隔离本进程已导入的模块。
+    """
+    import subprocess
+    bad = []
+    for rel in CLI_ENTRIES:
+        path = os.path.join(TOOLS, *rel.split("/"))
+        if not os.path.exists(path):
+            bad.append("%s 不存在" % rel)
+            continue
+        try:
+            r = subprocess.run([sys.executable, "-X", "utf8", path, "--help"],
+                               capture_output=True, text=True, timeout=60,
+                               encoding="utf-8", errors="replace")
+        except (OSError, subprocess.SubprocessError) as e:
+            bad.append("%s 无法执行: %s" % (rel, e))
+            continue
+        err = r.stderr or ""
+        if r.returncode != 0 or "Traceback" in err:
+            tail = (err.strip().splitlines() or ["无 stderr"])[-1]
+            bad.append("%s --help 退出 %s: %s" % (rel, r.returncode, tail[:90]))
+    add("命令行 -h 冒烟（%d 个入口）" % len(CLI_ENTRIES), FAIL if bad else OK,
+        "；".join(bad[:3]) or "全部入口 --help 正常退出")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -264,6 +294,7 @@ def main():
     checkVersion(files)
     checkRecordTypeMap()
     checkCli()
+    checkEntryHelp()
     checkImport()
 
     counts = {OK: 0, WARN: 0, FAIL: 0}

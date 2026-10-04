@@ -1,6 +1,6 @@
 name: CI
 
-# 全部检查都是**离线**的：不需要任何 secret，不碰 591iq 网络。
+# 全部检查都是**离线**的：不需要任何 secret，不碰 591iq 网络，不需要第三方包。
 # 带凭据的线上回归（TestApiReadOnly / TestRecordRead）刻意不放进 CI——
 # 学生账号凭据不该进公开仓库的 secrets，需要时在本地跑。
 on:
@@ -27,33 +27,21 @@ jobs:
         with:
           python-version: "3.11"
 
+      # 注意：不要在 run 里写 shell 专有语法（for/do/done 是 bash，而
+      # windows-latest 的默认 shell 是 PowerShell）——第一版就这么让 windows 单独变红。
+      # 需要多步逻辑就交给 Python，或显式写 shell: bash。
+
       - name: 字节码编译
         run: python -m compileall -q tools
 
+      # 这一步内含 12 项检查，其中「命令行 -h 冒烟」会逐个跑 9 个入口的 --help，
+      # 用来覆盖 argparse help 串转义、以及「顶层导入重依赖导致裸环境打不开 -h」两类事故。
       - name: 仓库契约与卫生
         run: python -X utf8 tools/TestCases/TestContract.py
 
-      - name: 命令行入口 -h 冒烟
-        # 覆盖 argparse 的 help 字符串转义类事故（2026-10-04 的 %T 崩溃就是这么来的）
+      # 冒烟测试不该改动已跟踪文件（产物已 gitignore）。用 git diff 的退出码判断，
+      # 不依赖任何 shell 语法。
+      - name: 断言测试未改动工作区
         run: |
-          set -e
-          for f in \
-            tools/Access/LoginToken.py \
-            tools/Access/VisionLogin.py \
-            tools/Export/ExportXlsx.py \
-            tools/Export/ExportSummaryList.py \
-            tools/RecordCenter/PublishActivity.py \
-            tools/RecordCenter/DeleteRecord.py \
-            tools/TestCases/TestApiReadOnly.py \
-            tools/TestCases/TestRecordRead.py \
-            tools/TestCases/TestContract.py
-          do
-            echo "--- $f -h"
-            python -X utf8 "$f" --help
-          done
-
-      - name: 断言无未提交改动
-        # 冒烟测试不该产生文件改动（产物已 gitignore）；有改动说明某入口偷偷写了东西
-        run: |
-          git status --porcelain
-          test -z "$(git status --porcelain)" || (git status --porcelain; exit 1)
+          git diff --exit-code
+          git diff --cached --exit-code
