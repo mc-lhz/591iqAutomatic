@@ -16,7 +16,7 @@
 | 删掉发错的记录 | `DeleteRecord.py --id <记录id> --dry-run` 先看清是哪一条，确认后加 `--yes` 才真删 |
 | 查待办任务与未读消息 | `TaskAndMessage` 模块，或看首页摘要 |
 | 不知道某类记录该填什么 | 查 `reference/frontend.md`（22 类记录的字段、必填项、平台原话提示） |
-| 确认系统是否正常 | `TestApiReadOnly.py`（42 项只读自检）、`TestRecordRead.py`（13 项业务断言） |
+| 确认系统是否正常 | `TestApiReadOnly.py`（42 项只读自检）、`TestRecordRead.py`（13 项业务断言）、`TestContract.py`（11 项本地契约审计，不联网） |
 
 一句话：**读**——数据汇总导出、任务与记录查询；**写**——写实记录与活动总结提交，
 提交前都会先向你确认，提交后自动读回执核对，不靠返回值说话。
@@ -46,8 +46,9 @@ tools/
   Export/ExportXlsx.py           个人综评全量导出（13 sheet，纯标准库）
   Export/ExportSummaryList.py    活动课程总结清单导出
   Export/XlsxWriter.py           共用的最小 xlsx 写出器（彩色样式）
-  TestCases/TestApiReadOnly.py   只读全量自检（41 项，可选加传图共 42 项）
+  TestCases/TestApiReadOnly.py   只读全量自检（42 项，可选加传图共 43 项）
   TestCases/TestRecordRead.py    写实记录业务 13 项断言回归
+  TestCases/TestContract.py      仓库契约与卫生审计（离线，CI 与本地共用）
 ```
 
 结构按业务分块：每个目录是一个业务领域（接入、档案、工作台、写实记录、成长报告、导出、自检），
@@ -91,8 +92,9 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file 正
 python tools/RecordCenter/PublishActivity.py --edit-id <记录id> --title "新标题" --yes
 python tools/RecordCenter/DeleteRecord.py --id <记录id> --dry-run        # 先看清要删的是哪一条
 python tools/RecordCenter/DeleteRecord.py --id <记录id> --yes             # 确认后删除（不可撤销）
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>  # 只读自检 41 项
-python tools/TestCases/TestRecordRead.py <ssoToken>           # 写实记录 13 项断言
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>  # 只读自检 42 项（要 token）
+python tools/TestCases/TestRecordRead.py <ssoToken>           # 写实记录 13 项断言（要 token）
+python tools/TestCases/TestContract.py                 # 本地契约审计（离线，不要 token）
 ```
 
 `ExportXlsx.py`、`PublishActivity.py`、`TestApiReadOnly.py` 也支持 `-u <学号> -p <密码>`，
@@ -112,6 +114,14 @@ python tools/TestCases/TestRecordRead.py <ssoToken>           # 写实记录 13 
   实测「发一条再删一条」：本人记录 15`→16`→15、本校可见 278`→279`→278，删完 `queryRecord` 查不到、feed 里也不见了。
   但删除不可撤销，所以提交前照样先问你一句。
 - 验证码结论：看图识别 46/46 = 100%，纯自动识别 42/70 ≈ 60%。
+
+## 版本与协作
+
+- 当前版本看仓库根的 `VERSION`（内容必须与 release tag 逐字一致）。
+- 每次 push / PR 自动跑一遍离线 CI：编译、契约审计、9 个命令行入口的 `-h` 冒烟、工作区是否干净。**不需要任何密钥**，也不访问 591iq。
+- 线上回归（那两个要 token 的）刻意不放进 CI：学生账号凭据不进公开仓库的 secrets，
+  需要时在本地跑。
+- 手动发版流程与 zip 打包规则见 `AGENTS.md`「版本与发布规范」。
 
 ## 依赖
 
