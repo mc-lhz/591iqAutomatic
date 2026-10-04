@@ -1,9 +1,9 @@
 ---
 name: 591iqAutomatic
-description: 天蛙综合素质评价系统（www.591iq.cn，福建厦门一中等校）自动化。Use when the user mentions 591iq、综合素质评价、综评系统、成长报告、写实记录、成长空间、学生档案、待办任务、ssoToken、#/mock_login，或要求抓取/导出/统计该系统里的学生数据、任务、荣誉、记录。
+description: 新壹我（天蛙）综合素质评价系统（www.591iq.cn，福建厦门一中等校）自动化Skill。Use when the user mentions 591iq、综合素质评价、综评系统、成长报告、写实记录、成长空间、学生档案、待办任务、ssoToken、#/mock_login，或要求抓取/导出/统计该系统里的学生数据、任务、荣誉、记录。
 ---
 
-# 591iq 综合素质评价自动化
+# 新壹我（天蛙）综合素质评价系统（www.591iq.cn）自动化
 
 目标站：`https://www.591iq.cn/#/student/index?theme=gray`（Vue SPA，hash 路由）。
 API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作，无需浏览器。**
