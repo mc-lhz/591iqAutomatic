@@ -19,7 +19,11 @@ from IqClient import IQClient, IQError                      # noqa: E402
 from Access.LoginToken import loginForToken           # noqa: E402
 
 def _pick_image():
-    """挑一张可上传的测试图：环境变量 > 本目录 fixture > 现场生成 1x1 JPEG。"""
+    """挑一张可上传的测试图：环境变量 > 本目录 fixture > 现场生成 1x1 JPEG。
+
+    只在真要上传时才调用（见 cmdUpload）：顶层就生成图片会让裸环境的
+    `--help` 直接 ImportError，离线 CI 的 -h 冒烟就过不去。
+    """
     cand = [os.environ.get("IQ_TEST_IMAGE", ""),
             os.path.join(HERE, "fixture.jpg")]
     for p in cand:
@@ -31,9 +35,6 @@ def _pick_image():
         from PIL import Image
         Image.new("RGB", (4, 4), (255, 0, 0)).save(out, "JPEG")
     return out
-
-
-IMG = _pick_image()
 
 
 def nonempty(v):
@@ -253,7 +254,7 @@ def main():
     # ---- 上传（可选） ----
     if args.upload:
         def _up():
-            path = os.path.abspath(IMG)
+            path = os.path.abspath(_pick_image())
             if not os.path.exists(path):
                 return "missing"
             return c.uploadImage(path)
