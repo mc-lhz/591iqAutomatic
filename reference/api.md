@@ -258,7 +258,38 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
 | POST | `/record/queryRecord` `{"id":"<recordId>"}` | 编辑回填 |
 | POST | `/record/queryClassifyList` / `/record/queryHistoryBookList` | `{}` / `{}` | 分类 `[1人文科学,2自然科学]`；历史书籍**两层** `data.list.list[]`，行含 `recordContent(null)/recordRead/recordBook{name,writer,intro}` |
 
-⚠️ 学生端**未发现删除接口**（app.js 无 record/delete），提交后无法自行撤销。
+✅ 学生端**确有删除接口**（2026-10-04 确认，见下方「删除写实记录」一节）。注意命名是 del 前缀不是 delete，只在前端 app.js 里 grep deleteRecord 会漏掉它。
+
+
+## 删除写实记录（✅ 路由已确认，2026-10-04）
+
+此前文档误记为「学生端未发现删除接口」，错在只 grep 了 `deleteRecord`：项目里删除类端点
+一律用 `del` 前缀（`delSummary` / `delComment` / `reviewDel`），所以记录删除叫 `delRecord`。
+
+| 项 | 值 |
+|---|---|
+| 端点 | `POST /record/delRecord` |
+| Content-Type | `application/x-www-form-urlencoded` |
+| Body | `request={"data":{"id":"<recordId>"}}`（与其他写接口一致，key 为 `request`） |
+| 成功返回 | `{"list":"操作成功"}` |
+| 库方法 | `c.deleteRecord(recordId)`（`RecordCenter/RecordWrite.py`） |
+| 命令行 | `python tools/RecordCenter/DeleteRecord.py --id <recordId> --yes` |
+
+**路由存在性验证（不删任何东西）**——用不存在的 id（32 个 `0`）调用：
+
+| 路由 | 过期 token | 有效 token |
+|---|---|---|
+| `/record/delRecord` | 200 `{"code":9000,"session已过期"}` | 200 `{"msg":"操作失败","code":1}` |
+| `/record/deleteRecord` | 404（Tomcat HTML） | 404 |
+| `/record/del` | 404 | 404 |
+| `/record/removeRecord` | — | 404 |
+
+即**路由已注册并真的在执行**（网关层返回结构化 JSON 而非 404 空页），对不存在的 id
+返回业务层「操作失败」。真实删除语义（条数 −1、feed 消失）由 issue #1 的实测背书；
+本仓库已把「路由还在不在」纳入 `TestApiReadOnly.py` 常驻用例
+（`record/delRecord (仅探测路由，不删)`，404 → FAIL），真删一律走 `DeleteRecord.py`。
+
+⚠️ 删除**不可撤销**。是否只能删自己的、能否删已审核通过的，**均未验证**。
 
 ## 写入接口②：活动总结 evaluateActivity（✅ 已实测提交成功）
 

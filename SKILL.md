@@ -176,6 +176,22 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
   `4` token 失效 / `5` 前置校验失败 / `6` 其他异常。
 - **写入必须显式 `--yes`**（即「已向用户确认」）；只读预览用 `--dry-run`。
 - 细节见 `tools/RecordCenter/PublishActivity.md`。
+- 提交后若发现发错了：改文案用 `--edit-id` 更好（删除不可撤销，能改就别删）；确实要删见下节 `DeleteRecord.py`。
+
+### 删除写实记录（✅ 路由已确认 2026-10-04，此前文档写错了）
+```bash
+python tools/RecordCenter/DeleteRecord.py --id <recordId> --dry-run   # 先看清是哪一条：id / 类型 / 槽位 / 标题 / 学期 / 图片数 / 字数
+python tools/RecordCenter/DeleteRecord.py --id <recordId> --yes        # 确认后删除（不可撤销）
+```
+- 端点 `POST /record/delRecord`，body `request={"data":{"id":"<recordId>"}}`，返回 `{"list":"操作成功"}`；库方法 `c.deleteRecord(id)`。
+- **名字是 `delRecord` 不是 `deleteRecord`**——项目里删除类端点一律 `del` 前缀（`delSummary` / `delComment` / `reviewDel`），
+  之前文档误记为「未发现删除接口」，错因就是只 grep 了 `deleteRecord`。
+- 回执校验：本人记录数恰好 −1、本校可见不增、`queryRecord(id)` 查不到；任一不符 → 退出码 3。
+  退出码 `0` 成功 / `2` 服务端拒绝或 404（接口可能下线）/ `3` 回执不符 / `4` token 失效 / `5` 前置校验失败。
+- `TestApiReadOnly.py` 有常驻用例 `record/delRecord (仅探测路由，不删)`，
+  用 32 个 `0` 探测路由是否还在（404 → FAIL），**永不删任何东西**。
+- ⚠ **删除不可撤销**；能否删他人的、能否删已审核通过的，均未验证。
+- 细节见 `tools/RecordCenter/DeleteRecord.md`，契约见 `reference/api.md`「删除写实记录」。
 
 ### 直接调库（需要自定义表单时）
 
@@ -204,7 +220,7 @@ c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档
                 honorImages=[img], orderName="优秀")
 ```
 
-⚠️ 提交前必须向用户确认：记录进入**本校可见** feed，且**未发现学生端删除接口**，提交后可能无法自行撤销。
+⚠️ 提交前必须向用户确认：记录进入**本校可见** feed。补充：学生端**确有删除接口**（/record/delRecord，2026-10-04 确认，\	ools/RecordCenter/DeleteRecord.py\），即**已发布的可删**——但删除同样不可撤销，所以确认环节不能省。
 字段/枚举/校验细节见 `reference/api.md`「写入接口」章节。
 
 > **填 `recordContent` 前先查已有结论**：**22 类记录的字段、必填项、平台原话提示已经全部查清**，

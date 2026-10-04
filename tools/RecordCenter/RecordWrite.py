@@ -1,10 +1,10 @@
-"""写实记录域（写）：图片上传与记录发布。
+"""写实记录域（写）：图片上传与记录发布、删除。
 
-⚠️ 所有方法都是写操作：记录进入本校可见 feed，且学生端未发现删除接口，
-调用前必须向用户确认。成功判据 = 读回执，不看返回值。
+⚠️ 所有方法都是写操作：记录进入本校可见 feed，调用前必须向用户确认。
+发布类操作成功判据 = 读回执，不看返回值；**删除不可撤销**，删前务必先确认。
 
-对应端点：/announcement/upload、/record/updateRecord
-读取见同目录 RecordQuery.py。
+对应端点：/announcement/upload、/record/updateRecord、/record/delRecord
+读取见同目录 RecordQuery.py，命令行入口见 PublishActivity.py / DeleteRecord.py。
 """
 import json
 import urllib.request
@@ -81,6 +81,18 @@ class WriteMixin:
         slot = RECORD_TYPE_MAP.get(rt, str(recordType))
         payload = {"recordContent": recordContent, slot: typeForm}
         return self._call("/record/updateRecord", payload, method="POST")
+
+    def deleteRecord(self, recordId):
+        """删除一条写实记录。
+
+        2026-10-04 确认学生端**有**删除接口：`/record/delRecord`（不是 deleteRecord——
+        同族端点都是 del 前缀：delSummary / delComment / reviewDel）。
+        非破坏性验证：用不存在的 id 调用返回 `{"msg":"操作失败","code":1}`，
+        而 deleteRecord / del / removeRecord 都是 Tomcat 404。
+        ⚠️ 删除**不可撤销**，也不限制只能删自己的（未验证）；调用前必须向用户确认。
+        成功判据 = 读回执：列表条数 -1 且 queryRecord(id) 查不到。
+        """
+        return self._call("/record/delRecord", {"id": str(recordId)}, method="POST")
 
     def _semesterName(self, semesterCode):
         """semesterCode -> 学期名；查不到返回空串。

@@ -13,9 +13,10 @@
 | 一次拿到个人全部综评数据 | `ExportXlsx.py` 导出 13 页表格：基本信息、学业成绩、学期总评、荣誉成就、活动课程、写实记录、任务、成长报告、体质健康、心理测评、汇总统计 |
 | 导出活动课程总结清单 | `ExportSummaryList.py`：未提交／已提交／可编辑重交／全量 |
 | 填一条写实记录或活动总结 | `PublishActivity.py` 一条命令：配文 → 上传图片 → 提交 → 自动读回执核对；活动总结见 `api.md` |
+| 删掉发错的记录 | `DeleteRecord.py --id <记录id> --dry-run` 先看清是哪一条，确认后加 `--yes` 才真删 |
 | 查待办任务与未读消息 | `TaskAndMessage` 模块，或看首页摘要 |
 | 不知道某类记录该填什么 | 查 `reference/frontend.md`（22 类记录的字段、必填项、平台原话提示） |
-| 确认系统是否正常 | `TestApiReadOnly.py`（41 项只读自检）、`TestRecordRead.py`（13 项业务断言） |
+| 确认系统是否正常 | `TestApiReadOnly.py`（42 项只读自检）、`TestRecordRead.py`（13 项业务断言） |
 
 一句话：**读**——数据汇总导出、任务与记录查询；**写**——写实记录与活动总结提交，
 提交前都会先向你确认，提交后自动读回执核对，不靠返回值说话。
@@ -39,6 +40,7 @@ tools/
   RecordCenter/RecordQuery.py   写实记录查询（列表/标签/统计/详情）
   RecordCenter/RecordWrite.py   图片上传、发布写实记录
   RecordCenter/PublishActivity.py 活动记录发布/编辑命令行（上传+发布+读回执校验）
+  RecordCenter/DeleteRecord.py     写实记录删除命令行（先 dry-run 看目标，--yes 才删）
   GrowReport/GrowthReport.py     成长报告列表与详情
   GrowReport/GrowthStatistics.py 荣誉统计、活动维度统计
   Export/ExportXlsx.py           个人综评全量导出（13 sheet，纯标准库）
@@ -87,6 +89,8 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>  # 活动总结清�
 python tools/RecordCenter/PublishActivity.py --title "标题" --content-file 正文.txt ^
     --image 图1.png --image 图2.png --duration 8 --yes      # 发布活动记录（先预览加 --dry-run）
 python tools/RecordCenter/PublishActivity.py --edit-id <记录id> --title "新标题" --yes
+python tools/RecordCenter/DeleteRecord.py --id <记录id> --dry-run        # 先看清要删的是哪一条
+python tools/RecordCenter/DeleteRecord.py --id <记录id> --yes             # 确认后删除（不可撤销）
 python tools/TestCases/TestApiReadOnly.py --token <ssoToken>  # 只读自检 41 项
 python tools/TestCases/TestRecordRead.py <ssoToken>           # 写实记录 13 项断言
 ```
@@ -104,7 +108,7 @@ python tools/TestCases/TestRecordRead.py <ssoToken>           # 写实记录 13 
 - 待办任务闭环跑通过：`/task/list` 行内自带 `taskId`+`moduleId` → `/task/get` 取 `eventId`
   → 按 `moduleId` 分流到活动课程 → 提交总结 → 回读确认待办清零。
 - **提交成功以「读回执」为准**：返回值都只是 `{"list":…}`，必须回读列表/统计核对计数变化。
-- 学生端**没有删除写实记录的接口**，所以每次提交前都会先向你确认。
+- 学生端**有删除接口**（2026-10-04 确认，之前文档记错了）：发出去的记录可以删掉，\DeleteRecord.py --id <记录id> --yes\。但删除不可撤销，所以提交前照样先问你一句。
 - 验证码结论：看图识别 46/46 = 100%，纯自动识别 42/70 ≈ 60%。
 
 ## 依赖

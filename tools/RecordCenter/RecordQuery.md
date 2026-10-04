@@ -32,4 +32,4 @@ c.records(limit=1, type_="1")["list"]["list"][0]   # 本人第一条
 
 - `type_` 参数名带下划线是为了不遮蔽内置 `type`，调用时用关键字 `type_="1"`。
 - `recordStatistics` 只统计本人，与 `type=2` 的全校条数**不是同一口径**。
-- 学生端无删除接口，记录一旦发布无法自行撤销。
+- 学生端**有**删除接口（\/record/delRecord\，见 \RecordWrite.deleteRecord\ 与 \DeleteRecord.py\）；删除不可撤销。
