@@ -49,6 +49,7 @@ tools/
   TestCases/TestApiReadOnly.py   只读全量自检（42 项，可选加传图共 43 项）
   TestCases/TestRecordRead.py    写实记录业务 13 项断言回归
   TestCases/TestContract.py      仓库契约与卫生审计（离线，CI 与本地共用）
+  Release/PackSkill.py           技能包打包（发版时自动产出 591iqAutomatic.zip）
 ```
 
 结构按业务分块：每个目录是一个业务领域（接入、档案、工作台、写实记录、成长报告、导出、自检），
@@ -121,7 +122,8 @@ python tools/TestCases/TestContract.py                 # 本地契约审计（�
 - 每次 push / PR 自动跑一遍离线 CI：编译、契约审计、9 个命令行入口的 `-h` 冒烟、工作区是否干净。**不需要任何密钥**，也不访问 591iq。
 - 线上回归（那两个要 token 的）刻意不放进 CI：学生账号凭据不进公开仓库的 secrets，
   需要时在本地跑。
-- 手动发版流程与 zip 打包规则见 `AGENTS.md`「版本与发布规范」。
+- 发版时 GitHub Actions 会自动把技能包打成 `591iqAutomatic.zip` 并挂到该 Release 上（根目录结构，解压前先建 `~\.config\opencode\skills\591iqAutomatic`）。
+- 手动发版流程与打包规则见 `AGENTS.md`「版本与发布规范」。
 
 ## 依赖
 

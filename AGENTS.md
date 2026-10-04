@@ -26,6 +26,7 @@ tools/
   TestCases/TestApiReadOnly.py    只读 42 项（加 `--upload` 满 43 项）
   TestCases/TestRecordRead.py     13 项
   TestCases/TestContract.py       仓库契约与卫生审计（离线，无网络无凭据）
+  Release/PackSkill.py            技能包打包（591iqAutomatic.zip，根目录结构）
 ```
 
 - `reference/api.md` — 端点清单；`reference/frontend.md` + `reference/recordForms.json` —
@@ -47,6 +48,8 @@ tools/
   复合名同时解决可读性与冲突
 - 每业务一个目录 + 每个 py 一个同名 .md 说明；说明含：职责、对应端点、方法清单、最小用法、注意事项
 - 新增业务域 = 新目录（含 `__init__.py`）+ mixin + 说明 + 在 `IqClient.py` 门面注册
+- **唯一例外**：`Release/`（仓库维护工具，与 591iq 平台 API 无关）**不注册门面**，
+  其模块也不 mixin 进 `IQClient`；它仍需同名 `.md` 说明与 `__init__.py`
 - `Http` 必须留在 `IQClient` 继承链末位（基类）
 - 对外 API 只增不改；改方法名必须同步 `IqClient.py` 门面、两个测试、SKILL/README/api.md
 - **改目录/模块名只改 import 语句与文档路径**；API 路径（`/record/...`）、
@@ -74,6 +77,11 @@ tools/
 ⚠️ **改这些文件不要用 PowerShell here-string**：2026-10-04 在 `@"..."@` 里写反引号，
   反引号被当转义符吃掉，5 处代码标记损坏、`\t` 还被解释成 TAB。
   要批量改就写一个补丁脚本文件再执行
+- **argparse 的 help 字符串里不能留裸 `%`**：`--help` 会对 help 再做一次 `%` 格式化，
+  ``ValueError: unsupported format character 'T'`` 就是这么来的。
+  连 ``"默认 %%TEMP%%\\%s" % NAME`` 这种「先 %% 转义再 % 代入」的写法也不行——
+  `%` 运算后仍会留下裸 `%T`。**help 文案里索性别用 `%`**。
+  已两次踩坑（`VisionLogin.py`、`PackSkill.py`），均由 `TestContract.py` 的 `-h` 冒烟当场抓住
 
 ## 常用命令
 
@@ -140,16 +148,23 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   1. 改 `VERSION`
   2. 提交 `chore(release): 升版到 <v>`
   3. `git tag -a <v> -m "<v>"` → `git push origin <v>`
-  4. 在 GitHub 网页端建 Release、勾 **Pre-release**、粘贴说明、上传 zip
+  4. 在 GitHub 网页端建 Release、勾 **Pre-release**、粘贴说明、点发布
+     → `.github/workflows/release.yml` 会在 `release: published` 时自动打包
+       并把 `591iqAutomatic.zip` 挂为该 Release 的附件（用 runner 自带 `GITHUB_TOKEN`，
+       本地不需要任何令牌；预发布同样会触发）
 - 命名：beta 期用 `v0.1-betaN`，功能冻结后转 `v0.1.0`，破坏性改动才升 minor。
   已知 `v0.1-beta1` **不是严格 SemVer**（规范写法 `v0.1.0-beta.1`），
   GitHub 正常但 SemVer 工具无法排序先后——有意选择，记录在案
 - 发版前必跑：`compileall` + `TestContract.py` + 敏感串扫描 +
   `reference/` 未超 100 KB；线上回归（`TestApiReadOnly` / `TestRecordRead`）在本地跑
-- **打包规则**：只取 `git ls-files`（天然排除验证码图 / state / 报告 / xlsx），
-  zip 内顶层目录为 `591iqAutomatic/`，解压到 `~\.config\opencode\skills\` 即装好；
-  打包**必须在推 tag 之后**做，Release 说明里写明「以 tag 为准，zip 是同快照的便利副本」
-  并附 sha256
+- **打包规则**（实现在 `Release/PackSkill.py`，规则改这里，别改 workflow）：
+  · 文件来源 `git ls-files`，额外排除 `.github/` 与 `.gitignore`（流水线配置与 git 内部约定不必随包分发）
+  · 产物固定名 `591iqAutomatic.zip`，**根目录结构**：`SKILL.md` / `tools/` / `reference/` 直接在顶层，**不套外层目录**（与 GitHub 自动源码包不同）
+  · 因此安装要自己先建目录：`mkdir -p ~/.config/opencode/skills/591iqAutomatic` 再解压进去；这一步必须写进 Release 说明
+  · 打包后自检：根目录必备齐全、未套层、包内无 .git/.github/__pycache__/*.pyc/*.xlsx/图片，
+    并输出 **sha256**；Release 说明注明「以 tag 为准，zip 是同快照的便利副本」
+  · `--version-check` 强制 VERSION 与 tag 逐字相同，`--require-clean` 拒绝把本地脏改动打进包
+  · 打包结构由 `TestContract.py` 第 13 项每次 CI 都验，改规则当天就能发现坏掉
 
 ## 依赖
 

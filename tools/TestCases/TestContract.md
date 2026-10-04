@@ -8,7 +8,7 @@ python tools/TestCases/TestContract.py            # 人类可读报告
 python tools/TestCases/TestContract.py --quiet    # 只输出汇总行（CI 用）
 ```
 
-退出码：0 全部通过（`WARN` 不阻断）/ 1 有 `FAIL`。
+退出码：0 全部通过（`WARN` 不阻断）/ 1 有 `FAIL`。共 **13 项**。
 
 ## 为什么需要它
 
@@ -28,7 +28,8 @@ python tools/TestCases/TestContract.py --quiet    # 只输出汇总行（CI 用�
 | `VERSION` | 存在且格式为 `v数字.数字[-标识]` | FAIL |
 | `VERSION` vs tag | 与 `git describe --tags` 一致 | FAIL（无 tag 时 WARN） |
 | rt 映射 | `RECORD_TYPE_MAP` / `RECORD_TYPE_NAME` 各 22 项，且与 `reference/frontend.md` 表格对得上 | FAIL |
-| 命令行入口 | 9 个入口都具备 `__main__` | FAIL |
+| 命令行入口 | 10 个入口都具备 `__main__` | FAIL |
+| 技能包结构 | 真的打一次 `591iqAutomatic.zip`：根目录必备齐全、未套外层目录、无垃圾文件 | FAIL |
 | 模块可导入 | `IQClient` 与写域 mixin 导入无副作用 | FAIL |
 
 ## 注意事项
@@ -40,5 +41,7 @@ python tools/TestCases/TestContract.py --quiet    # 只输出汇总行（CI 用�
 - 命名检查**只作用于 `tools/` 子树**：仓库根的 `reference/` 是文档目录，不适用大驼峰。
 - 文件清单取自 `git ls-files`（天然排除 gitignore 的验证码图、state、报告、xlsx）；
   不在 git 仓库里时退化为走目录树。
+- 「技能包结构」这项会真的调 `Release/PackSkill.py` 打一次包（落临时目录、跑完即删），
+  所以打包规则改动当天就能发现坏掉，不用等到发版那天。
 - 三个测试脚本的分工：`TestContract` 查本地契约（无网络）、`TestApiReadOnly` 查线上只读端点、
   `TestRecordRead` 查写实记录业务断言。

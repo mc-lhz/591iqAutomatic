@@ -35,6 +35,7 @@ CLI_ENTRIES = [
     "Access/LoginToken.py", "Access/VisionLogin.py",
     "Export/ExportXlsx.py", "Export/ExportSummaryList.py",
     "RecordCenter/PublishActivity.py", "RecordCenter/DeleteRecord.py",
+    "Release/PackSkill.py",
     "TestCases/TestApiReadOnly.py", "TestCases/TestRecordRead.py",
     "TestCases/TestContract.py",
 ]
@@ -280,6 +281,59 @@ def checkEntryHelp():
         "；".join(bad[:3]) or "全部入口 --help 正常退出")
 
 
+def checkPackage():
+    """真的打一次技能包，验证结构（根目录 / 无外层目录 / 无垃圾文件 / 必备齐全）。
+
+    打包规则住在 `Release/PackSkill.py` 里，这里只负责「每次都验一遍」——
+    否则规则改了没人知道，直到真发版那天才发现包是坏的。
+    产物落在临时目录，跑完即删，不污染工作区。
+    """
+    import shutil
+    import subprocess
+    import tempfile
+    import zipfile
+    from Release.PackSkill import PKG_NAME
+
+    pack = os.path.join(TOOLS, "Release", "PackSkill.py")
+    if not os.path.exists(pack):
+        add("技能包结构合规", FAIL, "找不到 %s" % pack)
+        return
+    tmp = tempfile.mkdtemp(prefix="packcheck_")
+    out = os.path.join(tmp, PKG_NAME)
+    try:
+        r = subprocess.run([sys.executable, "-X", "utf8", pack, "--out", out],
+                           capture_output=True, text=True, timeout=300,
+                           encoding="utf-8", errors="replace")
+        if r.returncode != 0:
+            tail = (r.stderr.strip().splitlines() or ["无 stderr"])[-1]
+            add("技能包结构合规", FAIL,
+                "打包失败(退出 %s): %s" % (r.returncode, tail[:110]))
+            return
+        with zipfile.ZipFile(out) as z:
+            names = [n for n in z.namelist() if not n.endswith("/")]
+        tops = {n.split("/", 1)[0] for n in names}
+        bad = []
+        for must in ("SKILL.md", "AGENTS.md", "README.md", "VERSION"):
+            if must not in names:
+                bad.append("缺 %s" % must)
+        if len(tops) == 1 and "/" not in names[0]:
+            bad.append("套了一层目录（顶层只有 %s），应为根目录包" % list(tops)[0])
+        for n in names:
+            if ("__pycache__" in n or n.startswith((".git", ".github"))
+                    or n.endswith((".pyc", ".xlsx", ".jpg", ".png"))):
+                bad.append("含垃圾文件 %s" % n)
+        if not os.path.exists(os.path.join(ROOT, "VERSION")):
+            bad.append("仓库根缺 VERSION")
+        add("技能包结构合规（%d 文件 / %.0f KB）"
+            % (len(names), os.path.getsize(out) / 1024),
+            FAIL if bad else OK,
+            "；".join(bad[:3]) or "根目录结构、无外层目录、必备齐全")
+    except (OSError, subprocess.SubprocessError, zipfile.BadZipFile) as e:
+        add("技能包结构合规", FAIL, "校验异常: %s: %s" % (type(e).__name__, e))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -295,6 +349,7 @@ def main():
     checkRecordTypeMap()
     checkCli()
     checkEntryHelp()
+    checkPackage()
     checkImport()
 
     counts = {OK: 0, WARN: 0, FAIL: 0}
