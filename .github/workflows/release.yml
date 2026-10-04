@@ -38,17 +38,30 @@ jobs:
           echo "tag=$TAG"
 
       - name: 校验 VERSION 与打包
-        # --require-clean：工作区必须干净（checkout 后本应如此）
-        # --version-check：VERSION 必须与 tag 逐字相同
+        # 不要再用 `python … | tee dist/pack.log`：shell 在建立管道时就会打开
+        # dist/pack.log，而此时 dist/ 还不存在（PackSkill 是之后才建目录的），
+        # tee 失败 + 默认的 pipefail 会让这一步无谓变红。日志直接进 step 输出即可。
         run: |
           python -X utf8 tools/Release/PackSkill.py \
             --require-clean \
             --version-check "${{ steps.tag.outputs.value }}" \
-            --out dist/591iqAutomatic.zip | tee dist/pack.log
+            --out dist/591iqAutomatic.zip
 
       - name: 写入 job summary
         if: always()
-        run: cat dist/pack.log >> "$GITHUB_STEP_SUMMARY" || true
+        run: |
+          echo "### 技能包 ${{ steps.tag.outputs.value }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f dist/591iqAutomatic.zip ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "条目 : $(python -c "import zipfile;print(len([n for n in zipfile.ZipFile('dist/591iqAutomatic.zip').namelist() if not n.endswith('/')]))")" >> "$GITHUB_STEP_SUMMARY"
+            echo "体积 : $(du -h dist/591iqAutomatic.zip | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
+            echo "sha256: $(sha256sum dist/591iqAutomatic.zip | cut -d' ' -f1)" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**打包失败，未产出 dist/591iqAutomatic.zip**" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: 挂为 Release 附件
         env:
