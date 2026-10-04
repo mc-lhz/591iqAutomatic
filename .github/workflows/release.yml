@@ -1,0 +1,65 @@
+name: Release
+
+# 发版自动产出技能包：Release 发布时（预发布同样触发）打一个
+# 591iqAutomatic.zip 并挂为该 Release 的附件。
+#
+# 不需要你本地有任何令牌——用的是 runner 自带的 GITHUB_TOKEN。
+# 人工发版流程：改 VERSION → 提交 → 打 tag 推 tag → 网页端建 Release 点发布。
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "手动重跑时：要挂载的 tag 名"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    name: 打包并挂载 591iqAutomatic.zip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 确定 tag
+        id: tag
+        # 手动触发用输入值；Release 触发用事件里的 tag_name
+        run: |
+          TAG="${{ github.event.inputs.tag || github.event.release.tag_name }}"
+          if [ -z "$TAG" ]; then echo "拿不到 tag 名"; exit 1; fi
+          echo "value=$TAG" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG"
+
+      - name: 校验 VERSION 与打包
+        # --require-clean：工作区必须干净（checkout 后本应如此）
+        # --version-check：VERSION 必须与 tag 逐字相同
+        run: |
+          python -X utf8 tools/Release/PackSkill.py \
+            --require-clean \
+            --version-check "${{ steps.tag.outputs.value }}" \
+            --out dist/591iqAutomatic.zip | tee dist/pack.log
+
+      - name: 写入 job summary
+        if: always()
+        run: cat dist/pack.log >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: 挂为 Release 附件
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.tag.outputs.value }}" \
+            dist/591iqAutomatic.zip --clobber
+
+      - name: 复核附件已挂上
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "${{ steps.tag.outputs.value }}" \
+            --json assets --jq '.assets[].name'
