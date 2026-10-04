@@ -258,7 +258,7 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
 | POST | `/record/queryRecord` `{"id":"<recordId>"}` | 编辑回填 |
 | POST | `/record/queryClassifyList` / `/record/queryHistoryBookList` | `{}` / `{}` | 分类 `[1人文科学,2自然科学]`；历史书籍**两层** `data.list.list[]`，行含 `recordContent(null)/recordRead/recordBook{name,writer,intro}` |
 
-✅ 学生端**确有删除接口**（2026-10-04 确认，见下方「删除写实记录」一节）。注意命名是 del 前缀不是 delete，只在前端 app.js 里 grep deleteRecord 会漏掉它。
+✅ 学生端**确有删除接口**（2026-10-04 确认并实测，见下方「删除写实记录」一节）。注意命名是 `del` 前缀不是 `delete`——只在前端 app.js 里 grep `deleteRecord` 会漏掉它。
 
 
 ## 删除写实记录（✅ 路由已确认，2026-10-04）
@@ -285,11 +285,23 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
 | `/record/removeRecord` | — | 404 |
 
 即**路由已注册并真的在执行**（网关层返回结构化 JSON 而非 404 空页），对不存在的 id
-返回业务层「操作失败」。真实删除语义（条数 −1、feed 消失）由 issue #1 的实测背书；
-本仓库已把「路由还在不在」纳入 `TestApiReadOnly.py` 常驻用例
+返回业务层「操作失败」。本仓库已把「路由还在不在」纳入 `TestApiReadOnly.py` 常驻用例
 （`record/delRecord (仅探测路由，不删)`，404 → FAIL），真删一律走 `DeleteRecord.py`。
 
-⚠️ 删除**不可撤销**。是否只能删自己的、能否删已审核通过的，**均未验证**。
+**真实删除语义已实测闭环（2026-10-04，当天完成）**——发一条一次性测试记录再删掉，
+用真实数据确认，而不只靠 issue #1 的口述：
+
+| 步骤 | 本人记录 | 本人活动记录 | 本校可见 |
+|---|---|---|---|
+| 基线 | 15 | 13 | 278 |
+| 发布测试记录后 | 16 | 14 | 279 |
+| 删除后 | 15 | 13 | 278 |
+
+`delRecord` 返回 `{"list":"操作成功"}`，随后 `queryRecord(id)` 查不到该 id，
+且该 id 已不出现在本人列表与本校 feed 中——**删除确实生效，并且从 feed 里消失**。
+（测试记录标题「临时测试记录：验证删除接口（发完即删）」，发完即删，无残留。）
+
+⚠️ 删除**不可撤销**。是否只能删自己的、能否删已审核通过的，**仍未验证**（本次只删了自己刚发的、未审核的记录）。
 
 ## 写入接口②：活动总结 evaluateActivity（✅ 已实测提交成功）
 

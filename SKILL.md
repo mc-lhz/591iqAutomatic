@@ -190,7 +190,8 @@ python tools/RecordCenter/DeleteRecord.py --id <recordId> --yes        # 确认�
   退出码 `0` 成功 / `2` 服务端拒绝或 404（接口可能下线）/ `3` 回执不符 / `4` token 失效 / `5` 前置校验失败。
 - `TestApiReadOnly.py` 有常驻用例 `record/delRecord (仅探测路由，不删)`，
   用 32 个 `0` 探测路由是否还在（404 → FAIL），**永不删任何东西**。
-- ⚠ **删除不可撤销**；能否删他人的、能否删已审核通过的，均未验证。
+- 真实删除语义**已实测闭环**（2026-10-04）：发一条 → 删一条，本人记录 15 → 16 → 15、本校可见 278 → 279 → 278，`queryRecord` 查不到且 feed 里消失。
+⚠️ **删除不可撤销**；能否删他人的、能否删已审核通过的，**仍未验证**。
 - 细节见 `tools/RecordCenter/DeleteRecord.md`，契约见 `reference/api.md`「删除写实记录」。
 
 ### 直接调库（需要自定义表单时）
@@ -220,7 +221,7 @@ c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档
                 honorImages=[img], orderName="优秀")
 ```
 
-⚠️ 提交前必须向用户确认：记录进入**本校可见** feed。补充：学生端**确有删除接口**（/record/delRecord，2026-10-04 确认，\	ools/RecordCenter/DeleteRecord.py\），即**已发布的可删**——但删除同样不可撤销，所以确认环节不能省。
+⚠️ 提交前必须向用户确认：记录进入**本校可见** feed。补充：学生端**确有删除接口**（`POST /record/delRecord`，2026-10-04 确认并实测，命令行 `tools/RecordCenter/DeleteRecord.py`），即**已发布的可删**——但删除同样不可撤销，所以确认环节不能省。`
 字段/枚举/校验细节见 `reference/api.md`「写入接口」章节。
 
 > **填 `recordContent` 前先查已有结论**：**22 类记录的字段、必填项、平台原话提示已经全部查清**，
