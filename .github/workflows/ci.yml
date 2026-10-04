@@ -1,0 +1,59 @@
+name: CI
+
+# 全部检查都是**离线**的：不需要任何 secret，不碰 591iq 网络。
+# 带凭据的线上回归（TestApiReadOnly / TestRecordRead）刻意不放进 CI——
+# 学生账号凭据不该进公开仓库的 secrets，需要时在本地跑。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: 契约检查 (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 字节码编译
+        run: python -m compileall -q tools
+
+      - name: 仓库契约与卫生
+        run: python -X utf8 tools/TestCases/TestContract.py
+
+      - name: 命令行入口 -h 冒烟
+        # 覆盖 argparse 的 help 字符串转义类事故（2026-10-04 的 %T 崩溃就是这么来的）
+        run: |
+          set -e
+          for f in \
+            tools/Access/LoginToken.py \
+            tools/Access/VisionLogin.py \
+            tools/Export/ExportXlsx.py \
+            tools/Export/ExportSummaryList.py \
+            tools/RecordCenter/PublishActivity.py \
+            tools/RecordCenter/DeleteRecord.py \
+            tools/TestCases/TestApiReadOnly.py \
+            tools/TestCases/TestRecordRead.py \
+            tools/TestCases/TestContract.py
+          do
+            echo "--- $f -h"
+            python -X utf8 "$f" --help
+          done
+
+      - name: 断言无未提交改动
+        # 冒烟测试不该产生文件改动（产物已 gitignore）；有改动说明某入口偷偷写了东西
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)" || (git status --porcelain; exit 1)

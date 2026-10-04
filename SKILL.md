@@ -259,7 +259,10 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 
 回归自测：
 ```bash
+# 离线：不需要 token、不联网，CI 每次 push 都跑这一条
+python tools/TestCases/TestContract.py
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录业务 13 项断言
+python tools/TestCases/TestContract.py                # 本地契约审计（离线，11 项）
 python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 41 项
 python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 41 项
 python tools/TestCases/TestApiReadOnly.py --token <t> --dump     # 额外落盘每个接口的真实返回

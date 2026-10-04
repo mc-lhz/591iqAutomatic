@@ -23,8 +23,9 @@ tools/
   Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet）
   Export/ExportSummaryList.py     活动课程总结清单导出（已交/未交/可编辑重交）
   Export/XlsxWriter.py            共用的最小 xlsx 写出器（纯标准库 zipfile）
-  TestCases/TestApiReadOnly.py    只读 41 项（加 `--upload` 满 42 项）
+  TestCases/TestApiReadOnly.py    只读 42 项（加 `--upload` 满 43 项）
   TestCases/TestRecordRead.py     13 项
+  TestCases/TestContract.py       仓库契约与卫生审计（离线，无网络无凭据）
 ```
 
 - `reference/api.md` — 端点清单；`reference/frontend.md` + `reference/recordForms.json` —
@@ -68,6 +69,11 @@ tools/
   ⚠️ Windows 上 Python 导入也不敏感，改错大小写测试仍可能全绿——改名后必须跑一次
   **大小写审计**（按 `git ls-files` 校验每个 import 路径按原样大小写可命中），别只信测试结果
 - 提交：一次一个 commit，按步骤提交（用户要求）；每个 commit 后推送
+- **每个 py 都要有同名 `.md`**；门面 `IqClient.py` 与最小写出器 `XlsxWriter.py`
+  是 `TestContract.py` 里唯一两个豁免项，新增豁免前先想清楚是不是该补文档
+⚠️ **改这些文件不要用 PowerShell here-string**：2026-10-04 在 `@"..."@` 里写反引号，
+  反引号被当转义符吃掉，5 处代码标记损坏、`\t` 还被解释成 TAB。
+  要批量改就写一个补丁脚本文件再执行
 
 ## 常用命令
 
@@ -125,6 +131,25 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
 - **删除类操作（`RecordCenter/DeleteRecord.py`）默认只读**：先 `--dry-run` 看清目标（id/类型/标题/学期/图片数），再显式 `--yes`；删除**不可撤销**。
   `TestApiReadOnly.py` 里的 `record/delRecord` 用例只用 32 个 `0` 探测路由存在性，**任何情况下都不得改成真删**
 - 端点命名规律：删除类一律 `del` 前缀（`delRecord` / `delSummary` / `delComment` / `reviewDel`），**不是** `deleteRecord`。查删除接口别只 grep `delete`
+
+## 版本与发布规范
+
+- **版本号唯一落点是仓库根 `VERSION`**，内容必须与 release tag **逐字一致**（含 `v` 前缀）
+- **禁止在 README / SKILL / 代码注释里手写版本号**——多处必然漂移；文档只说「见 VERSION」
+- 手动发版（**本仓库无 CI 发布流程**）：
+  1. 改 `VERSION`
+  2. 提交 `chore(release): 升版到 <v>`
+  3. `git tag -a <v> -m "<v>"` → `git push origin <v>`
+  4. 在 GitHub 网页端建 Release、勾 **Pre-release**、粘贴说明、上传 zip
+- 命名：beta 期用 `v0.1-betaN`，功能冻结后转 `v0.1.0`，破坏性改动才升 minor。
+  已知 `v0.1-beta1` **不是严格 SemVer**（规范写法 `v0.1.0-beta.1`），
+  GitHub 正常但 SemVer 工具无法排序先后——有意选择，记录在案
+- 发版前必跑：`compileall` + `TestContract.py` + 敏感串扫描 +
+  `reference/` 未超 100 KB；线上回归（`TestApiReadOnly` / `TestRecordRead`）在本地跑
+- **打包规则**：只取 `git ls-files`（天然排除验证码图 / state / 报告 / xlsx），
+  zip 内顶层目录为 `591iqAutomatic/`，解压到 `~\.config\opencode\skills\` 即装好；
+  打包**必须在推 tag 之后**做，Release 说明里写明「以 tag 为准，zip 是同快照的便利副本」
+  并附 sha256
 
 ## 依赖
 
