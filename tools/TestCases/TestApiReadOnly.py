@@ -15,7 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))                      # tools/t
 TOOLS = os.path.dirname(HERE)                                          # tools（import 根）
 sys.path.insert(0, TOOLS)
 
-from IqClient import IQClient                          # noqa: E402
+from IqClient import IQClient, IQError                      # noqa: E402
 from Access.LoginToken import loginForToken           # noqa: E402
 
 def _pick_image():
@@ -232,6 +232,23 @@ def main():
     case("eventTwo/listLabel dim5", lambda: c.activityLabels(5))
     case("eventTwo/listLabel dim17", lambda: c.activityLabels(17))
     case("evaluation/honor/list", lambda: c.honorTypes())
+
+    def _delRoute():
+        """探测 /record/delRecord 路由是否还在——**不会删除任何东西**（id 全 0 不存在）。
+
+        2026-10-04 发现学生端有删除接口（此前文档误记为「未发现」），所以把它纳入守门：
+          · 路由在   → 业务层 code=1「操作失败」= PASS
+          · 路由没了 → urlopen 抛 HTTPError 404 = FAIL（需同步改文档）
+        真删请走 tools/RecordCenter/DeleteRecord.py，不要在这里删。
+        """
+        try:
+            c.post("/record/delRecord", {"id": "0" * 32})
+        except IQError as e:
+            if "404" in str(e):
+                raise AssertionError("路由返回 404，/record/delRecord 可能已下线")
+            return "route-alive, id 不存在被业务层拒绝: %s" % e
+        raise AssertionError("不存在的 id 却返回成功，端点语义可疑")
+    case("record/delRecord (仅探测路由，不删)", _delRoute)
 
     # ---- 上传（可选） ----
     if args.upload:

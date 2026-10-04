@@ -17,6 +17,7 @@ tools/
   RecordCenter/RecordQuery.py     写实记录读取（列表/标签/统计/详情）
   RecordCenter/RecordWrite.py     图片上传、发布写实记录
   RecordCenter/PublishActivity.py 活动记录发布/编辑 CLI（--yes 才写，--dry-run 只读）
+  RecordCenter/DeleteRecord.py     写实记录删除 CLI（--yes 才删，--dry-run 只看目标）
   GrowReport/GrowthReport.py      成长报告列表与详情
   GrowReport/GrowthStatistics.py  荣誉统计、活动维度统计
   Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet）
@@ -121,6 +122,9 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   已 gitignore `*.xlsx`；不要把导出文件或含真实姓名的 json 提交进仓库
 - 提交前脱敏：不得包含 token / 密码 / 姓名 / userId / 班级
 - 测试需要有效 ssoToken；无 token 时 `TestApiReadOnly.py` 的登录步骤会失败
+- **删除类操作（`RecordCenter/DeleteRecord.py`）默认只读**：先 `--dry-run` 看清目标（id/类型/标题/学期/图片数），再显式 `--yes`；删除**不可撤销**。
+  `TestApiReadOnly.py` 里的 `record/delRecord` 用例只用 32 个 `0` 探测路由存在性，**任何情况下都不得改成真删**
+- 端点命名规律：删除类一律 `del` 前缀（`delRecord` / `delSummary` / `delComment` / `reviewDel`），**不是** `deleteRecord`。查删除接口别只 grep `delete`
 
 ## 依赖
 
