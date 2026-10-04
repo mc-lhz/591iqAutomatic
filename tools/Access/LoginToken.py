@@ -27,7 +27,9 @@ import re
 import sys
 import time
 
-import requests
+# `requests` 故意**不在顶层导入**：CLI 的 --help 不该因为缺重依赖而崩，
+# 而本仓库的离线 CI（无任何 secret、无第三方包）要能跑所有入口的 -h 冒烟。
+# 需要它的地方在函数内 import（见 newSession / 门户换 token）。
 
 BASE = "https://xmyz.xmedu.cn"
 APP = "https://www.591iq.cn"
@@ -43,7 +45,8 @@ def sha1(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8")).hexdigest()
 
 
-def newSession() -> requests.Session:
+def newSession() -> "requests.Session":       # noqa: F821
+    import requests
     s = requests.Session()
     s.headers.update({
         "Accept": "*/*",
@@ -193,6 +196,7 @@ def extractToken(text: str) -> str:
 
 def verify(token: str):
     """用 loginBySSOToken 校验，返回 (ok, 摘要)。字段平铺在顶层。"""
+    import requests
     try:
         r = requests.post(
             "https://service.591iq.cn/account/loginBySSOToken",
