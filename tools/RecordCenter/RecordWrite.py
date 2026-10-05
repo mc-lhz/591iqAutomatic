@@ -91,6 +91,11 @@ class WriteMixin:
         而 deleteRecord / del / removeRecord 都是 Tomcat 404。
         ⚠️ 删除**不可撤销**，也不限制只能删自己的（未验证）；调用前必须向用户确认。
         成功判据 = 读回执：列表条数 -1 且 queryRecord(id) 查不到。
+
+        🚨 **同族的 `/evaluateActivity/delSummary` 没有这层保护**（2026-10-05 实测）：
+        传不存在的 summaryId 依然回 `code=0`。所以**删总结不能靠返回值判断成功**，
+        也**不能拿它当探测接口**乱调——对真实 id 是真删且不可撤销。本仓库因此
+        **不封装** delSummary，真要删总结必须人工确认 + 读回执复核。
         """
         return self._call("/record/delRecord", {"id": str(recordId)}, method="POST")
 
