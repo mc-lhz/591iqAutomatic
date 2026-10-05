@@ -14,6 +14,30 @@ class IQError(Exception):
     pass
 
 
+def unwrapEnvelope(out, path):
+    """把响应信封拆成业务数据；错误码非 0 一律抛 IQError。
+
+    网关存在**两种**信封，只认顶层 code 会把失败当成功（D17）：
+    ① `{code,msg,data}` —— 绝大多数端点
+    ② `{meta:{code,msg}, …}` —— 少数端点（如家长评语提交），顶层根本没有 code
+    判别方式：顶层 `meta` 是 dict 且含 `code` 时以它为准，否则用顶层字段。
+    拆包规则两者一致：有 `data` 解一层，否则整份返回
+    （`loginBySSOToken` 的字段是平铺在顶层的，解了反而拿不到）。
+    """
+    if not isinstance(out, dict):
+        return out                              # 裸数组/标量，原样交给调用方
+    meta = out.get("meta")
+    if isinstance(meta, dict) and "code" in meta:
+        code, msg = meta.get("code"), meta.get("msg")
+    else:
+        code, msg = out.get("code"), out.get("msg")
+    if code not in (0, "0", None):
+        if str(code) == "9000":
+            raise IQError("session已过期, 需要重新用 ssoToken 调 loginBySSOToken")
+        raise IQError(f"{path} -> code={code} msg={msg}")
+    return out.get("data", out)
+
+
 class Http:
     def __init__(self, ssoToken: str):
         self.ssoToken = ssoToken
@@ -37,11 +61,7 @@ class Http:
             req.add_header("Content-Type", "application/x-www-form-urlencoded")
         with urllib.request.urlopen(req, timeout=30) as r:
             out = json.loads(r.read().decode("utf-8"))
-        if out.get("code") not in (0, "0", None):
-            if out.get("code") == 9000:
-                raise IQError("session已过期, 需要重新用 ssoToken 调 loginBySSOToken")
-            raise IQError(f"{path} -> code={out.get('code')} msg={out.get('msg')}")
-        return out.get("data", out)
+        return unwrapEnvelope(out, path)
 
     def get(self, path, data=None):
         return self._call(path, data, method="GET")

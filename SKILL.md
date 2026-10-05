@@ -39,7 +39,9 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
 3. **业务接口**：请求头带 `AccessToken: <ssoToken>`，参数统一封装为 `request={"data":{...}}`
    - GET：拼 query；POST：form body（同样 key=`request`）。
    - 不带 `AccessToken` 得 `{"code":9000,"msg":"session已过期"}`。
-   - 响应 `code` 非 0 即失败。
+   - 响应 `code` 非 0 即失败。⚠️ **信封有两种**：少数端点（已确认家长评语提交）是
+     `{meta:{code,msg}, …}`——顶层没有 `code`，只查顶层会把失败当成功。
+     工具链已由 `unwrapEnvelope` 统一处理，手写请求时务必两种都看。
 
 ### 源站门户登录（xmyz.xmedu.cn → ssoToken，✅ 已全链路打通）
 
@@ -262,7 +264,7 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 # 离线：不需要 token、不联网，CI 每次 push 都跑这一条
 python tools/TestCases/TestContract.py
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录业务 13 项断言
-python tools/TestCases/TestContract.py                # 本地契约审计（离线，11 项）
+python tools/TestCases/TestContract.py                # 本地契约审计（离线，14 项）
 python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 41 项
 python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 41 项
 python tools/TestCases/TestApiReadOnly.py --token <t> --dump     # 额外落盘每个接口的真实返回

@@ -130,7 +130,7 @@
 | D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **待上报**：跨角色越权，比 D10/D11 范围更大 |
 | D15 | 部分配置/导出端点接受客户端传入的 `schId`（`/apps/assess/scheme/list_semester` 实测 `200`→21 条 / `999999`→0 条，无兜底校验） | **待平台方验证**：需真实外校 `schId` 才能确认可利用性，本地单校数据无法判定 |
 | D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
-| D17 | **`HttpTransport._call` 只检查顶层 `code`**，但部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **待修（全局性正确性问题）**：这类端点的失败会被当成成功。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功 |
+| D17 | ~~`HttpTransport._call` 只检查顶层 `code`~~，部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **已修**：拆出纯函数 `unwrapEnvelope(out, path)`，`meta` 是 dict 且含 `code` 时以它为准；`TestContract` 新增第 14 项离线守着（7 种信封），已验证旧实现下该项 FAIL。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功。**遗留：`{meta:…}` 端点清单未枚举** |
 | D18 | `ocrCaptcha` 逻辑 bug：`texts[0]` 永远是**预处理图**的结果，原图识别被丢弃 | 待修。70 轮实测 OCR 准确率仅 **44.3%**，是免读图登录成功率的主要瓶颈 |
 
 ---
