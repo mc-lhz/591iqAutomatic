@@ -70,7 +70,7 @@ set IQ_SSO_TOKEN=<ssoToken> && python tools/Export/ExportXlsx.py   # 环境变�
 
 口径：`task/list` 三种 status 中 `type=3` 的任务 → `task/get` 取 eventId →
 `evaluateActivity/querySummary` 判定已交/未交、`editAuth`、正文、截止时间。
-`editAuth=1` 表示可带 `summaryId` 重交（覆盖旧正文，本校可见，**每次都要用户确认**）。
+`editAuth=1` 表示可带 `summaryId` 重交（覆盖旧正文，同校可见，**每次都要用户确认**）。
 
 ## 注意
 

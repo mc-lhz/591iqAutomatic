@@ -1,6 +1,6 @@
 # SearchQuery（搜索域·读）
 
-管：全平台搜索——写实记录全文搜索（`type=1`）与人员搜索（`type=2`）。
+管：搜索——写实记录全文搜索（`type=1`）与人员搜索（`type=2`），范围限本校。
 不管：写实记录列表（见 `../RecordCenter/RecordQuery.py` 的 `records()`）。
 
 本文件是 mixin，**没有 `__main__`、不能直接 `python` 运行**（会静默退出）；
@@ -17,7 +17,7 @@
 
 | type | 语义 | 实测（2026-10-05，厦门一中） |
 |---|---|---|
-| `1` | 写实记录全文搜索，**全平台约 14.6 万条**，含他人与外校 | 搜本人姓名 → 23 条 |
+| `1` | 写实记录全文搜索，含同校全部历史记录（**不跨校**） | 搜本人姓名 → 23 条 |
 | `2` | 人员搜索（姓名模糊子串） | 搜单字姓氏 → **1411** |
 | `0/3/4/5` | 无数据，恒 `totalResult=0` | — |
 | 空 | `code=999997 参数校验失败:搜索类型不能为空` | 抛 `IQError` |
@@ -26,7 +26,7 @@
 
 | 方法 | 说明 |
 |---|---|
-| `searchRecords(keyword, offset=0, limit=10)` | 全平台记录全文搜索；**无 redact 参数**，见下 |
+| `searchRecords(keyword, offset=0, limit=10)` | 记录全文搜索；**无 redact 参数**，见下 |
 | `searchPeople(keyword, offset=0, limit=10, redact=True)` | 人员搜索，**默认脱敏** |
 | `findPeople(keyword, exact=False)` | 精简找人；`exact=True` 只留姓名全等者 |
 | `_search(type_, keyword, offset, limit)` | 内部原始调用（返回未脱敏对象，勿直接对外） |
@@ -72,7 +72,7 @@
   「匹配一切」的前 N 条，别拿它当有效关键词。
 - 超长关键词（300 字符）、`<script>` 等均按普通文本处理，返回 `totalResult=0`。
 - 搜索是模糊子串匹配，无分词；`keyword` 过短（如单字姓氏）会命中上千条。
-- `searchRecords` 是**全平台**口径，比 `records(type_="2")` 的本校 feed 大两个数量级；
+- `searchRecords` 范围比 `records(type_="2")`（**班级**）大两个数量级；
   按人筛本校记录时优先用 `records(type_="2", userName=…)`（服务端过滤，省流量）。
 - ⚠️ **`records(userName=)` 也是子串匹配**，会一并命中同名他人。要精确取本人记录
   用 `records(type_="1")`。
@@ -81,10 +81,10 @@
 
 | 字段 | 格式 | 实测 |
 |---|---|---|
-| `userId` / `id` | **6 位十进制整数**，全平台自增主键 | 14,005 个去重值，区间 200717~864070 |
+| `userId` / `id` | **6 位十进制整数**，平台自增主键 | 发过记录的去重作者 14,005 人，全校人员目录去重 28,190 人，区间 200717~864070 |
 | `classUserId` / `guarderId` | 6 位整数（班主任 / 监护人） | — |
 | `classId` | 5 位整数 | — |
-| `schId` | 整数 | 全平台样本里只有 `200`（单一学校） |
+| `schId` | 整数 | 实测样本里恒为 `200`；**本部署为单校**，无跨校数据 |
 | `recordContent.id` | 5 位整数（记录主键） | — |
 | `contentId` | 32 位大写 hex | 与 ssoToken 同格式，混淆易误判 |
 

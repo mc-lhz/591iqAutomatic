@@ -22,8 +22,11 @@
 | 发版自动化 | `tools/Release/PackSkill.py` + `.github/workflows/release.yml`，Release 自动挂根目录 zip | `5adeb35` |
 | 首个 pre-release | `v0.1-beta1`（tag `fc75ef3`），53 文件 / 133.3 KB，附件校验通过 | — |
 | SearchCenter | `/search/search` + `searchRecords`/`searchPeople`/`findPeople` + `records(userName=)` | `7e49632` |
+| 遴选/总结域 | `tools/Selection/`：遴选与总结报告的读 + 写（写默认 dryRun） | `b3d75f6` |
+| 辅助模块 | `tools/Common/` 彩色日志 + `tools/Feedback/` 反馈工单 | `362b262` |
+| 口径更正 | `type` 语义、人口数、schId/租户边界（本文件第六节） | 见 git log |
 
-**当前 `main` = `7e49632`，已推送，工作区干净。**
+**当前 `main` 见 `git log -1`（本文件不写死 hash——写死必过期，已过期过两次）。**
 
 ---
 
@@ -119,11 +122,71 @@
 | D6 | 登录链路遇瞬时网络异常会漏栈而非按退出码契约退出 | 待修 |
 | D7 | release workflow 用插值方式把 tag 拼进 shell 命令，存在注入面 | 待改为 env 传递 |
 | D8 | `release: published` 触发时用的是 **tag 上的旧 workflow 定义**，`workflow_dispatch` 路径已用新定义验证过，自动路径未验证 | 需下一个 release 才能验证 |
-| D9 | SearchCenter 提交后 CI 未复查 | 待确认 |
+| D9 | SearchCenter 提交后 CI 未复查 | **已复查**：CI #8（`7e49632`）曾因 TestContract 隐私闸门失败（双平台红），`9256f53` 修复后 CI #9 转绿 |
+| D10 | `searchRecords()` **无 `redact` 开关**，每条命中项内嵌 `userInf`（51 字段）含身份标识/照片 | **待修（高）**：调用即带出，脱敏只能在调用方做 |
+| D11 | `searchPeople(redact=False)` 原始返回含他人隐私信息，且**脱敏是客户端丢弃**——服务端照发 | 已上报反馈；skill 侧约定仅审计用且输出须脱敏 |
+| D12 | `findPeople(exact=True)` 砍不掉**完全同名**账号（只做 `userName == keyword`） | 已知限制：认人只能靠 `userId` |
+| D13 | `searchRecords("")` 抛 999997，但 `"   "`（纯空格）返回 1729 条——空串与空格行为不一致 | 已知限制：别拿空白串当有效关键词 |
+| D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **待上报**：跨角色越权，比 D10/D11 范围更大 |
+| D15 | 部分配置/导出端点接受客户端传入的 `schId`（`/apps/assess/scheme/list_semester` 实测 `200`→21 条 / `999999`→0 条，无兜底校验） | **待平台方验证**：需真实外校 `schId` 才能确认可利用性，本地单校数据无法判定 |
+| D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
 
 ---
 
-## 六、环境与纪律
+## 六、schId 与租户边界（2026-10-05 实测，本节结论推翻过三次才对）
+
+### 6.1 平台形态：每校独立部署的多租户
+
+- `schId` 是租户标识，由 `loginBySSOToken` 依据 `ssoToken` 决定后返回（`schoolId:"200"`）。
+- **数据查询类端点的请求里不含任何学校标识**，租户完全由 `AccessToken` 请求头决定：
+  - `/search/search` —— 前端全站仅 1 处调用，参数只有 `type` / `content` / `pageRowBounds`
+  - `/record/queryRecordList`、`/apps/credit/query/list_school` —— 同样不传
+- 实测所有返回的 `schId` **恒为 `200`**：`searchPeople` 跨 407 个汉字去重 28,190 人全部 200；
+  跨校学分名册 28,705 人与本校集合交集 28,190、其余 515 人抽查 40/40 也是 200。
+- **结论：数据查询类端点不存在跨校读取路径**（因为根本没有学校参数可传）。
+
+### 6.2 `schId` 作为客户端参数只出现在配置/导出类端点
+
+前端 `localStorage.get("schoolId")` 共 20 处，**只有 6 处真正进请求**：
+
+| 端点 | 传法 |
+|---|---|
+| `/studentMgr/export` | POST body（另带 URL 内 `session`） |
+| `/teacherMgr/export` | URL query |
+| `/ctc/criticism/export` | URL query |
+| `/apps/club/evaluate/listTemplate` | GET data |
+| `/apps/integral/scheme/integralAppraisalScheme/*` | POST body |
+| `/cqesBank/scheme/confirm` | POST body（写） |
+
+其余 14 处是本地判断，如 `["1","3","50"].includes(schoolId)` 做功能开关（**说明各校配置不同**）。
+
+### 6.3 未定性的一环：前端内置学校切换器
+
+`chunk-7961fa63` 顶部用户栏存在 `isMultiSchool` + `schoolChange` 下拉框，选项是 `schools[].schId`。
+**这说明「同一账号切换学校」是产品设计**，那么「后端不校验 `schId` 与 session 一致」就不是缺陷而是必然行为。
+**定性取决于 `schoolChange` 是「后端重新签发 session」还是「仅改前端查询条件」——尚未查证。**
+
+### 6.4 由此产生的纪律
+
+- **不要用真实存在的其他学校 `schId` 做验证**——那是跨租户访问尝试。只用不存在的值（如 `999999`）做有效性探测。
+- 本仓库只覆盖 `schId=200`，任何「跨校」结论都必须由平台方自查，不能由我们断言。
+
+### 6.5 同批修正的错误口径（都已作废）
+
+| 曾经的错误表述 | 实际 |
+|---|---|
+| `type=""` 是「全平台 / 含外校」 | 后端**兜底分支**，前端无对应 tab，不做范围过滤 |
+| `type="2"` 是「本校可见」 | 前端 tab 名是「**班级**」 |
+| 人口 34,624 | **28,196**（`searchPeople` 是子串匹配，把各姓 `totalResult` 相交会重复计数） |
+| 「14.6 万条是跨校数据」 | 全部 `schId=200`；把「作者数 14,005」误当成人口是错的根源 |
+
+**教训**：这三条错误都源于「拿接口参数名推断业务语义，而不去前端找 tab 定义」。
+`type` 的四个取值在 `chunk-7c090c4c` 的 `modules` 数组里写得清清楚楚：
+`[{id:"2",name:"班级"},{id:"4",name:"年段"},{id:"3",name:"学校"},{id:"1",name:"我的"}]`（默认 `type:"2"`）。
+
+---
+
+## 七、环境与纪律
 
 - 仓库：`C:\Users\Administrator\.config\opencode\skills\591iqAutomatic`
 - 远端：`https://github.com/mc-lhz/591iqAutomatic`

@@ -17,6 +17,7 @@
 | 查待办任务与未读消息 | `TaskAndMessage` 模块，或看首页摘要 |
 | 不知道某类记录该填什么 | 查 `reference/frontend.md`（22 类记录的字段、必填项、平台原话提示） |
 | 确认系统是否正常 | `TestApiReadOnly.py`（42 项只读自检）、`TestRecordRead.py`（13 项业务断言）、`TestContract.py`（11 项本地契约审计，不联网） |
+| 把报错/未覆盖功能反馈给开发 | `SendFeedback.py --type gap\|bug\|security --title "..." --detail 说明.md --yes`（先 `--dry-run` 预览，自动脱敏学号与敏感信息） |
 
 一句话：**读**——数据汇总导出、任务与记录查询；**写**——写实记录与活动总结提交，
 提交前都会先向你确认，提交后自动读回执核对，不靠返回值说话。
@@ -50,6 +51,8 @@ tools/
   TestCases/TestRecordRead.py    写实记录业务 13 项断言回归
   TestCases/TestContract.py      仓库契约与卫生审计（离线，CI 与本地共用）
   Release/PackSkill.py           技能包打包（发版时自动产出 591iqAutomatic.zip）
+  Common/Logcat.py                彩色分等级日志（内部诊断；用户可见输出仍用 print）
+  Feedback/SendFeedback.py        反馈工单CLI（--dry-run 预览 / --yes 真发，自动脱敏）
 ```
 
 结构按业务分块：每个目录是一个业务领域（接入、档案、工作台、写实记录、成长报告、导出、自检），
@@ -105,14 +108,14 @@ python tools/TestCases/TestContract.py                 # 本地契约审计（�
 
 - 只读端点自检 **PASS=40 / FAIL=0 / WARN=1**（41 项，约 6.5s）；加 `--upload` 跑满 42 项。
   唯一 WARN 是积分接口学校侧未配置，接口本身可达。
-- 写实记录列表的 `type` 决定范围：`1`=本人、`2`=本校可见、空=全平台（约 14.6 万条）。
+- 写实记录列表的 `type` 决定范围，取值语义取自学生端 tab：`1`=我的、`2`=**班级**、`4`=学校；空值/非法值走**后端兜底分支**（无对应 tab，比「学校」宽 12 倍，含历年毕业届记录，不可当「全校」口径引用）。
 - 提交写实记录已真实验证：顶层键必须是组件名（`recordActivityFJ`…），写成数字会
   `999999 发布失败`；`semesterName` 传了也会被服务端丢弃。
 - 待办任务闭环跑通过：`/task/list` 行内自带 `taskId`+`moduleId` → `/task/get` 取 `eventId`
   → 按 `moduleId` 分流到活动课程 → 提交总结 → 回读确认待办清零。
 - **提交成功以「读回执」为准**：返回值都只是 `{"list":…}`，必须回读列表/统计核对计数变化。
 - 学生端**有删除接口**（2026-10-04 确认，之前文档记错了）：发出去的记录可以删掉，`DeleteRecord.py --id <记录id> --yes`。
-  实测「发一条再删一条」：本人记录 15`→16`→15、本校可见 278`→279`→278，删完 `queryRecord` 查不到、feed 里也不见了。
+  实测「发一条再删一条」：本人记录 15`→16`→15、班级口径 278`→279`→278，删完 `queryRecord` 查不到、feed 里也不见了。
   但删除不可撤销，所以提交前照样先问你一句。
 - 验证码结论：看图识别 46/46 = 100%，纯自动识别 42/70 ≈ 60%。
 

@@ -5,7 +5,7 @@
 
 ## 对应端点
 
-- `POST /record/queryRecordList` — 列表；`type`：1=本人 / 2=本校 / 空=全平台
+- `POST /record/queryRecordList` — 列表；`type`：**1=我的 / 2=班级 / 4=学校**；空串与任意非法值走后端兜底分支（无对应 tab，不做范围过滤，勿当全校口径）
 - `GET /record/queryLabelList` — 21 个标签
 - `GET /record/group_type` — 分组类型
 - `POST /record/queryRecordStatistics` — 按标签计数（只统计本人）
@@ -24,7 +24,7 @@
 ## 用法
 
 ```python
-c.records(limit=10, type_="2")["list"]["count"]   # 本校可见条数
+c.records(limit=10, type_="2")["list"]["count"]   # 班级口径条数（注意：2=班级）
 c.records(limit=1, type_="1")["list"]["list"][0]   # 本人第一条
 ```
 
