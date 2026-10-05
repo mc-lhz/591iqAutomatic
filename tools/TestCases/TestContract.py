@@ -5,12 +5,19 @@
 here-string 里写反引号，弄出 5 处代码标记损坏 + 一处 TAB 混入——这类事故本该被机器拦住。
 
 用法：
-    python tools/TestCases/TestContract.py            # 人类可读报告
-    python tools/TestCases/TestContract.py --quiet    # 只输出汇总行（CI 用）
+    python tools/TestCases/TestContract.py            # 人类可读报告，只提示
+    python tools/TestCases/TestContract.py --quiet    # 只输出汇总行
+    python tools/TestCases/TestContract.py --strict   # 有 FAIL 即退出码 1
 
-退出码：0 全部通过（WARN 不影响）/ 1 有 FAIL。
+退出码：默认恒为 0（**只提示不阻止**）；`--strict` 下有 FAIL 才返回 1。
 与 TestApiReadOnly / TestRecordRead 的区别：那两个要 token、只读线上接口；
 本脚本只读本地文件与 git 元数据，**不碰网络**。
+
+为什么要「不阻止」：这套检查的价值是**提醒**，不是拦人。历史上被它挡下的问题
+（文档示例写死中文姓名、reference 超预算）都是几秒钟就能修好的，如果让 CI 变红
+阻断合并，人第一反应是 `--continue-on-error` 或者干脆删检查——闸门就此名存实亡。
+所以默认放行，但**把 FAIL 顶到 PR 界面上**（见 annotate()）：不拦你，但一定让你看见。
+真正需要硬拦的地方（发版打包）用 `--strict`。
 """
 import argparse
 import io
@@ -69,6 +76,23 @@ SKIP_DIR = {".git", "__pycache__", ".github"}
 
 def add(name, status, note=""):
     RESULTS.append((name, status, note))
+
+
+def annotate():
+    """把 FAIL/WARN 写成 GitHub Actions 注解。
+
+    「不阻止」的代价是没人会去看日志——所以必须让失败**出现在 PR 页面上**
+    （黄色警告三角），而不是只躺在 run log 里。这是本脚本唯一的对外通道。
+    """
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return
+    for name, status, note in RESULTS:
+        if status == FAIL:
+            print("::error file=TestContract.py,title=%s::%s"
+                  % (name.replace("\n", " "), note.replace("\n", " ")[:240]))
+        elif status == WARN:
+            print("::warning file=TestContract.py,title=%s::%s"
+                  % (name.replace("\n", " "), note.replace("\n", " ")[:240]))
 
 
 def repoFiles():
@@ -344,6 +368,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--quiet", action="store_true", help="只打印汇总行")
+    ap.add_argument("--strict", action="store_true",
+                    help="有 FAIL 就退出码 1（发版/本地自查用）；默认只提示不阻止")
     a = ap.parse_args()
 
     files = repoFiles()
@@ -366,9 +392,13 @@ def main():
         for n, st, note in RESULTS:
             print("  [%s] %-*s %s" % (st, w, n, note))
         print("-" * (w + 30))
+    annotate()
     print("PASS=%d WARN=%d FAIL=%d 共 %d 项" % (counts[OK], counts[WARN],
                                                 counts[FAIL], len(RESULTS)))
-    return 1 if counts[FAIL] else 0
+    if counts[FAIL] and not a.strict:
+        print("提示模式：%d 项 FAIL 已列出但不阻止（加 --strict 可使其返回退出码 1）"
+              % counts[FAIL])
+    return 1 if (a.strict and counts[FAIL]) else 0
 
 
 if __name__ == "__main__":

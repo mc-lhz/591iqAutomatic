@@ -8,6 +8,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      strict:
+        description: "严格模式：有 FAIL 即失败（发版前自查用）"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,6 +25,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+    # 检查只负责「提醒」，不负责「拦人」：契约与卫生问题都是几秒钟能修的小事，
+    # 让 CI 变红阻断合并，只会逼出 --continue-on-error 或者干脆删掉检查，闸门就废了。
+    # 失败项仍会以 GitHub 注解（PR 页面黄色三角）冒出来，不会被埋掉。
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -45,3 +54,19 @@ jobs:
         run: |
           git diff --exit-code
           git diff --cached --exit-code
+
+  # 需要硬拦的时候手动开：workflow_dispatch 带 strict=true 时才跑，失败即非 0 退出码。
+  # 用途是发版前自查，以及判断某个 FAIL 到底该不该忍。
+  strict:
+    name: 契约检查（严格模式 · 仅手动）
+    if: github.event_name == 'workflow_dispatch' && inputs.strict == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 字节码编译
+        run: python -m compileall -q tools
+      - name: 仓库契约与卫生（FAIL 即失败）
+        run: python -X utf8 tools/TestCases/TestContract.py --strict
