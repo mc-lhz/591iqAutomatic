@@ -30,9 +30,15 @@ jobs:
 
       - name: 确定 tag
         id: tag
-        # 手动触发用输入值；Release 触发用事件里的 tag_name
+        # ⚠️ tag 名必须经 env 传进 shell，**不能**用 `${{ }}` 直接插值进 run：
+        # 表达式是文本替换，一个含 `"` 或 `$(...)` 的 tag 名就能在 runner 上执行任意命令
+        # （2026-10-05 静态审计发现，已修）。workflow_dispatch 用输入值，
+        # release 事件用 tag_name。
+        env:
+          TAG_INPUT: ${{ github.event.inputs.tag }}
+          TAG_RELEASED: ${{ github.event.release.tag_name }}
         run: |
-          TAG="${{ github.event.inputs.tag || github.event.release.tag_name }}"
+          TAG="${TAG_INPUT:-$TAG_RELEASED}"
           if [ -z "$TAG" ]; then echo "拿不到 tag 名"; exit 1; fi
           echo "value=$TAG" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG"
@@ -41,16 +47,20 @@ jobs:
         # 不要再用 `python … | tee dist/pack.log`：shell 在建立管道时就会打开
         # dist/pack.log，而此时 dist/ 还不存在（PackSkill 是之后才建目录的），
         # tee 失败 + 默认的 pipefail 会让这一步无谓变红。日志直接进 step 输出即可。
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
         run: |
           python -X utf8 tools/Release/PackSkill.py \
             --require-clean \
-            --version-check "${{ steps.tag.outputs.value }}" \
+            --version-check "$TAG" \
             --out dist/591iqAutomatic.zip
 
       - name: 写入 job summary
         if: always()
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
         run: |
-          echo "### 技能包 ${{ steps.tag.outputs.value }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "### 技能包 $TAG" >> "$GITHUB_STEP_SUMMARY"
           if [ -f dist/591iqAutomatic.zip ]; then
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
@@ -66,13 +76,15 @@ jobs:
       - name: 挂为 Release 附件
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.value }}
         run: |
-          gh release upload "${{ steps.tag.outputs.value }}" \
+          gh release upload "$TAG" \
             dist/591iqAutomatic.zip --clobber
 
       - name: 复核附件已挂上
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.value }}
         run: |
-          gh release view "${{ steps.tag.outputs.value }}" \
+          gh release view "$TAG" \
             --json assets --jq '.assets[].name'
