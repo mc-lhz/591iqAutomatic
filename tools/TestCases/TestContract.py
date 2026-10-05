@@ -56,6 +56,12 @@ SENSITIVE = [
     ("手机号", r"(?<!\d)1[3-9]\d{9}(?!\d)"),
     ("真实图片地址", r"fs\.591iq\.cn/group1/[A-Za-z0-9]{16,}"),
     ("硬编码密码", r"(?:password|密码|passwd)\s*[:=]\s*[\"'][^\"']{6,}[\"']"),
+    #真实学生姓名：**只抓泄漏形态，不做泛用中文姓名检测**——后者必然误报
+    #（姓氏字开头的普通词太多：方案/于是/方向/文件…）。抓两种确切形态：
+    #  ① 接口返回里 personName/studentName 字段带着中文名
+    #  ② 文档示例里 c.searchXxx("中文名") 这类把姓名当参数写死
+    ("姓名字段", r"\"(?:studentName|personName|userName)\"\s*:\s*\"[一-龥]{2,4}\""),
+    ("姓名示例", r"search(?:People|Records)\(\s*\"[一-龥]{2,4}\""),
 ]
 SCAN_EXT = (".py", ".md", ".json", ".jsonc", ".yml", ".yaml", ".txt")
 SKIP_DIR = {".git", "__pycache__", ".github"}

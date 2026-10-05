@@ -89,11 +89,17 @@ def main():
         except Exception:                         # noqa: BLE001
             return str(v)
 
-    def case(name, fn, check=nonempty, note="", warn_codes=False):
+    def case(name, fn, check=nonempty, note="", warn_codes=False,
+             expect_error=False):
+        """expect_error=True：期望抛 IQError（校验类负向用例），抛出记 PASS。"""
         t = time.time()
         try:
             v = fn()
             ms = int((time.time() - t) * 1000)
+            if expect_error:
+                results.append((name, "FAIL", ms, "期望报错但成功返回"))
+                raw[name] = _dump(v)
+                return
             ok = check(v) if check else True
             raw[name] = _dump(v)
             results.append((name, "PASS" if ok else "FAIL", ms,
@@ -101,6 +107,10 @@ def main():
         except Exception as e:                    # noqa: BLE001
             ms = int((time.time() - t) * 1000)
             msg = str(e)
+            if expect_error:
+                results.append((name, "PASS", ms, f"如期报错 {msg[:70]}"))
+                raw[name] = f"EXC {msg}"
+                return
             # warn_codes=True：业务层 code=1 视为 WARN（接口通、学校侧未配置）
             status = "WARN" if (warn_codes and "code=1" in msg) else "FAIL"
             raw[name] = f"EXC {msg}"
@@ -190,6 +200,34 @@ def main():
     case("record/queryClassifyList", lambda: c.post("/record/queryClassifyList", {}))
     case("record/queryHistoryBookList",
          lambda: c.post("/record/queryHistoryBookList", {}))
+
+    # ---- 全局搜索（/search/search）----
+    # 用本人姓名做关键字，保证任何学校都命中自己，不依赖外部数据
+    kw = (prof.get("userName") or "").strip()
+    case("search/search type=1 记录",
+         lambda: c.searchRecords(kw, limit=5),
+         check=lambda v: isinstance(v, dict) and "totalResult" in v)
+    case("search/search type=2 人员",
+         lambda: c.searchPeople(kw, limit=5),
+         check=lambda v: isinstance(v, dict) and "totalResult" in v)
+    case("search/search type=2 脱敏白名单",
+         lambda: c.searchPeople(kw, limit=5),
+         check=lambda v: all(
+             set(p) <= {"userId", "userName", "userNameAndClassName", "className",
+                        "gradeName", "enrolYearName", "sex", "status", "schId",
+                        "userType"} and "identityCard" not in p
+             for p in v["list"]))
+    case("search/search type=0 无数据",
+         lambda: c.get("/search/search", {"type": "0", "content": kw,
+                                          "pageRowBounds": {"offset": 0, "limit": 5}}),
+         check=lambda v: v.get("totalResult") == 0)
+    case("search/search type=空 报错",
+         lambda: c.get("/search/search", {"type": "", "content": kw,
+                                          "pageRowBounds": {"offset": 0, "limit": 5}}),
+         expect_error=True)
+    case("record/queryRecordList userName 过滤",
+         lambda: c.records(type_="2", userName=kw, limit=5),
+         check=lambda v: "list" in v)
 
     # ---- 成长空间 / 荣誉 / 活动 ----
     case("querySemesterList", lambda: c.semesters())
