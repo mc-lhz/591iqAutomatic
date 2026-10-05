@@ -134,15 +134,21 @@ class WriteMixin:
                      orderId=""):
         """发布一条荣誉记录（前端 recordHonor 的完整表单）。
 
-        必填：semesterCode, typeId, honorTime, sponsor, levelId, itemName,
+必填：semesterCode, typeId, honorTime, sponsor, levelId, itemName,
         honorImages 非空；orderName 在非“先进个人”/非思想品德维度时必填。
-        levelId: 01校级 02区县级 03市级 04省级
+        levelId: 01校级 02区县 03市级 04省级
+
+        ⚠️ typeId **不是自由值**：用 `StudentBase/DictOptions.py` 的
+        `honorTypes()` 取，其 `eventConfigId` 即 typeId、`title` 即 typeName，
+        同项 `levelInfo[]` 的 `levelCode`/`levelDesc` 即 levelId/levelName。
+        2026-10-05 实测：typeId 填一个不存在的值，服务端报
+        `code=1 荣誉名称不能为空` —— 报错文案完全指不到真正原因，别被误导。
         """
         rc = {"recordType": recordType, "content": content,
               "images": list(honorImages), "semesterCode": str(semesterCode),
               "semesterName": self._semesterName(semesterCode)}
         form = {"typeId": typeId, "typeName": typeName, "levelName": levelName,
                 "levelId": levelId, "honorTime": honorTime, "sponsor": sponsor,
-                "orderName": orderName, "orderId": orderId,
-                "honorImages": list(honorImages)}
+                "itemName": itemName, "orderName": orderName,
+                "orderId": orderId, "honorImages": list(honorImages)}
         return self.addRecord(rc, form, recordType)
