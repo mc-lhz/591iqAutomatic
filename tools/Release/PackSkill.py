@@ -13,8 +13,8 @@
     python tools/Release/PackSkill.py --list                    # 只看会打进哪些文件
     python tools/Release/PackSkill.py                           # 默认 %TEMP%\591iqAutomatic.zip
     python tools/Release/PackSkill.py --out dist/591iqAutomatic.zip
-    python tools/Release/PackSkill.py --require-clean --version-check v0.1-beta1 \\
-            --out dist/591iqAutomatic.zip                        # CI 发版用
+    python tools/Release/PackSkill.py --require-clean --version-check <tag> \\
+            --out dist/591iqAutomatic.zip                        # CI 发版用；<tag> 传 tag 名（如 v0.1-beta2）
 
 文件来源是 `git ls-files`，所以天然不含 .git / __pycache__ / *.pyc / 验证码图 /
 state / 报告 json / xlsx；另见 EXCLUDE_PREFIXES 与 EXCLUDE_GLOBS。

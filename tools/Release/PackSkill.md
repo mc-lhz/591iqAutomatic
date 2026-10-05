@@ -25,9 +25,12 @@ mkdir -p ~/.config/opencode/skills/591iqAutomatic
 python tools/Release/PackSkill.py --list                      # 只看会打进哪些文件
 python tools/Release/PackSkill.py                             # 默认 %TEMP%\591iqAutomatic.zip
 python tools/Release/PackSkill.py --out dist/591iqAutomatic.zip
-python tools/Release/PackSkill.py --require-clean --version-check v0.1-beta1 \
-        --out dist/591iqAutomatic.zip                          # CI 发版用
+python tools/Release/PackSkill.py --require-clean --version-check <tag> \
+        --out dist/591iqAutomatic.zip                          # CI 发版用；<tag> 传 tag 名，如 v0.1-beta2
 ```
+
+> `--version-check` 收的是 **tag 名**（与仓库根 `VERSION` 逐字比对，不是"大于等于"）。
+> 所以发版顺序固定为：**先改 `VERSION` 并提交 → 再打同名 tag**。顺序反了必然失败。
 
 退出码：`0` 成功 / `2` 打包后自检不合规 / `3` 前置条件不满足（脏工作区、版本不匹配、非 git 仓库）。
 
