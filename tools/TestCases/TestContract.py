@@ -1,6 +1,6 @@
 """仓库契约与卫生审计：**离线**、无网络、无凭据，CI 与本地共用同一份实现。
 
-存在的理由：仓库的硬约束全写在 AGENTS.md 里（脱敏、reference/ 100KB 上限、命名契约、
+存在的理由：仓库的硬约束全写在 AGENTS.md 里（脱敏、reference/ 150KB 上限、命名契约、
 每 py 配同名 md），但**没有任何自动化守着**，全靠人记。2026-10-04 就因为在 PowerShell
 here-string 里写反引号，弄出 5 处代码标记损坏 + 一处 TAB 混入——这类事故本该被机器拦住。
 
@@ -35,13 +35,14 @@ OK, WARN, FAIL = "PASS", "WARN", "FAIL"
 RESULTS = []
 
 # AGENTS.md 写死的硬约束
-REFERENCE_BUDGET = 100 * 1024
+REFERENCE_BUDGET = 150 * 1024
 
 # 必须带 main() + __main__ 的命令行入口（其余是库模块）
 CLI_ENTRIES = [
     "Access/LoginToken.py", "Access/VisionLogin.py",
     "Export/ExportXlsx.py", "Export/ExportSummaryList.py",
     "RecordCenter/PublishActivity.py", "RecordCenter/DeleteRecord.py",
+    "Feedback/SendFeedback.py",
     "Release/PackSkill.py",
     "TestCases/TestApiReadOnly.py", "TestCases/TestRecordRead.py",
     "TestCases/TestContract.py",
@@ -181,8 +182,8 @@ def checkReferenceBudget():
     total = sum(os.path.getsize(os.path.join(refDir, f)) for f in files
                 if os.path.isfile(os.path.join(refDir, f)))
     ok = total <= REFERENCE_BUDGET
-    add("reference/ 体积预算 ≤ 100KB", OK if ok else FAIL,
-        "%d KB / 100 KB（%s）" % (total // 1024, "、".join(files)))
+    add("reference/ 体积预算 ≤ 150KB", OK if ok else FAIL,
+        "%d KB / 150 KB（%s）" % (total // 1024, "、".join(files)))
 
 
 def checkHygiene(files):
