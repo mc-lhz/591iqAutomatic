@@ -45,6 +45,33 @@ def nonempty(v):
     return True
 
 
+def _firstOwnerReportId(c):
+    """取「我发起的报告」里第一个 reportId；取不到就退回 "0"。
+
+    只为让 querySubjectHonorStuff 有个可传参数——**不打印**报告内容，
+    免得把他人姓名/票数带进只读测试的报告文件。
+    """
+    r = c.ownerReports(limit=5) or {}
+    for path in (("list",), ("data", "list"), ("pdlist",), ("data", "pdlist")):
+        cur = r
+        for k in path:
+            cur = (cur or {}).get(k) if isinstance(cur, dict) else None
+        if isinstance(cur, list) and cur and isinstance(cur[0], dict):
+            rid = cur[0].get("reportId")
+            if rid:
+                return rid
+    return "0"
+
+
+def _expectValueError(fn):
+    """断言 fn() 抛 ValueError（写端点的参数校验是纯本地逻辑，不发请求）。"""
+    try:
+        fn()
+    except ValueError as e:
+        return {"raised": "ValueError", "msg": str(e)[:80]}
+    raise AssertionError("期望 ValueError，但没有抛出")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--token", default="")
@@ -271,6 +298,23 @@ def main():
     case("eventTwo/listLabel dim5", lambda: c.activityLabels(5))
     case("eventTwo/listLabel dim17", lambda: c.activityLabels(17))
     case("evaluation/honor/list", lambda: c.honorTypes())
+
+    # ---- 遴选 / 总结报告（Selection 域，2026-10-05 新增） ----
+    case("reportManage/queryOwnerReportData", lambda: c.ownerReports(limit=5))
+    case("stuffVotes/querySubjectHonorStuff",
+         lambda: c.subjectHonorStuff(_firstOwnerReportId(c)))
+    # commitBatchVote / reportConfirm 是**高影响写端点**（改他人遴选结果、
+    # 替他人确认），此处只验证 dryRun 的参数校验与回显，**绝不发真实请求**。
+    case("stuffVotes/commitBatchVoteStuff (仅 dryRun)",
+         lambda: c.commitBatchVote([{"stuffType": 1, "reportId": "0",
+                                     "eventId": "0"}]))
+    case("diathesisReport/reportConfirm (仅 dryRun)",
+         lambda: c.reportConfirm("0", type_="2"))
+    case("stuffVotes/commitBatchVoteStuff 缺字段应报错",
+         lambda: _expectValueError(
+             lambda: c.commitBatchVote([{"reportId": "0", "eventId": "0"}])))
+    case("reportConfirm 非法 type_ 应报错",
+         lambda: _expectValueError(lambda: c.reportConfirm("0", type_="9")))
 
     def _delRoute():
         """探测 /record/delRecord 路由是否还在——**不会删除任何东西**（id 全 0 不存在）。
