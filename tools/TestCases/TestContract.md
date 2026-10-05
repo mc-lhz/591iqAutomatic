@@ -4,9 +4,30 @@
 
 用法：
 ```bash
-python tools/TestCases/TestContract.py            # 人类可读报告
-python tools/TestCases/TestContract.py --quiet    # 只输出汇总行（CI 用）
+python tools/TestCases/TestContract.py            # 人类可读报告，只提示
+python tools/TestCases/TestContract.py --quiet    # 只输出汇总行
+python tools/TestCases/TestContract.py --strict   # 有 FAIL 即退出码 1
 ```
+
+退出码：默认**恒为 0**（只提示不阻止）；`--strict` 下有 `FAIL` 才返回 1。
+
+## 为什么默认不阻止
+
+这套检查的价值是**提醒**，不是拦人。被它挡下的问题（文档示例写死中文姓名、
+`reference/` 超预算）都是几秒钟能修的小事；一旦让 CI 变红阻断合并，人的第一反应
+是加 `--continue-on-error` 或者干脆把检查删掉，闸门就此名存实亡。
+
+所以默认放行，但失败**不会被埋掉**：在 GitHub Actions 里 `FAIL`/`WARN` 会写成
+workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的黄色三角上。
+
+需要硬拦时用 `--strict`：
+- 手动触发 CI 并勾选 `strict` 输入，走独立的 `strict` job（ubuntu 单平台，FAIL 即失败）；
+- 发版打包前本地跑 `--strict`。
+
+注意 `continue-on-error: true` 设在 **job 级**：`contract` job 整体不再让 run 变红，
+但步骤日志与注解照常产出。代价是同 job 里的 `git diff --exit-code`
+（断言测试没改动工作区）也一并降级为提示——这是有意的取舍：它同样属于卫生检查，
+不是安全闸门。
 
 退出码：0 全部通过（`WARN` 不阻断）/ 1 有 `FAIL`。共 **13 项**。
 
