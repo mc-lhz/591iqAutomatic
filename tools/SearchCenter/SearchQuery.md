@@ -27,7 +27,7 @@
 ## 用法
 
 ```python
-c.searchRecords("军训")["totalResult"]
+c.searchRecords("<关键词>")["totalResult"]                      # 全文检索，命中 totalResult
 c.searchPeople("<某同学>")["totalResult"]                       # 25（模糊）
 c.searchPeople("<某同学>", exact=True)["totalResult"]           # 精确（仅 findPeople 支持）
 c.findPeople("<某同学>", exact=True)                           # [{userId, userName, className, ...}]
