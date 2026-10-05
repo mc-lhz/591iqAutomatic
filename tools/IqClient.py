@@ -1,7 +1,7 @@
 """591iq 综合素质评价 - 纯 API 客户端（门面）。
 
 按业务域拆分为 StudentBase / HomeWorkbench / RecordCenter / GrowReport /
-SearchCenter 五个域（域内按职责分子模块，每个模块带同名 .md 说明），
+SearchCenter / Selection 六个域（域内按职责分子模块，每个模块带同名 .md 说明），
 接入层为 Access/HttpTransport.py（传输层）与 Access/LoginToken.py（登录）。
 本文件只负责组合，对外保持 IQClient API 不变。
 """
@@ -16,10 +16,13 @@ from RecordCenter.RecordQuery import QueryMixin
 from RecordCenter.RecordWrite import WriteMixin
 from HomeWorkbench.TaskAndMessage import WorkbenchMixin
 from SearchCenter.SearchQuery import SearchMixin
+from Selection.SelectionQuery import SelectionQueryMixin
+from Selection.SelectionVote import SelectionVoteMixin
 
 
 class IQClient(ProfileMixin, OptionsMixin, WorkbenchMixin, QueryMixin, WriteMixin,
-               ReportMixin, StatsMixin, SearchMixin, Http):
+               ReportMixin, StatsMixin, SearchMixin, SelectionQueryMixin,
+               SelectionVoteMixin, Http):
     pass
 
 
