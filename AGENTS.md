@@ -161,8 +161,8 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
        并把 `591iqAutomatic.zip` 挂为该 Release 的附件（用 runner 自带 `GITHUB_TOKEN`，
        本地不需要任何令牌；预发布同样会触发）
 - 命名：beta 期用 `v0.1-betaN`，功能冻结后转 `v0.1.0`，破坏性改动才升 minor。
-  已知 `v0.1-beta1` **不是严格 SemVer**（规范写法 `v0.1.0-beta.1`），
-  GitHub 正常但 SemVer 工具无法排序先后——有意选择，记录在案
+  已知 `v0.1-betaN`（如 `v0.1-beta1` / `v0.1-beta2`）**不是严格 SemVer**
+  （规范写法 `v0.1.0-beta.1`），GitHub 正常但 SemVer 工具无法排序先后——有意选择，记录在案
 - 发版前必跑：`compileall` + `TestContract.py` + 敏感串扫描 +
   `reference/` 未超 150 KB；线上回归（`TestApiReadOnly` / `TestRecordRead`）在本地跑
 - **打包规则**（实现在 `Release/PackSkill.py`，规则改这里，别改 workflow）：
