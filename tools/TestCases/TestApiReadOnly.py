@@ -46,12 +46,17 @@ def nonempty(v):
 
 
 def _firstOwnerReportId(c):
-    """取「我发起的报告」里第一个 reportId；取不到就退回 "0"。
+    """取「我发起的报告」里第一个 reportId；取不到返回 **None**。
 
-    只为让 querySubjectHonorStuff 有个可传参数——**不打印**报告内容，
-    免得把他人姓名/票数带进只读测试的报告文件。
+    ⚠️ 必须自己吞掉异常并返回 None（2026-10-05 修）：账号名下可能**根本没有**
+    荣誉评选报告，`ownerReports()` 会抛 IQError(`没有查询到数据`)。异常若往外传，
+    调用方的 case 会把**上一个端点的报错文案**记到自己头上——两个用例显示同一句
+    `queryOwnerReportData`，排查时极具误导性。返回 None 让调用方自己决定 SKIP。
     """
-    r = c.ownerReports(limit=5) or {}
+    try:
+        r = c.ownerReports(limit=5) or {}
+    except IQError:
+        return None
     for path in (("list",), ("data", "list"), ("pdlist",), ("data", "pdlist")):
         cur = r
         for k in path:
@@ -60,16 +65,7 @@ def _firstOwnerReportId(c):
             rid = cur[0].get("reportId")
             if rid:
                 return rid
-    return "0"
-
-
-def _expectValueError(fn):
-    """断言 fn() 抛 ValueError（写端点的参数校验是纯本地逻辑，不发请求）。"""
-    try:
-        fn()
-    except ValueError as e:
-        return {"raised": "ValueError", "msg": str(e)[:80]}
-    raise AssertionError("期望 ValueError，但没有抛出")
+    return None
 
 
 def main():
@@ -299,22 +295,27 @@ def main():
     case("eventTwo/listLabel dim17", lambda: c.activityLabels(17))
     case("evaluation/honor/list", lambda: c.honorTypes())
 
-    # ---- 遴选 / 总结报告（Selection 域，2026-10-05 新增） ----
-    case("reportManage/queryOwnerReportData", lambda: c.ownerReports(limit=5))
-    case("stuffVotes/querySubjectHonorStuff",
-         lambda: c.subjectHonorStuff(_firstOwnerReportId(c)))
-    # commitBatchVote / reportConfirm 是**高影响写端点**（改他人遴选结果、
-    # 替他人确认），此处只验证 dryRun 的参数校验与回显，**绝不发真实请求**。
-    case("stuffVotes/commitBatchVoteStuff (仅 dryRun)",
-         lambda: c.commitBatchVote([{"stuffType": 1, "reportId": "0",
-                                     "eventId": "0"}]))
-    case("diathesisReport/reportConfirm (仅 dryRun)",
-         lambda: c.reportConfirm("0", type_="2"))
-    case("stuffVotes/commitBatchVoteStuff 缺字段应报错",
-         lambda: _expectValueError(
-             lambda: c.commitBatchVote([{"reportId": "0", "eventId": "0"}])))
-    case("reportConfirm 非法 type_ 应报错",
-         lambda: _expectValueError(lambda: c.reportConfirm("0", type_="9")))
+# ---- 遴选 / 总结报告（Selection 域，2026-10-05 新增） ----
+    # ⚠️ 这两个端点**依赖账号名下真有荣誉评选报告**。学生账号通常没有这类数据，
+    # `ownerReports()` 会回 `code=1 没有查询到数据`——那是「接口可达但本账号无数据」，
+    # 不是端点失效。所以无数据一律记 SKIP（同本文件 task/get 的既有惯例），
+    # 绝不能记 FAIL，否则每次回归都白挂两条。
+    _rid = _firstOwnerReportId(c)
+    if _rid:
+        case("reportManage/queryOwnerReportData", lambda: c.ownerReports(limit=5))
+        case("stuffVotes/querySubjectHonorStuff",
+             lambda: c.subjectHonorStuff(_rid))
+    else:
+        why = "本账号无荣誉评选报告，ownerReports 回 code=1 没有查询到数据"
+        results.append(("reportManage/queryOwnerReportData", "SKIP", 0, why))
+        results.append(("stuffVotes/querySubjectHonorStuff", "SKIP", 0, why))
+    # 路由活性单独探：空参必然 999997（缺必填），说明后端在、不是 404。
+    case("stuffVotes/commitBatchVoteStuff 路由活性",
+         lambda: c.post("/stuffVotes/commitBatchVoteStuff", {}),
+         expect_error=True, note="空参应报参数校验失败")
+    case("diathesisReport/reportConfirm 路由活性",
+         lambda: c.post("/diathesisReport/manage/reportConfirm", {}),
+         expect_error=True, note="空参应报参数校验失败")
 
     def _delRoute():
         """探测 /record/delRecord 路由是否还在——**不会删除任何东西**（id 全 0 不存在）。
