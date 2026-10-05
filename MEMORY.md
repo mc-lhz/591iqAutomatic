@@ -117,10 +117,10 @@
 | D1 | ~~`publishHonor()` 荣誉名称字段层级错~~ **已修（`itemName` 从未被写进 form，封装层吞字段）** | 已发→读回→删闭环，`16→17→16` |
 | D2 | `searchRecords()` 返回 `idNumber` 等敏感字段且未脱敏 | 待修（调用方自行处理） |
 | D3 | `findPeople()` limit=50 会截断，需翻页 | 已知限制 |
-| D4 | 文档端点计数过期（如 42/43），实际只读测试已 48 项、含上传 49 项 | 待同步 |
+| D4 | 文档端点计数与实测脱节 | **部分已同步**：`api.md` 已加「count 会漂，别当断言用」的警示；`TestApiReadOnly` 现为 **52 项（PASS 49 / WARN 1 / SKIP 2）**，加 `--upload` 变 54 项 |
 | D5 | `delSummary` 对不存在 id 也返回 `code=0`，无异常保护 | 高危，需二次确认 |
 | D6 | 登录链路遇瞬时网络异常会漏栈而非按退出码契约退出 | 待修 |
-| D7 | release workflow 用插值方式把 tag 拼进 shell 命令，存在注入面 | 待改为 env 传递 |
+| D7 | release workflow 用插值方式把 tag 拼进 shell 命令，存在注入面 | **已修（`fa5e7be`）**：五处 tag 全改 `env:` 传递，YAML 已复检 |
 | D8 | `release: published` 触发时用的是 **tag 上的旧 workflow 定义**，`workflow_dispatch` 路径已用新定义验证过，自动路径未验证 | 需下一个 release 才能验证 |
 | D9 | SearchCenter 提交后 CI 未复查 | **已复查**：CI #8（`7e49632`）曾因 TestContract 隐私闸门失败（双平台红），`9256f53` 修复后 CI #9 转绿 |
 | D10 | `searchRecords()` **无 `redact` 开关**，每条命中项内嵌 `userInf`（51 字段）含身份标识/照片 | **待修（高）**：调用即带出，脱敏只能在调用方做 |
@@ -130,6 +130,8 @@
 | D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **待上报**：跨角色越权，比 D10/D11 范围更大 |
 | D15 | 部分配置/导出端点接受客户端传入的 `schId`（`/apps/assess/scheme/list_semester` 实测 `200`→21 条 / `999999`→0 条，无兜底校验） | **待平台方验证**：需真实外校 `schId` 才能确认可利用性，本地单校数据无法判定 |
 | D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
+| D17 | **`HttpTransport._call` 只检查顶层 `code`**，但部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **待修（全局性正确性问题）**：这类端点的失败会被当成成功。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功 |
+| D18 | `ocrCaptcha` 逻辑 bug：`texts[0]` 永远是**预处理图**的结果，原图识别被丢弃 | 待修。70 轮实测 OCR 准确率仅 **44.3%**，是免读图登录成功率的主要瓶颈 |
 
 ---
 
@@ -160,18 +162,56 @@
 
 其余 14 处是本地判断，如 `["1","3","50"].includes(schoolId)` 做功能开关（**说明各校配置不同**）。
 
-### 6.3 未定性的一环：前端内置学校切换器
+### 6.3 学校切换器：已定性（2026-10-05 复查，**推翻本节原「未定性」结论**）
 
-`chunk-7961fa63` 顶部用户栏存在 `isMultiSchool` + `schoolChange` 下拉框，选项是 `schools[].schId`。
-**这说明「同一账号切换学校」是产品设计**，那么「后端不校验 `schId` 与 session 一致」就不是缺陷而是必然行为。
-**定性取决于 `schoolChange` 是「后端重新签发 session」还是「仅改前端查询条件」——尚未查证。**
+`chunk-7961fa63` 的 `schoolChange` 真实实现：
 
-### 6.4 由此产生的纪律
+```js
+schoolChange(l){ this.$http.post("/account/switch", {data:{schId:l}}).then(l=>{
+    this.$localStorage.clear();                                   // 清空本地态
+    "0"!==String(l.data.code) ? 登录失败提示 : this.toHomeView(l.data); // 成功后整页重载
+})}
+```
+
+- **结论：切换学校 = 后端重新签发身份 + 清 localStorage + 重载**，
+  **不是**「仅改前端查询条件」。因此「数据查询端点不校验 schId」是**设计（必然行为），
+  不是缺陷**——原 6.3 那一节的疑问到此关闭。
+- `schools` 来自 `localStorage.switchStr`（`{school:[{schId, schName}]}`），
+  `isMultiSchool = schools.length > 0`——**学校列表由后端在登录态里下发**，
+  前端不自带任何学校常量。
+- ⚠️ 该组件是 `teacher-user-bar`，`toHomeView` 跳 `/#/teacher/index`，
+  `userType` 判断只覆盖 `02/03/04`。**学校切换器是教师端功能，学生端没有这条 UI 路径。**
+- `/account/switch` 对**学生 token 也存在**（用不存在的 `999999` 探测 → `code=1 登录失败`，
+  探测后 session 仍可用、非破坏）。但它是**写端点、会换身份**，
+  本仓库**不封装**，也不得用真实 schId 调用（那是跨租户访问尝试）。
+
+### 6.4 跨校注入探测（2026-10-05，直接实证）
+
+在 `/search/search` 的 payload 里塞学校标识，观察 `totalResult` 与返回 `schId`：
+
+| 注入 | `totalResult` | 返回行 `schId` 分布 | 判定 |
+|---|---|---|---|
+| 无（基线 type=2） | 1411 | 20/20 全 `200` | — |
+| `schId=999999`（不存在） | 1411 | 全 `200` | **不变** |
+| `schId=201`（相邻真实值） | 1411 | 全 `200` | **不变** |
+| `schoolId=999999` | 1411 | 全 `200` | **不变** |
+| `schId=true` | 1411 | 全 `200` | **不变** |
+| `schId="abc"`（字符串） | — | — | `code=999999 参数校验失败` |
+| type=1 基线 / 注入 `schId=999999` | 430 / 430 | 全 `200` | **不变** |
+
+两条结论：
+1. **数据查询面没有跨校读取路径**——注入学校标识对结果**零影响**。
+   租户完全由 `AccessToken` 决定。
+2. `schId="abc"` 报参数校验失败，说明后端**认识这个字段并校验它的类型，却不取值参与过滤**
+   —— 比「完全不读」更能说明这个参数是死参数。
+3. 命中项里 `schId` / `schoolId` / `schoolName` **恒为 `200` / 厦门一中**，可直接用于单租户断言。
+
+### 6.5 由此产生的纪律
 
 - **不要用真实存在的其他学校 `schId` 做验证**——那是跨租户访问尝试。只用不存在的值（如 `999999`）做有效性探测。
 - 本仓库只覆盖 `schId=200`，任何「跨校」结论都必须由平台方自查，不能由我们断言。
 
-### 6.5 同批修正的错误口径（都已作废）
+### 6.6 同批修正的错误口径（都已作废）
 
 | 曾经的错误表述 | 实际 |
 |---|---|
