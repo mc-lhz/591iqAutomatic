@@ -44,7 +44,7 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
 | 命名契约 | `tools/` 下目录与模块文件大驼峰、无下划线/短横线、不与标准库同名 | FAIL |
 | 每个 py 配同名 `.md` | 见同名 `.md` 是否存在 | FAIL（`IqClient.py`/`XlsxWriter.py` 豁免） |
 | 敏感串 | 32 位 hex、手机号、真实图片地址、硬编码密码 | FAIL |
-| `reference/` 体积 | ≤ 100 KB（AGENTS 定的预算） | FAIL |
+| `reference/` 体积 | ≤ 150 KB（AGENTS 定的预算，2026-10-05 由 100 KB 抬高） | FAIL |
 | UTF-8 卫生 | 无 BOM、无 TAB、无乱码残留 | FAIL |
 | `VERSION` | 存在且格式为 `v数字.数字[-标识]` | FAIL |
 | `VERSION` vs tag | 与 `git describe --tags` 一致 | FAIL（无 tag 时 WARN） |

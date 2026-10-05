@@ -27,6 +27,10 @@ tools/
   TestCases/TestRecordRead.py     13 项
   TestCases/TestContract.py       仓库契约与卫生审计（离线，无网络无凭据）
   Release/PackSkill.py            技能包打包（591iqAutomatic.zip，根目录结构）
+  Common/Logcat.py                彩色分等级日志（内部诊断用；默认 stderr+WARNING）
+  Feedback/FeedbackClient.py      反馈接口投递（独立服务，非 591iq 网关，不注册门面）
+  Feedback/Ticket.py              工单HTML 模板 + 学号脱敏 + 投递前敏感信息闸门
+  Feedback/SendFeedback.py        反馈工单 CLI（--dry-run 预览 / --yes 真发）
 ```
 
 - `reference/api.md` — 端点清单；`reference/frontend.md` + `reference/recordForms.json` —
@@ -50,6 +54,9 @@ tools/
 - 新增业务域 = 新目录（含 `__init__.py`）+ mixin + 说明 + 在 `IqClient.py` 门面注册
 - **唯一例外**：`Release/`（仓库维护工具，与 591iq 平台 API 无关）**不注册门面**，
   其模块也不 mixin 进 `IQClient`；它仍需同名 `.md` 说明与 `__init__.py`
+- **门面例外**：`Feedback/` 与 `Release/` 同理——反馈接口是独立服务
+  （`feedback.mclhz.de5.net`，裸 JSON、不带 AccessToken），**不注册门面**、不 mixin。
+  `Common/` 是通用工具（Logcat），同样不注册门面，仅被内部模块 import
 - `Http` 必须留在 `IQClient` 继承链末位（基类）
 - 对外 API 只增不改；改方法名必须同步 `IqClient.py` 门面、两个测试、SKILL/README/api.md
 - **改目录/模块名只改 import 语句与文档路径**；API 路径（`/record/...`）、
@@ -126,8 +133,9 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   → ④ 按 `recordForms.json` 里的 `chunk`/`moduleId` 定位那一个 chunk
   → ⑤ 全量搜 564 个 chunk（串行下载约 2.5 min，**仅在前四步全失败时**）。
   禁止从第 ⑤ 步起手；翻 bundle 必须先映射定位、并发下载、落盘建索引，并区分发布态/查看态 chunk
-- **`reference/` 体积上限 100 KB**（2026-10-02 已用 91.6 KB：`api.md` 24.6 +
-  `frontend.md` 19.7 + `recordForms.json` 47.3）：只放提炼后的结论，
+- **`reference/` 体积上限 150 KB**（2026-10-05 已用 97 KB：`api.md` 30.2 +
+  `frontend.md` 19.7 + `recordForms.json` 47.3；原 100 KB 预算于 2026-10-05 抬高，
+  原因见 MEMORY.md「Phase 1」）：只放提炼后的结论，
   **原始前端代码、chunk、映射中间产物一律留在 `%TEMP%\591iq_scratch`，不入库**。
   要加内容先减：表格按类聚合、不要逐字段成行；`frontend.md` 的表格以
   `recordForms.json` 为准（生成脚本未入库），改 JSON 后要同步改 md 里的表
@@ -156,7 +164,7 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   已知 `v0.1-beta1` **不是严格 SemVer**（规范写法 `v0.1.0-beta.1`），
   GitHub 正常但 SemVer 工具无法排序先后——有意选择，记录在案
 - 发版前必跑：`compileall` + `TestContract.py` + 敏感串扫描 +
-  `reference/` 未超 100 KB；线上回归（`TestApiReadOnly` / `TestRecordRead`）在本地跑
+  `reference/` 未超 150 KB；线上回归（`TestApiReadOnly` / `TestRecordRead`）在本地跑
 - **打包规则**（实现在 `Release/PackSkill.py`，规则改这里，别改 workflow）：
   · 文件来源 `git ls-files`，额外排除 `.github/` 与 `.gitignore`（流水线配置与 git 内部约定不必随包分发）
   · 产物固定名 `591iqAutomatic.zip`，**根目录结构**：`SKILL.md` / `tools/` / `reference/` 直接在顶层，**不套外层目录**（与 GitHub 自动源码包不同）

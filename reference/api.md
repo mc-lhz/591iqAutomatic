@@ -122,6 +122,33 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 | GET | `/eventTwo/listActivityStatisticsByDimension` | `{"semesterId":"","studentId":"<userId>"}` | 活动课程按维度统计 |
 | GET | `/statistics/student/get_interest` | `{}` | 兴趣特长 |
 | GET | `/apps/integral/rank/integralRecord/account_integral` | `{"userId":"<userId>"}` | 积分明细；**本校实测 `code=1 找不到对应的积分配置`**（学校侧未配置，接口可达，测试里记 WARN） |
+| GET | `/evaluation/honor/list` | `{"offset":0,"limit":100}` | **荣誉类型（`typeId` 的唯一合法来源）**，见下方「荣誉类型契约」 |
+
+### 荣誉类型契约（2026-10-05 实测，`publishHonor` 的前提）
+
+- 返回体是 `{totalResult, pd, pdlist}`，**`pdlist` 在顶层**，不在 `data` 里（`HttpTransport.get()` 已解包一层，别再取 `["data"]`）
+- `pdlist[i].eventConfigId` → `publishHonor(typeId=…)`；`.title` → `typeName`
+- `pdlist[i].levelInfo[]`（`levelCode` / `levelDesc`）→ `levelId` / `levelName`；`levelCode` 是 `01`/`02`…
+- 本校实测 6 个类型（`5739` 先进个人 `studentEnable=0` / `7999` 校内获奖（不入档）/ `5738` 体育比赛 / `5742` 艺术活动 / `5737` 科技创新成果 / `5741` 研究性学习成果）
+- ⚠️ **填一个列表里不存在的 `typeId`，服务端回 `code=1 荣誉名称不能为空`** —— 报错文案与真实原因无关。别顺着文案查，先核对 `eventConfigId`
+
+## 遴选 / 总结投票（2026-10-05 从前端 chunk + 邮件情报交叉验证）
+
+| 方法 | 路径 | data payload | 说明 |
+|---|---|---|---|
+| GET | `/reportManage/queryOwnerReportData` | `{"offset":0,"limit":10}` | 我发起的报告/遴选列表，**已实测 `code=0`** |
+| GET | `/stuffVotes/querySubjectHonorStuff` | `{"offset":0,"limit":10}` | 某报告下的候选名单与票数，**已实测 `code=0`** |
+| POST | `/stuffVotes/commitBatchVoteStuff` | `{"stuffList":[{"stuffType":…,"reportId":…,"eventId":…}]}` | 批量投票。**键是 `eventId` 不是 `stuffId`**（邮件里写的 `stuffId` 是错的） |
+| GET | `/voteManage/deleteVoteStuff` | `{"eventId":"<t.voteId>"}` | 删投票。**是 GET 不是 POST**（邮件里写 POST 是错的），且 eventId 取自 `t.voteId` |
+| POST | `/diathesisReport/manage/reportConfirm` | `{"reportId":…,"type":"1"\|"2","signData":…}` | 强制确认遴选/总结 |
+
+- `type`：`"1"` / `"2"`（`reportConfirm` 的组件里是字符串枚举）
+- ⚠️ **`signData` 来自前端电子签名组件 `$refs.esign.generate()`，仓库内无生成逻辑**（私钥签名），
+  调用方只能从别处取得后传入。**端到端成功路径因此无法在本仓库自测**
+- ✅ 已证实「投票窗口过期后仍可强制确认」：两个 reportId 的 `confirmStatus` 被另一 AI（豆包）
+  从 0 改成了 `2`，时间在 10-05 00:18（投票窗口已过）→ **这条能力真实存在**
+- ⚠️ **写端点未封装**（本仓库 `tools/` 下无对应方法）。`commitBatchVoteStuff` 会改变**他人**的
+  遴选结果且不可撤销，`reportConfirm` 会替他人确认——都属高影响操作，封装前需先取得用户明确授权
 
 ## 成长报告 / 档案
 
@@ -162,6 +189,51 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 - 响应行结构：`recordContent`(公共) + 23 个类型槽位（`recordHonor`/`recordActivityFJ`/`recordRead`…）；
   列表(type=2) 只填 `recordContent`，详情(type=1) 才带非空槽位。
 - 错误路径：无 token → 9000；坏 token → `code=1 登录失败`；不存在的 labelId → `code=1 查询错误`。
+
+> ⚠️ 上表 count 是 **2026-10-04 的快照**，之后本人又发了记录（16 条）、feed 也增长（279），
+> 数字会漂。**别把具体 count 当断言用**，要最新值就跑 `TestApiReadOnly.py`。
+> 该脚本当前 **48 项（47 PASS / 1 WARN）**，加 `--upload` 变 **49 项（48 PASS / 1 WARN）**。
+
+## 服务端契约（2026-10-05 实测，12 类提交验证得出）
+
+四条结论，全部来自 rt `2/3/4/14/15/16` 的真实提交—读回—删除闭环，**踩过坑才成立**：
+
+1. **服务端严格拒绝未知字段。** 往 form 里多塞一个组件里不存在的 `desc`，6 类全部
+   `999999 发布失败`；删掉多余字段后立刻全通。**构造载荷必须与前端组件字面量 1:1。**
+2. **`code` 能区分失败原因**（比文案有用）：
+   | code | 含义 |
+   |---|---|
+   | `999999` | 载荷/业务失败（字段错、槽位 key 错、学校未开通该类型） |
+   | `1` | 缺必填参数，**带明文原因**（「荣誉名称不能为空」「ISBN不能为空」「学生ID不能为空」） |
+   | `0` | 成功，但**不代表有可见效果**（`delSummary` 对不存在的 id 也返回 0） |
+3. **报错文案可能与真实原因无关，别顺着文案查。** 遇到 `code=1` 先查自己的封装层有没有把参数
+   吞掉（签名收了却没放进 payload dict —— `publishHonor` 就这样漏了 `itemName` 很久），
+   再拿一条**真实同类记录**做 `queryRecord` 字段对照，比逐字读前端 chunk 快得多。
+4. **部分类型需要多个顶层槽位键。** rt 2（阅读记录）要 `recordContent` + `recordRead` +
+   `recordBook` 三个。单槽位的封装（如 `addRecord()`）表达不了 → 直接打原始接口。
+   注意这是**测试脚本的坑，不是平台缺陷**。
+
+### 学校开通的类型（`get_sch_feature`，12/22）
+
+`[0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16, 17]` —— 其余 10 类（`8~13`/`18~21`）**未开通**。
+未开通类型提交失败**无法区分**「载荷错」与「没开通」，所以这 10 类拿不到验证信号，
+只能靠 `recordForms.json` 的静态结构，不能靠提交实测。
+
+### 已实测闭环的类型（12 类）
+
+| rt | 槽位 key | rt | 槽位 key |
+|---|---|---|---|
+| 0 | `recordGrow` | 14 | `recordLaborAbility` |
+| 1 | `recordHonor` | 15 | `recordLaborResult` |
+| 2 | `recordRead` + `recordBook` | 16 | `recordLaborRace` |
+| 3 | `recordSport` | 17 | `recordActivityFJ` |
+| 4 | `recordInvent` | | |
+| 5 | `recordArt` | | |
+| 6 | `recordCase` | | |
+| 7 | `recordSubject` | | |
+
+枚举值取自 chunk 字面量，可直接用：运动等级 `sportList` 1 国际级运动健将 / 2 运动健将 /
+3 一级运动员 / 4 二级运动员 / 5 三级运动员；发明类型 `typeList` 1 发明 / 2 实用新型 / 3 外观设计。
 
 ## 写入接口：发布写实记录（✅ 已实测提交成功）
 
@@ -345,8 +417,17 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
 ## 写入接口②：活动总结 evaluateActivity（✅ 已实测提交成功）
 
 第二类写入，风险**低于**写实记录：`editAuth=1` 时可带 `summaryId` 用同一接口重新提交；
-bundle 里存在 `/evaluateActivity/delSummary`，但学生端是否暴露**未验证**。
+bundle 里存在 `/evaluateActivity/delSummary`，学生端**确实暴露**（2026-10-05 用不存在的
+`summaryId` 探测返回 `{"list":null}` + `code=0`，路由活着）。
 ⚠️ 首次提交前仍须人工确认——总结进入**本校可见** feed。
+
+> 🚨 **`delSummary` 没有任何异常保护**（2026-10-05 实测）：传一个**不存在的** `summaryId`
+> 依然返回 `code=0`。即「删掉了」这个信号**不能证明任何东西**——它对不存在的对象也点头。
+> 因此：
+> · 绝不能用返回值判断删除成功，**只能用读回执**（`summaryId` 查不到、列表条数 -1）
+> · **不要**把它当成探测接口随意调用——它对真实 id 是真删，且不可撤销
+> · 与 `delRecord` 不同，`delRecord` 对不存在 id 回 `code=1`，反而能用来安全探路由
+> （`TestApiReadOnly` 里那条 `delRecord` 探测就是靠这个差异成立的）
 
 **闭环 6 步**（2026-10-01 实测）：鉴权 → `/task/list status=0` 发现待办 → 读 `pcUrl` 拿
 `taskId/moduleId` → `/task/get` 拿 `eventId` → `/activity/info?eventId=…`（`moduleId=14`）→
