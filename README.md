@@ -16,7 +16,7 @@
 | 删掉发错的记录 | `DeleteRecord.py --id <记录id> --dry-run` 先看清是哪一条，确认后加 `--yes` 才真删 |
 | 查待办任务与未读消息 | `TaskAndMessage` 模块，或看首页摘要 |
 | 不知道某类记录该填什么 | 查 `reference/frontend.md`（22 类记录的字段、必填项、平台原话提示） |
-| 确认系统是否正常 | `TestApiReadOnly.py`（42 项只读自检）、`TestRecordRead.py`（13 项业务断言）、`TestContract.py`（11 项本地契约审计，不联网） |
+| 确认系统是否正常 | `TestApiReadOnly.py`（42 项只读自检）、`TestRecordRead.py`（13 项业务断言）、`TestContract.py`（14 项本地契约审计，不联网） |
 | 把报错/未覆盖功能反馈给开发 | `SendFeedback.py --type gap\|bug\|security --title "..." --detail 说明.md --yes`（先 `--dry-run` 预览，自动脱敏学号与敏感信息） |
 
 一句话：**读**——数据汇总导出、任务与记录查询；**写**——写实记录与活动总结提交，

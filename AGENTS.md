@@ -119,6 +119,9 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   退出码 0 成功 / 2 服务端拒绝 / 3 回执不一致 / 4 token 失效 / 5 前置校验失败。
 - `querySummary` / `sysDict` 返回 `{list:[…]}` 或 `{pdlist:[…]}`，不是裸数组；
   **不可对返回值直接 `.get(code)`** —— 需要 code→name 映射时遍历 `["list"]`（见 `RecordWrite._semesterName`）
+- **响应信封有两种**：`{code,msg,data}` 与 `{meta:{code,msg},…}`（已确认家长评语提交属后者）。
+  判断 code/msg 只能用 `Access/HttpTransport.py` 的 `unwrapEnvelope()`，
+  **不要在别处重写「取顶层 code」** —— 那正是 D17 的成因（失败被当成成功）
 - `records()` 的 `type_` 参数带下划线（避免遮蔽内置 `type`），用关键字传
 - **门户登录必须先判断自身有无读图能力，再选路径**：
   有 → `Access/VisionLogin.py new` → 读「识图推荐」PNG → `submit --code`（实测 30/30，累计 46/46）；

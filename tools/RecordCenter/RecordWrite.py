@@ -9,7 +9,7 @@
 import json
 import urllib.request
 
-from Access.HttpTransport import BASE, IQError
+from Access.HttpTransport import BASE, IQError, unwrapEnvelope
 
 # recordType 数字 -> 前端组件/数据槽位（模块 ecf4）
 RECORD_TYPE_MAP = {
@@ -64,7 +64,8 @@ class WriteMixin:
         req.add_header("clientos", "pc")
         with urllib.request.urlopen(req, timeout=60) as r:
             out = json.loads(r.read().decode("utf-8"))
-        if str(out.get("code")) != "0":
+        out = unwrapEnvelope(out, "/announcement/upload")
+        if not isinstance(out, dict) or not out.get("imageUrl"):
             raise IQError(f"upload -> {out}")
         return out["imageUrl"]
 

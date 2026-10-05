@@ -524,3 +524,15 @@ statistics_total_class statistics_total_student submitHonor submitSummary update
 | 10 | 获取ssoToken为空 | 请求体没用 `request=` form 格式 |
 | 9000 | session已过期 | 请求头缺 `AccessToken` 或需重调 loginBySSOToken |
 | -1 + msgCode=msgauth_access_token_invalid | 同 9000 | 前端会跳 `/#/login` |
+
+### 响应信封有两种（2026-10-05 确认）
+
+| 形状 | 出现范围 | 判别 |
+|---|---|---|
+| `{code,msg,data}` | 绝大多数端点（含 `loginBySSOToken`，但它的业务字段是**平铺在顶层**、没有 `data`） | 顶层取 `code` |
+| `{meta:{code,msg}, …}` | 少数端点，已确认的有**家长评语提交**（失败时 `meta.msg=学生总结已截止`） | 顶层 `meta` 是 dict 且含 `code` 时以它为准 |
+
+⚠️ **只查顶层 `code` 会把 `{meta:…}` 端点的失败当成成功**（拿到 `null` 却以为提交成功）。
+`tools/Access/HttpTransport.py` 的 `unwrapEnvelope()` 两种都认，
+`TestContract.py` 的「响应信封」一项离线守着这个行为。
+已知 `{meta:…}` 端点清单尚未枚举（需要逐个只读端点比对才能补全）。

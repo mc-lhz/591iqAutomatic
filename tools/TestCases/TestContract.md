@@ -29,7 +29,7 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
 （断言测试没改动工作区）也一并降级为提示——这是有意的取舍：它同样属于卫生检查，
 不是安全闸门。
 
-退出码：0 全部通过（`WARN` 不阻断）/ 1 有 `FAIL`。共 **13 项**。
+退出码：0 全部通过（`WARN` 不阻断）/ 1 有 `FAIL`。共 **14 项**。
 
 ## 为什么需要它
 
@@ -49,9 +49,10 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
 | `VERSION` | 存在且格式为 `v数字.数字[-标识]` | FAIL |
 | `VERSION` vs tag | 与 `git describe --tags` 一致 | FAIL（无 tag 时 WARN） |
 | rt 映射 | `RECORD_TYPE_MAP` / `RECORD_TYPE_NAME` 各 22 项，且与 `reference/frontend.md` 表格对得上 | FAIL |
-| 命令行入口 | 10 个入口都具备 `__main__` | FAIL |
+| 命令行入口 | 11 个入口都具备 `__main__` | FAIL |
 | 技能包结构 | 真的打一次 `591iqAutomatic.zip`：根目录必备齐全、未套外层目录、无垃圾文件 | FAIL |
 | 模块可导入 | `IQClient` 与写域 mixin 导入无副作用 | FAIL |
+| 响应信封 | `unwrapEnvelope` 对 7 种信封（顶层 `code` / `meta.code` / 无 code / 裸数组）解析正确，错误码不被吞 | FAIL |
 
 ## 注意事项
 
@@ -64,5 +65,8 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
   不在 git 仓库里时退化为走目录树。
 - 「技能包结构」这项会真的调 `Release/PackSkill.py` 打一次包（落临时目录、跑完即删），
   所以打包规则改动当天就能发现坏掉，不用等到发版那天。
+- 「响应信封」这项是纯函数断言，不联网也不要 token，守的是 D17：
+  `HttpTransport` 若退回「只查顶层 `code`」，`{meta:{code:1}}` 的失败会被当成成功，
+  本项当场 FAIL。**加新端点时不必改这里**，但若发现新的信封形状要顺手加一条用例。
 - 三个测试脚本的分工：`TestContract` 查本地契约（无网络）、`TestApiReadOnly` 查线上只读端点、
   `TestRecordRead` 查写实记录业务断言。

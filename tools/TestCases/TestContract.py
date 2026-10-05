@@ -365,6 +365,36 @@ def checkPackage():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def checkEnvelope():
+    """响应信封解析：顶层 `code` 与 `meta.code` 都必须能识别错误码。
+
+    守的是 D17：`meta` 信封的端点失败时顶层没有 `code`，
+    只看顶层的实现会把「学生总结已截止」当成功返回 null——失败被当成成功。
+    纯函数、离线，不碰网络也不需要 token。
+    """
+    from Access.HttpTransport import IQError, unwrapEnvelope
+    cases = [
+        ("顶层 code=0 解 data", {"code": 0, "msg": "ok", "data": {"a": 1}}, {"a": 1}),
+        ("顶层 code=1 抛错", {"code": 1, "msg": "缺少参数"}, "raise"),
+        ("meta code=0 解 data", {"meta": {"code": 0, "msg": ""}, "data": {"b": 2}}, {"b": 2}),
+        ("meta code=1 抛错", {"meta": {"code": 1, "msg": "学生总结已截止"},
+                              "data": None}, "raise"),
+        ("meta code=9000 抛错", {"meta": {"code": 9000, "msg": ""}}, "raise"),
+        ("无 code 视为成功", {"list": [1]}, {"list": [1]}),
+        ("裸数组原样返回", [1, 2], [1, 2]),
+    ]
+    bad = []
+    for name, payload, want in cases:
+        try:
+            got = unwrapEnvelope(payload, "/probe")
+        except IQError:
+            got = "raise"
+        if got != want:
+            bad.append("%s: 期望 %r 实得 %r" % (name, want, got))
+    add("响应信封（顶层 code 与 meta.code 都识别）", FAIL if bad else OK,
+        "；".join(bad[:3]) or "%d 种信封解析正确，错误码不再被吞" % len(cases))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -384,6 +414,7 @@ def main():
     checkEntryHelp()
     checkPackage()
     checkImport()
+    checkEnvelope()
 
     counts = {OK: 0, WARN: 0, FAIL: 0}
     for _n, st, _note in RESULTS:
