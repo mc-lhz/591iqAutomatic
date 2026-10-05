@@ -14,6 +14,21 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 | GET | `/module/school/list` | `{"terminalType":"1"}` | 模块列表 |
 | GET | `/sysDict/getDict` | `{"field":"INTEREST"}` | 字典，可换 field 取其他字典 |
 
+### ID 格式（2026-10-05 实测）
+
+| 字段 | 格式 | 说明 |
+|---|---|---|
+| `userId` / `id` | **6 位十进制整数**，自增主键 | 14,005 个去重值，区间 200717~864070 |
+| `classUserId` / `guarderId` | 6 位整数 | 班主任 / 监护人 |
+| `classId` | 5 位整数 | — |
+| `schId` | 整数 | 全平台样本里只有 `200` |
+| `recordContent.id` | 5 位整数 | 记录主键 |
+| `contentId` | 32 位大写 hex | **与 ssoToken 同格式**，易混淆误判 |
+
+- **自增 ⇒ 可反推注册先后**，即大致届别（已用记录起始日期与 `enrolYearName` 交叉验证若干区间）。
+- **`userId` 才是稳定主键**：`userName` 不是——实测 22 个 `userId` 对应多个 `userName`（改名/学籍异动）。
+- **平台侧不存学号**，按学号搜人恒 0 命中；门户登录账号（学号）与平台 `userId` 是两套独立 ID。
+
 ## 任务 / 消息 / 公告
 
 | 方法 | 路径 | data payload | 实测结果 |
@@ -87,11 +102,16 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 | `0/3/4/5` | 无数据，恒 `totalResult=0` | — |
 | 空 | `code=999997 参数校验失败:搜索类型不能为空` | — |
 
-⚠️ **`type=2` 原始返回明文带他人隐私**：`identityCard`（身份证号）、`birthday`、
-`unifiedExaminationNumber`（考号）、`individuationUname`、`phoneNumber`。
-`SearchQuery.searchPeople()` 默认 `redact=True` 只吐白名单 10 字段，**别把原始返回
-打进日志/报告/仓库**。另有 `status=3` 的已毕业账号（`className=null`）造成重名重影，
-按 `enrolYearName`/班级筛掉。
+⚠️ **隐私信息暴露面**：`type=2` 原始返回，以及 `type=1` 每条命中项内嵌的 `userInf`
+（51 字段），均含**身份标识、联系方式、照片等隐私信息**；且 `type=1` **没有 redact 开关**，
+调用即带出。`SearchQuery.searchPeople()` 默认 `redact=True` 只吐白名单 10 字段，
+但那是**客户端丢弃**——数据已过网，绕过客户端直接发 HTTP 一样全拿到，
+**防手滑而非安全控制**。**别把原始返回打进日志/报告/仓库**；
+`redact=False` 仅限安全审计且输出须先脱敏。
+
+⚠️ 重名有两层：`status=3` 已毕业账号（`className=null`）造成重名重影；
+此外平台存在多个**完全同名**账号，`findPeople(exact=True)` 砍不掉
+（它只做 `userName == keyword`），**认人只能靠 `userId`**。
 
 ## 成长空间 / 荣誉 / 活动
 
