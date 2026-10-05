@@ -69,10 +69,29 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 
 | 方法 | 路径 | data payload | 说明 |
 |---|---|---|---|
-| POST | `/record/queryRecordList` | `{"type":"2","recordType":"","labelId":"","offset":0,"limit":10}` | ⚠️ 字段必须齐全否则超时。返回 `list.count`(266) + `list.list[]`，每条含 recordContent.id/userName/content/semesterCode |
+| POST | `/record/queryRecordList` | `{"type":"2","recordType":"","labelId":"","offset":0,"limit":10,"userName":""}` | ⚠️ 前 5 个字段必须齐全否则超时。**`userName` 非空时服务端按记录作者姓名做子串过滤**（2026-10-04 实测：`userName="黄"`→28 条且全部是黄姓作者；`keyword`/`name`/`searchValue` 等字段被忽略）。返回 `list.count` + `list.list[]`，每条含 recordContent.id/userName/content/semesterCode |
 | GET | `/record/queryLabelList` | `{}` | 标签（21 个）：中华优秀传统文化实践、日常生活劳动、爱党爱国教育、… |
 | GET | `/record/group_type` | `{}` | 记录分组类型 |
 | POST | `/record/queryRecordStatistics` | `{"semesterId":"","studentId":"<userId>"}` | 按标签计数，返回 `[{labelId:"1",count:1,labelName:"荣誉成就"},…]` |
+
+## 全局搜索（2026-10-04 由 HAR 抓包定位并实测）
+
+| 方法 | 路径 | data payload | 说明 |
+|---|---|---|---|
+| GET | `/search/search` | `{"type":"1\|2","content":"<关键字>","pageRowBounds":{"offset":0,"limit":10}}` | 唯一搜索入口；返回 `{totalResult, data:null, list:[…]}` |
+
+| type | 语义 | 实测 |
+|---|---|---|
+| `1` | 写实记录**全文搜索**，范围是**全平台**（约 14.6 万条，含他人与外校），与 `records(type_=…)` 的 1/2 无关 | `<某同学>`→112、`军训`→4851 |
+| `2` | **人员搜索**（姓名模糊子串），可搜到没发过任何记录的人 | `<某同学>`→25 |
+| `0/3/4/5` | 无数据，恒 `totalResult=0` | — |
+| 空 | `code=999997 参数校验失败:搜索类型不能为空` | — |
+
+⚠️ **`type=2` 原始返回明文带他人隐私**：`identityCard`（身份证号）、`birthday`、
+`unifiedExaminationNumber`（考号）、`individuationUname`、`phoneNumber`。
+`SearchQuery.searchPeople()` 默认 `redact=True` 只吐白名单 10 字段，**别把原始返回
+打进日志/报告/仓库**。另有 `status=3` 的已毕业账号（`className=null`）造成重名重影，
+按 `enrolYearName`/班级筛掉。
 
 ## 成长空间 / 荣誉 / 活动
 

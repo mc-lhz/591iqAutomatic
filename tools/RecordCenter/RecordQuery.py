@@ -7,15 +7,17 @@
 
 
 class QueryMixin:
-    def records(self, offset=0, limit=10, recordType="", labelId="", type_="2"):
+    def records(self, offset=0, limit=10, recordType="", labelId="", type_="2",
+                userName=""):
         """写实记录列表。
 
         type_ 决定范围：1=仅本人 / 2=本校可见 / 空或非法=全平台。
+        userName 非空时按**记录作者姓名**做服务端子串过滤（2026-10-04 实测）。
         ⚠️ payload 字段必须齐全，否则请求挂起超时。
         """
         return self.post("/record/queryRecordList", {
             "type": type_, "recordType": recordType, "labelId": labelId,
-            "offset": offset, "limit": limit})
+            "offset": offset, "limit": limit, "userName": userName})
 
     def recordLabels(self):
         """记录标签树"""
