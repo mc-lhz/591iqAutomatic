@@ -20,7 +20,7 @@ python tools/TestCases/TestRecordRead.py <ssoToken>
 
 | 组 | 断言 |
 |---|---|
-| 范围口径 | `type=1`（本人）≤ `type=2`（本校可见）≤ 全平台；`type` 非法值回落全平台 |
+| 范围口径 | `type=1`（我的）≤ `type=2`（**班级**）≤ 兜底分支；`type` 非法值走兜底分支 |
 | 分页 | `offset/limit` 翻页条数自洽，末页不满 |
 | 标签 | `labelId` 过滤后每行的 `labelId` 都匹配 |
 | recordType | 按 `recordType` 过滤后每行 `recordContent.recordType` 都匹配 |
@@ -33,8 +33,8 @@ python tools/TestCases/TestRecordRead.py <ssoToken>
 
 - 需要**有效 ssoToken**；没有 token 直接跑会失败（先用 `VisionLogin.py` 或
   `LoginToken.py` 换）。
-- 断言里用到「本人 ≤ 本校 ≤ 全平台」这类**包含关系**，不要改成严格相等——
-  全平台条数会随别的同学提交而变。
+- 断言里用到「我的 ≤ 班级 ≤ 兜底分支」这类**包含关系**，不要改成严格相等——
+  外层条数会随别的同学提交而变。
 - 本文件曾长期是「模块级平铺脚本」：import 就会自动跑测试，且**永远退出 0**
   （打印了 `FAIL=` 却不让 CI 拦）。2026-10-04 已包成 `main()` 并修好退出码。
 - 细节见 `reference/api.md`「写实记录全量测试结论」。

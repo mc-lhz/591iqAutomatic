@@ -1,4 +1,4 @@
-"""搜索域（读）：全平台写实记录全文搜索 + 人员搜索。
+"""搜索域（读）：写实记录全文搜索 + 人员搜索（同校范围）。
 
 对应端点：/search/search（type=1 记录 / type=2 人员）
 
@@ -32,10 +32,12 @@ class SearchMixin:
             "pageRowBounds": {"offset": offset, "limit": limit}})
 
     def searchRecords(self, keyword, offset=0, limit=10):
-        """全平台写实记录全文搜索（type=1）。
+        """写实记录全文搜索（type=1）。
 
-        范围**不受** `records(type_=...)` 的 1/2 约束——这里搜的是全平台
-        （约 14.6 万条），含他人与外校；命中项结构与 `records()` 的 `list[]` 一致。
+        范围**不受** `records(type_=...)` 的 tab 约束——含同校全部历史记录
+        （含他人，含历年毕业届）。**不跨校**：本端点请求里不含任何学校标识，
+        租户由 `AccessToken` 决定，实测 `schId` 恒为本校。
+        命中项结构与 `records()` 的 `list[]` 一致。
         """
         return self._search(SEARCH_TYPE_RECORD, keyword, offset, limit)
 

@@ -47,6 +47,8 @@ def _count(c, type_, recordType=""):
 
 
 def _snapshot(c):
+  # 注: "本校可见记录" 是历史遗留的输出键名，实际口径是 type="2" = **班级**
+  # （前端 tab 名，见 reference/api.md）。改名会破坏 CLI 输出兼容性，故保留。
     return {"本人记录": _count(c, "1"), "本校可见记录": _count(c, "2")}
 
 

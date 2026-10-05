@@ -22,7 +22,7 @@
 
 token 优先级：--token > 环境变量 IQ_SSO_TOKEN > -u/-p。
 
-⚠️ 写操作：记录进入本校可见 feed；学生端**有**删除接口（`/record/delRecord`，2026-10-04 确认），能撤但**删除不可撤销**，所以每次写之前仍须先确认。
+⚠️ 写操作：记录进入同校可见 feed；学生端**有**删除接口（`/record/delRecord`，2026-10-04 确认），能撤但**删除不可撤销**，所以每次写之前仍须先确认。
    实际写入必须显式加 --yes（代表「已向用户确认」）；只读预览用 --dry-run。
 
 退出码：
@@ -76,6 +76,7 @@ def _count(c, type_, recordType=""):
 
 def _snapshot(c):
     return {"本人记录": _count(c, "1"), "本人活动记录": _count(c, "1", "17"),
+            # 遗留键名，实际口径 = type_"2" = 班级（见 reference/api.md）
             "本校可见记录": _count(c, "2")}
 
 
@@ -125,7 +126,7 @@ def _uploadAll(c, images):
 
 
 def _findByTitle(c, title, slot):
-    """按标题在「本校可见」与「本人」两个口径里找刚发布的记录。"""
+    """按标题在「班级」（type=2）与「本人」（type=1）两个口径里找刚发布的记录。"""
     for type_, where in (("2", "本校feed"), ("1", "本人列表")):
         out = c.records(offset=0, limit=50, type_=type_) or {}
         for row in (out.get("list") or {}).get("list") or []:

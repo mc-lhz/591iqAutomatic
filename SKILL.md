@@ -186,11 +186,11 @@ python tools/RecordCenter/DeleteRecord.py --id <recordId> --yes        # 确认�
 - 端点 `POST /record/delRecord`，body `request={"data":{"id":"<recordId>"}}`，返回 `{"list":"操作成功"}`；库方法 `c.deleteRecord(id)`。
 - **名字是 `delRecord` 不是 `deleteRecord`**——项目里删除类端点一律 `del` 前缀（`delSummary` / `delComment` / `reviewDel`），
   之前文档误记为「未发现删除接口」，错因就是只 grep 了 `deleteRecord`。
-- 回执校验：本人记录数恰好 −1、本校可见不增、`queryRecord(id)` 查不到；任一不符 → 退出码 3。
+- 回执校验：本人记录数恰好 −1、班级口径不增、`queryRecord(id)` 查不到；任一不符 → 退出码 3。
   退出码 `0` 成功 / `2` 服务端拒绝或 404（接口可能下线）/ `3` 回执不符 / `4` token 失效 / `5` 前置校验失败。
 - `TestApiReadOnly.py` 有常驻用例 `record/delRecord (仅探测路由，不删)`，
   用 32 个 `0` 探测路由是否还在（404 → FAIL），**永不删任何东西**。
-- 真实删除语义**已实测闭环**（2026-10-04）：发一条 → 删一条，本人记录 15 → 16 → 15、本校可见 278 → 279 → 278，`queryRecord` 查不到且 feed 里消失。
+- 真实删除语义**已实测闭环**（2026-10-04）：发一条 → 删一条，本人记录 15 → 16 → 15、班级口径 278 → 279 → 278，`queryRecord` 查不到且 feed 里消失。
 ⚠️ **删除不可撤销**；能否删他人的、能否删已审核通过的，**仍未验证**。
 - 细节见 `tools/RecordCenter/DeleteRecord.md`，契约见 `reference/api.md`「删除写实记录」。
 
@@ -221,7 +221,7 @@ c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档
                 honorImages=[img], orderName="优秀")
 ```
 
-⚠️ 提交前必须向用户确认：记录进入**本校可见** feed。补充：学生端**确有删除接口**（`POST /record/delRecord`，2026-10-04 确认并实测，命令行 `tools/RecordCenter/DeleteRecord.py`），即**已发布的可删**——但删除同样不可撤销，所以确认环节不能省。`
+⚠️ 提交前必须向用户确认：记录进入**同校可见** feed。补充：学生端**确有删除接口**（`POST /record/delRecord`，2026-10-04 确认并实测，命令行 `tools/RecordCenter/DeleteRecord.py`），即**已发布的可删**——但删除同样不可撤销，所以确认环节不能省。`
 字段/枚举/校验细节见 `reference/api.md`「写入接口」章节。
 
 > **填 `recordContent` 前先查已有结论**：**22 类记录的字段、必填项、平台原话提示已经全部查清**，
@@ -236,7 +236,7 @@ c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档
 `POST /evaluateActivity/submitSummary` —— 表单只有 `summary[0].content` 必填（**无字数校验**），
 荣誉/图片/附件全可选；`editAuth=1` 时带 `summaryId` 复用同一接口即可重新提交；
 bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验证**。
-⚠️ 仍需逐次确认：总结同样进入**本校可见** feed。
+⚠️ 仍需逐次确认：总结同样进入**同校可见** feed。
 
 待办任务 → 提交总结的 **6 步闭环**（实测清掉首页 1 条待办）：
 
@@ -278,8 +278,18 @@ python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 42 项：追�
 
 ## 关键业务语义
 
-`record/queryRecordList` 的 `type` 决定范围：`1`=仅本人(4条)、`2`=本校可见(266条)、
-空/非法=全平台(145,994条)；`queryRecordStatistics` 只统计本人，口径与 `type=1` 一致。
+`record/queryRecordList` 的 `type` 决定范围，**取值语义取自学生端 tab 定义**（2026-10-05 实测）：`1`=我的、`2`=**班级**、`4`=学校；`3/5/空/任意非法值` 走后端兜底分支（**前端没有任何 tab 对应它**）。
+
+| type | 前端 tab | 实测 count（2026-10-05） |
+|---|---|---:|
+| `1` | 我的 | 18 |
+| `2` | **班级** | 281 |
+| `4` | 学校 | 12,136 |
+| `3` / `5` / `""` / 非法 | *（无 tab，后端兜底）* | **146,016** |
+
+⚠️ 兜底分支比「学校」tab 宽 12 倍——它不做范围过滤，把历年毕业届的记录一并返回，**不可当作「全校/全平台」口径引用**。`queryRecordStatistics` 只统计本人，口径与 `type=1` 一致。
+
+⚠️ **平台是每校独立部署的多租户**。`/search/search`、`/record/queryRecordList` 等数据查询端点的请求里**不含任何学校标识**，租户完全由 `AccessToken` 决定；实测全部数据的 `schId` 恒为 `200`（厦门一中）。详见 MEMORY.md「schId 与租户边界」。
 
 ## 注意事项
 
