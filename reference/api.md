@@ -525,14 +525,26 @@ statistics_total_class statistics_total_student submitHonor submitSummary update
 | 9000 | session已过期 | 请求头缺 `AccessToken` 或需重调 loginBySSOToken |
 | -1 + msgCode=msgauth_access_token_invalid | 同 9000 | 前端会跳 `/#/login` |
 
-### 响应信封有两种（2026-10-05 确认）
+### 响应信封有两种（2026-10-05 全量日志实测枚举）
 
 | 形状 | 出现范围 | 判别 |
 |---|---|---|
-| `{code,msg,data}` | 绝大多数端点（含 `loginBySSOToken`，但它的业务字段是**平铺在顶层**、没有 `data`） | 顶层取 `code` |
-| `{meta:{code,msg}, …}` | 少数端点，已确认的有**家长评语提交**（失败时 `meta.msg=学生总结已截止`） | 顶层 `meta` 是 dict 且含 `code` 时以它为准 |
+| `{code,msg,data}` | 34 个端点（含 `loginBySSOToken`，但它的业务字段**平铺在顶层**、没有 `data`） | 顶层取 `code` |
+| `{meta:{code,msg}, …}` | **5 个端点**，顶层根本没有 `code` | 顶层 `meta` 是 dict 且含 `code` 时以它为准 |
 
-⚠️ **只查顶层 `code` 会把 `{meta:…}` 端点的失败当成成功**（拿到 `null` 却以为提交成功）。
-`tools/Access/HttpTransport.py` 的 `unwrapEnvelope()` 两种都认，
+⚠️ **只查顶层 `code` 会把后一类端点的失败当成成功**（拿到 `null` 却以为成功；
+`code=9000` 的会话过期也会被吞）。已实测的 5 个：
+
+| 端点 | 说明 |
+|---|---|
+| `/user/getUserInfoDetail` | 本人档案（最常调用的之一） |
+| `/studentMgr/getParentList` | 家长列表 |
+| `/announcement/listAnnouncementRead` | 已读公告 |
+| `/eventTwo/listActivityStatisticsByDimension` | 活动维度统计 |
+| `/growReport/summary/listGrowReportStuByStudentId` | 成长报告（按学生） |
+
+已确认的 `{meta:…}` 端点：**家长评语提交**（失败时 `meta.msg=学生总结已截止`）+ 上表 5 个。
+清单靠 `IQ_VERBOSE=1` 跑一次全量测试、看 `HttpTransport` 打的 `信封=[...]` 诊断行即可补全。
+
+`tools/Access/HttpTransport.py` 的 `unwrapEnvelope()` 两种都认；
 `TestContract.py` 的「响应信封」一项离线守着这个行为。
-已知 `{meta:…}` 端点清单尚未枚举（需要逐个只读端点比对才能补全）。

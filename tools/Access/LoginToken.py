@@ -27,6 +27,14 @@ import re
 import sys
 import time
 
+# `Common.Logcat` 在上一级（tools/）。直接 `python tools/Access/LoginToken.py` 时
+# sys.path[0] 是 tools/Access，import 会 ModuleNotFoundError——
+# 与 VisionLogin 同样先把自己和 tools/ 都塞进 sys.path（LoginToken 以前不需要这一步，
+# 是接入 Logcat 后才有的，故放在标准库 import 之后、业务代码之前）。
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from Common.Logcat import Log, setVerbose  # noqa: E402
+
 # `requests` 故意**不在顶层导入**：CLI 的 --help 不该因为缺重依赖而崩，
 # 而本仓库的离线 CI（无任何 secret、无第三方包）要能跑所有入口的 -h 冒烟。
 # 需要它的地方在函数内 import（见 newSession / 门户换 token）。
@@ -38,6 +46,8 @@ MOCK_TMPL = (APP + "/#/mock_login?logoutDisable=1&from=third"
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edge/145.0.0.0")
 TOKEN_RE = re.compile(r"token=([0-9a-fA-F]{32})")
+# 内部诊断日志统一用 Common.Logcat 的单例 Log；AI/用户可见的结论一律 print。
+# 看细节：环境变量 IQ_VERBOSE=1，或命令行 --verbose。
 
 
 # ---------------------------------------------------------------- 门户侧 ----
@@ -113,6 +123,14 @@ def getSsoToken(s) -> str:
     return m.group(1) if m else ""
 
 
+# OCR 变体池：`(阈值, 放大倍数)`，三者**强度接近但预处理不同**——投票才有效。
+# ⚠️ 两个反直觉的实测结论（A/B 两批共 48 张真值，逐字读图标定，输入用文件路径）：
+#   ① 「裁剪归一化」变体只有 7/24，全画布阈值化 17~19/24，**弱变体会把强变体带跑**；
+#   ② 单一最优变体（阈值200×4）40/48，三者投票 43/48——投票有净增益，且比 5 变体更快。
+# 改这里之前先重跑离线基准（A/B 两批 + 逐字真值），别凭感觉调。
+CAPTCHA_VARIANTS = [(170, 3), (180, 4), (200, 4)]
+
+
 def preprocess(path, out=None, scale=3, threshold=160):
     """红字白底验证码 → 黑字白底 → 放大（实测能把 rapidocr 从 fa0p 修成 faod）。"""
     import numpy as np
@@ -127,33 +145,107 @@ def preprocess(path, out=None, scale=3, threshold=160):
     return out
 
 
+def normalizeGlyphs(path, out=None, targetW=560, pad=8, thr=160):
+    """裁到墨迹外接框 → 反相 → 按宽度归一化放大。
+
+    与 `VisionLogin.prepForVision` 是同一套几何变换，但**刻意不复用那份代码**——
+    两个模块的契约是「完全独立、互不修改」（见 VisionLogin 模块文档）。
+    对 rapidocr 的增益来自去掉留白：原图 250x100 里字符只占约 61%x37%，
+    不裁按时不管怎么放大，识别率都上不去。
+    """
+    import numpy as np
+    from PIL import Image
+    im = Image.open(path).convert("L")
+    a = np.array(im)
+    ink = a < thr
+    rows = np.where(ink.any(axis=1))[0]
+    cols = np.where(ink.any(axis=0))[0]
+    if len(rows) and len(cols):
+        t, b, l, r = rows[0], rows[-1], cols[0], cols[-1]
+        im = im.crop((max(0, l - pad), max(0, t - pad),
+                      min(im.width, r + pad), min(im.height, b + pad)))
+    im = Image.eval(im, lambda v: 255 - v)
+    scale = targetW / max(1, im.width)
+    im = im.resize((targetW, max(1, int(im.height * scale))), Image.LANCZOS)
+    out = out or (str(path) + ".norm%d.png" % thr)
+    im.save(out)
+    return out
+
+
+# 字符集（2026-10-05 用户定调）：验证码**只含小写字母、没有数字**。
+# 于是 OCR 读出来的每一个数字都必然是字母的误认，一律按形近关系映射回字母——
+# 注意是「映射」不是「删掉」：删掉会改变长度，把一个错的答案换成另一个错的答案。
+DIGIT2LETTER = str.maketrans("0123456789", "olzeasgbgg")
+
+
+def cleanCode(text):
+    """把 OCR 原始串归一到字符集：数字→形近字母、全转小写、只留 a-z。"""
+    t = text.strip().lower().translate(DIGIT2LETTER)
+    return "".join(ch for ch in t if "a" <= ch <= "z")
+
+
+def _ocrOnce(ocr, path):
+    """跑一次 rapidocr → (归一后的串, 平均置信度)；没识别出框返回 ('', 0)。"""
+    res, _ = ocr(path)
+    if not res:
+        return "", 0.0
+    res = sorted(res, key=lambda r: min(p[0] for p in r[0]))
+    joined = cleanCode("".join(r[1] for r in res))
+    return joined, sum(float(r[2]) for r in res) / len(res)
+
+
 def ocrCaptcha(path):
-    """验证码识别，返回 [0-9a-z]+；识别失败返回 ''。"""
-    prep = preprocess(path)
+    """验证码识别，返回 4~5 位小写字母；没有变体读出合法长度就返回 ''。
+
+    2026-10-05 修 D18。**原实现是「算了两份、只取第一份」**：
+    按 `(预处理图, 原图)` 顺序把结果 append 进 `texts`，最后 `return texts[0]`，
+    于是恒定返回预处理图那一份，原图识别算完即丢；再加上「高置信度就 break」，
+    原图几乎永远轮不到。70 轮基线只有 44.3%。
+    现在对多个预处理变体各跑一次做**多数投票**（票数 → 置信度），
+    长度不在 4~5 的候选直接丢弃。
+    变体文件名必须带阈值与倍数：默认 out 是 `<path>.prep.png`，四个变体会互相覆盖，
+    结果四份「变体」其实是同一张图，投票退化成单变体（这个坑踩过一次）。
+    """
+    made = []
+    for t, s in CAPTCHA_VARIANTS:
+        out = "%s.t%d_s%d.png" % (path, t, s)
+        made.append(((t, s), preprocess(path, out=out, threshold=t, scale=s)))
+    cands = []
     try:
         from rapidocr_onnxruntime import RapidOCR
-    except Exception:                            # noqa: BLE001
-        RapidOCR = None
-    texts = []
-    if RapidOCR:
         ocr = RapidOCR()
-        for f in (prep, path):
-            res, _ = ocr(f)
-            if not res:
-                continue
-            res = sorted(res, key=lambda r: min(p[0] for p in r[0]))
-            joined = "".join(r[1] for r in res)
-            texts.append(joined)
-            if len(res) > 1 and all(r[2] > 0.9 for r in res):
-                break                             # 高置信度即采纳
-    if not texts:
-        try:                                      # 备选：tesseract
+    except Exception:                                # noqa: BLE001
+        ocr = None
+    if ocr:
+        for (t, s), f in made:
+            code, conf = _ocrOnce(ocr, f)
+            Log.d("OCR", "%s 阈值%d×%d → %r conf=%.3f" % (os.path.basename(path),
+                                                          t, s, code, conf))
+            if len(code) in (4, 5):
+                cands.append((code, conf))
+    if not cands:
+        try:                                          # 备选：tesseract
             import pytesseract
             from PIL import Image
-            texts = [pytesseract.image_to_string(Image.open(prep))]
-        except Exception:                         # noqa: BLE001
+            t = cleanCode(pytesseract.image_to_string(Image.open(made[0][1])))
+            if len(t) in (4, 5):
+                cands.append((t, 0.5))
+        except Exception:                             # noqa: BLE001
             return ""
-    return re.sub(r"[^0-9a-z]", "", texts[0].lower())
+    if not cands:
+        Log.d("OCR", "%s 无合法长度候选（真值只可能是 4~5 位）"
+              % os.path.basename(path))
+        return ""
+    votes = {}
+    for code, conf in cands:
+        slot = votes.setdefault(code, [0, 0.0])
+        slot[0] += 1
+        slot[1] = max(slot[1], conf)
+    best = max(votes, key=lambda k: (votes[k][0], votes[k][1]))
+    Log.d("OCR", "选定 %r 票数=%s 全部候选=%s"
+          % (best, {k: v[0] for k, v in votes.items()},
+             {k: round(v[1], 3) for k, v in votes.items()}))
+    return best
 
 
 def loginForToken(username, password, retry=6, captchaFile="jcaptcha.jpg",
@@ -174,10 +266,12 @@ def loginForToken(username, password, retry=6, captchaFile="jcaptcha.jpg",
             code = ocrCaptcha(captchaFile)
             print(f"[ocr] 第{attempt}次 验证码={code or '(识别失败)'} "
                   f"图={captchaFile}")
+            Log.d("Login", "第%d次提交验证码 %r" % (attempt, code))
             if not code:
                 continue
             if portalLogin(s, username, password, code):
                 break
+            Log.d("Login", "第%d次被拒，换新图重试" % attempt)
         else:
             print("[login] 多次尝试均失败", file=sys.stderr)
             sys.exit(1)
@@ -227,6 +321,8 @@ def emit(token: str, how: str, noVerify: bool = False) -> int:
 
 
 def mPassword(a) -> int:
+    setVerbose(a.verbose)
+    Log.d("Login", "开始 OCR 登录，retry=%d 变体池=%s" % (a.retry, CAPTCHA_VARIANTS))
     tok = loginForToken(a.username, a.password, retry=a.retry,
                         captchaFile=a.captchaFile,
                         interactive=a.interactive)
@@ -312,6 +408,8 @@ def main():
                    help="OCR 验证码重取重试次数（单次约 70%% 通过，默认 6）")
     p.add_argument("--interactive", action="store_true", help="人工看图输验证码")
     p.add_argument("--captchaFile", default="jcaptcha.jpg")
+    p.add_argument("--verbose", action="store_true",
+                   help="打开内部 DEBUG 日志（走 stderr，不污染 stdout 的结论输出）")
     p.add_argument("--noVerify", action="store_true")
     p.set_defaults(func=mPassword)
 
