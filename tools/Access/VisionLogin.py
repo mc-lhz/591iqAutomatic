@@ -39,6 +39,7 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(
 
 from LoginToken import (BASE, newSession, serverTime, fetchCaptcha,   # noqa: E402
                         sha1, portalLogin, getSsoToken, emit)
+from Common.Logcat import Log, setVerbose                              # noqa: E402
 
 BASE_HOST = "xmyz.xmedu.cn"
 SCRATCH = os.path.join(tempfile.gettempdir(), "591iq_scratch")
@@ -148,6 +149,7 @@ def newState(s, hint=None):
 
 def cmdNew(a):
     """第①步：取验证码图 + 生成 vision 友好图 + 落盘会话。无需任何凭据。"""
+    setVerbose(a.verbose)
     s = newSession()
     serverTime(s)
     state = newState(s, a.state)
@@ -155,6 +157,8 @@ def cmdNew(a):
     raw = base + ".jpg"
     fetchCaptcha(s, raw)
     saveState(s, state)
+    Log.d("Vision", "取图 %s 大小=%dB JSESSIONID=%s"
+          % (raw, os.path.getsize(raw), s.cookies.get("JSESSIONID")))
     print("验证码图片: %s" % raw)
     try:
         vision = prepForVision(raw)
@@ -247,6 +251,8 @@ def main():
     # 用 SCRATCH 常量在传入前就格式化掉；replace 是防临时目录名里含 % 的复发。
     p.add_argument("--state", help="会话状态文件路径（不传则用 %s 下带时间戳的默认名）"
                % SCRATCH.replace("%", "%%"))
+    p.add_argument("--verbose", action="store_true",
+                   help="打开内部 DEBUG 日志（走 stderr，不污染 stdout 的指引输出）")
     p.set_defaults(func=cmdNew)
 
     p = sub.add_parser("submit", help="② 提交验证码，换 ssoToken")
@@ -254,8 +260,10 @@ def main():
     p.add_argument("-p", "--password", default="")
     # 故意不用 required=True：argparse 的用法错误会以退出码 2 结束，
     # 那会与「验证码错误(2)」混淆，故改在 cmdSubmit 内校验并返回 3。
-    p.add_argument("--code", default="", help="验证码，4~5 位小写字母与数字")
+    p.add_argument("--code", default="", help="验证码，4~5 位小写字母")
     p.add_argument("--state", help="new 步打印的会话状态文件路径")
+    p.add_argument("--verbose", action="store_true",
+                   help="打开内部 DEBUG 日志（走 stderr，不污染 stdout 的结论输出）")
     p.add_argument("--noVerify", action="store_true")
     p.set_defaults(func=cmdSubmit)
 

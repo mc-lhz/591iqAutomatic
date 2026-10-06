@@ -36,14 +36,15 @@ COLORS = {
     "RESET": "\033[0m",
 }
 
-# 写文件前强制脱敏：token/口令/证件/手机号一律替换，防止日志把敏感信息落盘。
+# 脱敏策略（2026-10-05 按用户定调收窄）：**只挡密码与身份证**，其余一律原样输出。
+# 允许进日志的：ssoToken / JSESSIONID / Authorization / URL 里的 session、
+# 姓名 / 学号 / userId / 手机号 —— 这些是排查问题必须看得见的东西，
+# 靠「日志不落盘」来兜底（outputFile 默认关），而不是靠把内容涂黑。
+# 2026-10-05 之前这里是 7 条规则，其中 `JSESSIONID → "JSESSIONID"`、
+# `Authorization → "Authorization"` 两条还是自等替换的 no-op（涂黑了个寂寞）。
 _SCRUB = [
-    (re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{32}(?![0-9a-fA-F])"), "<32hex>"),
-    (re.compile(r"JSESSIONID", re.I), "JSESSIONID"),
-    (re.compile(r"Authorization", re.I), "Authorization"),
     (re.compile(r"(?:password|passwd|密码|口令)\s*[:=]\s*\S+", re.I), "<密码已脱敏>"),
     (re.compile(r"(?<!\d)\d{17}[\dXx](?!\d)"), "<身份证已脱敏>"),
-    (re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)"), "<手机号已脱敏>"),
 ]
 
 
@@ -173,13 +174,31 @@ class Logcat:
         self.log(tag, "ERROR", "%s\n%s" % (msg or "", traceback.format_exc()))
 
 
+def _defaultLevel():
+    """默认 WARNING；设 IQ_VERBOSE=1 打开 DEBUG（CI/流水线上不会误开）。"""
+    return "DEBUG" if os.environ.get("IQ_VERBOSE") == "1" else "WARNING"
+
+
+# 模块级单例：**全仓库统一用 `Log`**，不要在业务模块里再 new 一个。
+# 需要落盘或换等级时用 setLevel()/setVerbose()，别自己 Logcat()，
+# 否则一份日志会散到两个实例上、等级各调各的。
+Log = Logcat(level=_defaultLevel())
+
+
+def setVerbose(flag: bool = True) -> str:
+    """CLI 的 `--verbose` 用；不传参时按环境变量 IQ_VERBOSE 决定。返回最终等级。"""
+    if flag or os.environ.get("IQ_VERBOSE") == "1":
+        Log.setLevel("DEBUG")
+    return Log.level
+
+
 if __name__ == "__main__":
-    log = Logcat(level="DEBUG")
-    log.d("Test", "这是一条 debug 日志")
-    log.i("Test", "这是一条 info 日志")
-    log.w("Test", "这是一条 warning 日志")
-    log.e("Test", "这是一条 error 日志")
+    setVerbose(True)
+    Log.d("Test", "这是一条 debug 日志")
+    Log.i("Test", "这是一条 info 日志")
+    Log.w("Test", "这是一条 warning 日志")
+    Log.e("Test", "这是一条 error 日志")
     try:
         1 / 0
     except ZeroDivisionError:
-        log.exc("Test", "捕获到异常")
+        Log.exc("Test", "捕获到异常")
