@@ -45,27 +45,7 @@ def nonempty(v):
     return True
 
 
-def _firstOwnerReportId(c):
-    """取「我发起的报告」里第一个 reportId；取不到返回 **None**。
 
-    ⚠️ 必须自己吞掉异常并返回 None（2026-10-05 修）：账号名下可能**根本没有**
-    荣誉评选报告，`ownerReports()` 会抛 IQError(`没有查询到数据`)。异常若往外传，
-    调用方的 case 会把**上一个端点的报错文案**记到自己头上——两个用例显示同一句
-    `queryOwnerReportData`，排查时极具误导性。返回 None 让调用方自己决定 SKIP。
-    """
-    try:
-        r = c.ownerReports(limit=5) or {}
-    except IQError:
-        return None
-    for path in (("list",), ("data", "list"), ("pdlist",), ("data", "pdlist")):
-        cur = r
-        for k in path:
-            cur = (cur or {}).get(k) if isinstance(cur, dict) else None
-        if isinstance(cur, list) and cur and isinstance(cur[0], dict):
-            rid = cur[0].get("reportId")
-            if rid:
-                return rid
-    return None
 
 
 def main():
@@ -295,27 +275,13 @@ def main():
     case("eventTwo/listLabel dim17", lambda: c.activityLabels(17))
     case("evaluation/honor/list", lambda: c.honorTypes())
 
-# ---- 遴选 / 总结报告（Selection 域，2026-10-05 新增） ----
-    # ⚠️ 这两个端点**依赖账号名下真有荣誉评选报告**。学生账号通常没有这类数据，
-    # `ownerReports()` 会回 `code=1 没有查询到数据`——那是「接口可达但本账号无数据」，
-    # 不是端点失效。所以无数据一律记 SKIP（同本文件 task/get 的既有惯例），
-    # 绝不能记 FAIL，否则每次回归都白挂两条。
-    _rid = _firstOwnerReportId(c)
-    if _rid:
-        case("reportManage/queryOwnerReportData", lambda: c.ownerReports(limit=5))
-        case("stuffVotes/querySubjectHonorStuff",
-             lambda: c.subjectHonorStuff(_rid))
-    else:
-        why = "本账号无荣誉评选报告，ownerReports 回 code=1 没有查询到数据"
-        results.append(("reportManage/queryOwnerReportData", "SKIP", 0, why))
-        results.append(("stuffVotes/querySubjectHonorStuff", "SKIP", 0, why))
-    # 路由活性单独探：空参必然 999997（缺必填），说明后端在、不是 404。
-    case("stuffVotes/commitBatchVoteStuff 路由活性",
-         lambda: c.post("/stuffVotes/commitBatchVoteStuff", {}),
-         expect_error=True, note="空参应报参数校验失败")
-    case("diathesisReport/reportConfirm 路由活性",
-         lambda: c.post("/diathesisReport/manage/reportConfirm", {}),
-         expect_error=True, note="空参应报参数校验失败")
+# ⚠️ **遴选/投票域已整体删除（2026-10-06）**，这里不再有用例。
+    # 原因：写操作会改**他人**遴选结果或替报告发起人强制确认（已证实窗口过期后
+    # 仍能确认），属越权代操作；读端点返回他人姓名与票数。
+    # 原 4 项（queryOwnerReportData / querySubjectHonorStuff /
+    # commitBatchVoteStuff 路由活性 / reportConfirm 路由活性）随之移除。
+    # **探测它们等于把能力又装回去**，所以连「只探路由活性」都不做。
+    # 端点清单见 reference/api.md（只记录、不封装）。
 
     def _delRoute():
         """探测 /record/delRecord 路由是否还在——**不会删除任何东西**（id 全 0 不存在）。
