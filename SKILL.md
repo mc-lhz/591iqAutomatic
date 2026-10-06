@@ -270,13 +270,13 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 python tools/TestCases/TestContract.py
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录业务 13 项断言
 python tools/TestCases/TestContract.py                # 本地契约审计（离线，14 项）
-python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 51 项
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 51 项
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 47 项
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 47 项
 python tools/TestCases/TestApiReadOnly.py --token <t> --dump     # 额外落盘每个接口的真实返回
-python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 52 项：追加 announcement/upload（会落一个文件）
+python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 48 项：追加 announcement/upload（会落一个文件）
 ```
-全量结果（2026-10-02 实测）：**PASS=48 FAIL=0 WARN=1 SKIP=2**，共 **51 项**（20.9s，`-u -p --upload`）；
-只跑只读端点（不加 `--upload`）为 **51 项 / PASS=48 FAIL=0 WARN=1 SKIP=2**——第 52 项
+全量结果（2026-10-02 实测）：**PASS=48 FAIL=0 WARN=1 SKIP=2**，共 **47 项**（20.9s，`-u -p --upload`）；
+只跑只读端点（不加 `--upload`）为 **47 项 / PASS=48 FAIL=0 WARN=1 SKIP=2**——第 48 项
 `announcement/upload` 只在显式 `--upload` 时才计入，**`-u -p` 本身不含上传**。
 （含新增只读：`task/get`、`evaluateActivity/get_config`、`evaluateActivity/querySummary`）；
 产物 `tools/TestCases/TestApiReadOnlyReport.json`（逐项状态，由本次运行生成，gitignore）；

@@ -23,7 +23,7 @@ tools/
   Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet）
   Export/ExportSummaryList.py     活动课程总结清单导出（已交/未交/可编辑重交）
   Export/XlsxWriter.py            共用的最小 xlsx 写出器（纯标准库 zipfile）
-  TestCases/TestApiReadOnly.py    只读 51 项（加 `--upload` 满 52 项）
+  TestCases/TestApiReadOnly.py    只读 47 项（加 `--upload` 满 48 项）
   TestCases/TestRecordRead.py     13 项
   TestCases/TestContract.py       仓库契约与卫生审计（离线，无网络无凭据）
   Release/PackSkill.py            技能包打包（591iqAutomatic.zip，根目录结构）
@@ -106,9 +106,9 @@ python tools/Access/VisionLogin.py submit -u <学号> -p <密码> --code ab12   
 python tools/Access/LoginToken.py password -u <学号> -p <密码>      # 无读图能力时的 OCR 路径
 python tools/Access/LoginToken.py token <32hex>                  # 校验已有 token
 python tools/IqClient.py <ssoToken>                       # 验证并打印摘要
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>    # 只读全量 51 项
-python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>    # 门户登录换 token → 只读 51 项
-python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload  # 52 项（追加上传项，会落一个文件）
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>    # 只读全量 47 项
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>    # 门户登录换 token → 只读 47 项
+python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload  # 48 项（追加上传项，会落一个文件）
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录 13 项断言
 python tools/Export/ExportXlsx.py --token <ssoToken>            # 综评全量导出 xlsx（13 sheet）
 python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结清单导出 xlsx

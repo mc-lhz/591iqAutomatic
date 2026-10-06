@@ -406,6 +406,7 @@ def checkCapabilityGate():
     顺手加回来或改掉默认值——之后没有任何测试会红，红线就悄悄失效了。
     纯离线：不发任何请求（`_search` 被替换成固定返回），不联网也不要 token。
     """
+    from Access.HttpTransport import IQError
     from IqClient import IQClient
     from SearchCenter import SearchQuery
 
@@ -426,7 +427,37 @@ def checkCapabilityGate():
     if os.environ.get("IQ_ALLOW_PEOPLE_SEARCH"):
         bad.append("环境变量 IQ_ALLOW_PEOPLE_SEARCH 仍在生效")
 
-    # ② 记录搜索默认脱敏
+    # ② 遴选/投票域整个模块不得再存在（2026-10-06 删除）
+    for name in ("commitBatchVote", "deleteVoteStuff", "reportConfirm",
+                 "ownerReports", "subjectHonorStuff", "stuffList"):
+        if hasattr(c, name):
+            bad.append("门面仍暴露 %s" % name)
+    sel = os.path.join(TOOLS, "Selection")
+    if os.path.exists(sel):
+        bad.append("Selection 目录仍存在：%s" % sorted(os.listdir(sel))[:3])
+    for name in ("Selection", "SelectionQuery", "SelectionVote"):
+        if name in sys.modules:
+            bad.append("%s 仍被导入" % name)
+
+    # ③ 写端点不得被重新接上：用假 _call 探，谁调了投票/确认类端点就记下来
+    touched = []
+    c._call = lambda p, *a, **k: touched.append(p) or {}
+    for name in ("commitBatchVote", "reportConfirm", "deleteVoteStuff"):
+        fn = getattr(c, name, None)
+        if callable(fn):
+            try:
+                fn({} if name == "commitBatchVote" else "x")
+            except (IQError, ValueError, TypeError, KeyError):
+                pass
+            except Exception:                        # noqa: BLE001
+                pass
+    hit = [p for p in touched
+           if p.startswith(("/stuffVotes/", "/diathesisReport/",
+                            "/voteManage/", "/reportManage/"))]
+    if hit:
+        bad.append("仍有代码在调 %s" % sorted(set(hit)))
+
+    # ④ 记录搜索默认脱敏
     canned = {"totalResult": 1, "data": None,
               "list": [{"id": "x", "recordContent": {"name": "n"},
                         "userInf": {"userId": 1, "userName": "A",
@@ -440,8 +471,8 @@ def checkCapabilityGate():
     if "userName" not in inf:
         bad.append("searchRecords 脱敏过头，丢了白名单字段")
 
-    add("能力红线（无搜人入口·记录搜索默认脱敏）", FAIL if bad else OK,
-        "；".join(bad[:3]) or "搜人能力已不存在，searchRecords 默认脱敏")
+    add("能力红线（无搜人/投票入口·记录搜索默认脱敏）", FAIL if bad else OK,
+        "；".join(bad[:3]) or "搜人与遴选投票能力均已不存在，searchRecords 默认脱敏")
 
 
 def main():
