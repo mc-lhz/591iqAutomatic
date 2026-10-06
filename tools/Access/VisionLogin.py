@@ -13,7 +13,8 @@
 （2026-10-02 实测：换新会话提交同一码 → loginFailure?error=2）。
 因此 new 步要把会话 cookie 落盘，submit 步复原后续用同一个会话登录。
 
-验证码特征（实测）：**长度 4 或 5 位不定**，仅小写字母与数字，一次性。
+验证码特征（实测）：**长度 4 或 5 位不定**，**只含小写字母、没有数字**（用户 2026-10-05 定调；
+48 张真值基线里 0 个数字），一次性。
 new 步会额外产出一张「识图推荐」PNG（裁掉留白 + 反相 + 放大），显著好读。
 
 退出码（供 agent 可靠分支）：
@@ -171,7 +172,7 @@ def cmdNew(a):
     print("JSESSIONID: %s" % (s.cookies.get("JSESSIONID") or "(无)"))
     print()
     print("→ 用读图能力打开上面「识图推荐」那张图，识别验证码"
-          "（**4 位或 5 位**，仅小写字母与数字），然后执行：")
+          "（**4 位或 5 位**，仅小写字母、无数字），然后执行：")
     print("   python tools/Access/VisionLogin.py submit -u <学号> -p <密码> "
           "--state \"%s\" --code <验证码>" % state)
     print("→ 识别不出就重新执行本步换新图（验证码一次性，旧图立即作废）。")
@@ -209,7 +210,7 @@ def cmdSubmit(a):
               file=sys.stderr)
         return OTHER
     if not re.fullmatch(r"[0-9a-z]{4,5}", a.code):
-        print("[vision] --code 只接受 4~5 位小写字母或数字，收到 %r" % a.code,
+        print("[vision] --code 只接受 4~5 位小写字母，收到 %r" % a.code,
               file=sys.stderr)
         return OTHER
 
