@@ -123,18 +123,31 @@ def main():
         return out
     step("offset 越界 (260/265/9999)", offset_probe)
 
-    # ---------- 5. type 参数扫描 ----------
+    # ---------- 5. type 取值边界（合法 4 个 tab + 非法值必须被客户端拒） ----------
+    # 2026-10-06 起语义变了：以前这里扫 `("", "0", "3", "9", "abc")` 是为了
+    # **记录服务端兜底分支有多宽**（实测 146,020 条，比学校 tab 宽 12 倍）。
+    # 现在 `QueryMixin.records()` 在客户端就拦掉了这些值——留在这里扫
+    # 等于把能力又用一遍。所以改成断言「非法值被拒 + 合法 tab 仍通」。
     def type_scan():
         out = {}
-        for t in ("", "0", "1", "2", "3", "9", "abc"):
+        for t in ("1", "2", "3", "4"):
             try:
                 d = c.records(limit=5, type_=t)
                 lst = d.get("list", {})
-                out[str(t)] = {"count": lst.get("count"), "got": len(lst.get("list") or [])}
-            except Exception as e:
-                out[str(t)] = f"ERR {e}"
+                out["tab " + t] = {"count": lst.get("count"),
+                                  "got": len(lst.get("list") or [])}
+            except Exception as e:                       # noqa: BLE001
+                out["tab " + t] = f"ERR {e}"
+        for t in ("", "0", "5", "9", "abc"):
+            try:
+                c.records(limit=5, type_=t)
+                out["非法 " + repr(t)] = "!! 未被拒绝"
+            except IQError as e:
+                out["非法 " + repr(t)] = "已拒绝"
+            except Exception as e:                       # noqa: BLE001
+                out["非法 " + repr(t)] = f"ERR {e}"
         return out
-    step("type 参数扫描", type_scan)
+    step("type 取值边界（合法 tab 通·非法值被拒）", type_scan)
 
     # ---------- 6. labelId 维度遍历 ----------
     def label_scan():

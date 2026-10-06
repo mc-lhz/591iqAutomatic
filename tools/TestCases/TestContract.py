@@ -471,8 +471,69 @@ def checkCapabilityGate():
     if "userName" not in inf:
         bad.append("searchRecords 脱敏过头，丢了白名单字段")
 
-    add("能力红线（无搜人/投票入口·记录搜索默认脱敏）", FAIL if bad else OK,
-        "；".join(bad[:3]) or "搜人与遴选投票能力均已不存在，searchRecords 默认脱敏")
+    # ⑤ records(type_) 兜底分支必须被拦（空串 → 146,020 条，无范围过滤）
+    from RecordCenter.RecordQuery import RECORD_TYPE_SCOPE
+    if set(RECORD_TYPE_SCOPE) != {"1", "2", "3", "4"}:
+        bad.append("RECORD_TYPE_SCOPE 不是前端 4 个 tab：%s" % sorted(RECORD_TYPE_SCOPE))
+    posted = []
+
+    def _fakeList(path, data=None, method=None):
+        posted.append((path, data))
+        return {"list": {"count": 146020, "list": []}}
+    c._call = _fakeList
+    c.profile = {"userId": 787316}
+    for bad_t in ("", "0", "5", "9", "abc"):
+        try:
+            c.records(limit=1, type_=bad_t)
+            bad.append("records(type_=%r) 非法值未被拦" % bad_t)
+        except IQError:
+            pass
+    if posted:
+        bad.append("非法 type_ 仍发出了请求：%s" % posted[:2])
+    for ok_t in ("1", "2", "3", "4"):
+        try:
+            c.records(limit=1, type_=ok_t)
+        except IQError as e:
+            bad.append("合法 type_=%s 被误拒：%s" % (ok_t, str(e)[:40]))
+    # 显式旁路仍可用（留 WARNING），但必须真的发出去
+    try:
+        c.records(limit=1, type_="", unsafeScope=True)
+        if not posted:
+            bad.append("unsafeScope=True 旁路失效")
+    except IQError as e:
+        bad.append("unsafeScope=True 仍被拒：%s" % str(e)[:40])
+
+    # ⑥ queryRecord 归属校验 + 默认脱敏
+    mine = {"userId": 787316, "userName": "A", "idNumber": "1" * 18,
+            "identityCard": "350203" + "0" * 12,
+            "unifiedExaminationNumber": "252601", "letter": "ADDR",
+            "politicalStatus": "P", "phoneNumber": "138" + "0" * 8}
+    c._call = lambda p, data=None, method=None: {"list": {
+        "recordContent": {"id": "X"}, "userInf": dict(mine)}}
+    got = c.queryRecord("X")["userInf"]
+    leak = sorted(set(got) & {"idNumber", "identityCard", "phoneNumber",
+                               "politicalStatus", "letter",
+                               "unifiedExaminationNumber"})
+    if leak:
+        bad.append("queryRecord 默认未脱敏，仍带 %s" % leak)
+    if "userName" not in got:
+        bad.append("queryRecord 脱敏过头")
+    c._call = lambda p, data=None, method=None: {"list": {
+        "recordContent": {"id": "Y"},
+        "userInf": dict(mine, userId=999999)}}
+    try:
+        c.queryRecord("Y")
+        bad.append("queryRecord 读他人记录未被拦")
+    except IQError:
+        pass
+    try:
+        c.queryRecord("Y", allowOther=True)
+    except IQError as e:
+        bad.append("allowOther=True 仍被拒：%s" % str(e)[:40])
+
+    add("能力红线（无搜人/投票·兜底与归属已校验·默认脱敏）", FAIL if bad else OK,
+        "；".join(bad[:3]) or
+        "搜人/投票已删除；非法 type_ 被拒、他人记录被拒、身份字段默认脱敏")
 
 
 def main():

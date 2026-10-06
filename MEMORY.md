@@ -45,6 +45,12 @@
 - `TestContract.py` 第 15 项每次 CI 都验这条红线：门面与模块都搜不到任何搜人入口，
   授权开关（`enablePeopleSearch`/`peopleSearchReason`/`IQ_ALLOW_PEOPLE_SEARCH`）
   也不许复活——否则一次无害重构就能悄悄把能力加回来，且没有任何测试会红。
+- **客户端闸门（2026-10-06，针对服务端比前端宽松的两处）**：`records(type_=)` 只放行前端
+  4 个 tab（`1/2/3/4`），非法值抛错不发请求，旁路须 `unsafeScope=True`；
+  `queryRecord(id)` 比对 `userInf.userId` 与登录者，不符即拒，旁路须 `allowOther=True`；
+  两者旁路都打 WARNING 留痕，且 `userInf` 默认脱敏到 10 字段白名单。
+  ⚠️ **闸门只防误用，不是安全控制**——绕过本模块直接发 HTTP 一样拿全量数据，
+  所以 D14/D19 都已作为 security 工单上报，真正的修复要在服务端。
 
 **当前 `main` 见 `git log -1`（本文件不写死 hash——写死必过期，已过期过两次）。**
 
@@ -147,11 +153,12 @@
 | D11 | ~~`searchPeople(redact=False)` 原始返回含他人隐私信息，且脱敏是客户端丢弃——服务端照发~~ | **已随能力删除而消解**（2026-10-06）：工具不再封装搜人；服务端仍照发，属平台侧口径问题，已上报 |
 | D12 | ~~`findPeople(exact=True)` 砍不掉完全同名账号~~ | **随能力删除而失效**；结论保留：**认人只能靠 `userId`**，姓名不是主键 |
 | D13 | `searchRecords("")` 抛 999997，但 `"   "`（纯空格）返回 1729 条——空串与空格行为不一致 | 已知限制：别拿空白串当有效关键词 |
-| D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **待上报（最重）**：跨角色越权 + 未成年人敏感个人信息。已起草 security 工单待投递；**端点细节已移出本文件到 `reference/api-privileged.md`**（gitignored，不进包）——漏洞细节不该贴在可能被公开读到的文档里 |
+| D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **已上报（2026-10-06）**：security 工单已投递 feedback（id `rEGwKxCIz…`）。跨角色越权 + 未成年人敏感个人信息，**服务端未修前风险不变**。端点细节已移出本文件到 `reference/api-privileged.md`（gitignored，不进包） |
 | D15 | 部分配置/导出端点接受客户端传入的 `schId`（`/apps/assess/scheme/list_semester` 实测 `200`→21 条 / `999999`→0 条，无兜底校验） | **待平台方验证**：需真实外校 `schId` 才能确认可利用性，本地单校数据无法判定 |
 | D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
 | D17 | ~~`HttpTransport._call` 只检查顶层 `code`~~，部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **已修**：拆出纯函数 `unwrapEnvelope(out, path)`，`meta` 是 dict 且含 `code` 时以它为准；`TestContract` 新增第 14 项离线守着（7 种信封），已验证旧实现下该项 FAIL。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功。**遗留：无**。2026-10-05 靠 `IQ_VERBOSE=1` 的全量日志枚举出 6 个 `{meta:…}` 端点（家长评语提交 + `/user/getUserInfoDetail` `/studentMgr/getParentList` `/announcement/listAnnouncementRead` `/eventTwo/listActivityStatisticsByDimension` `/growReport/summary/listGrowReportStuByStudentId`），另34 个是顶层 `code` 型；清单见 `reference/api.md`。线上回归无回归：`TestApiReadOnly` 47 项 PASS 46 / WARN 1 / FAIL 0、`TestRecordRead` 13/13 |
 | D18 | ~~`ocrCaptcha` 逻辑 bug：`texts[0]` 恒为预处理图结果，原图识别被丢弃~~ | **已修（离线实测）**：改 3 个全画布阈值化变体投票（170×3 / 180×4 / 200×4）+ `DIGIT2LETTER` 数字映射。48 张逐字真值（输入用文件路径，与生产同路径）**43/48 ≈ 90%**，A 批 21/24、B 批 22/24；旧实现同条件 33/48 ≈ 69%，历史上服务端实测 42/70 = 60%。**服务端实测（2026-10-06，15 轮真实登录）：12/15 = 80%**，同一样本上旧逻辑只对 6/12 = 50% —— 离线 90% 比服务端保守 10 个点，**对外只报服务端数字**。**两个反直觉结论**：①「裁剪归一化」变体只有 7/24，混进投票会把强变体带跑；②变体文件名曾互相覆盖（默认 out 都是 `.prep.png`），投票等于单变体 |
+| D19 | `queryRecord(id)` **不校验记录归属**（只按 id 返回），且 `userInf` 原始 51 字段含身份证号/考号/政治面貌/住址/照片；`queryRecordList` 的非法 `type`（空串即可）走**无过滤兜底分支**返回 146,020 条 | **已上报**（工单 `EMflgkmw2B…`）+ **客户端已加两道闸门**：`records` 只放行前端 4 个 tab（其余抛错，旁路要 `unsafeScope=True` 留 WARNING）、`queryRecord` 比对 `userInf.userId` 不符即拒（旁路要 `allowOther=True`）+ 默认脱敏。**闸门只防误用不是安全控制**——绕过本模块直接发 HTTP 一样拿全量 | 
 
 ---
 

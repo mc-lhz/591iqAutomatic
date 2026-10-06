@@ -185,7 +185,7 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 |---|---|---|---|
 | `1` | **4** | 仅本人 | 4 条均为本人（历史 3 条 classId=10139，新提交 1 条 classId=10141） |
 | `2` | **266** | **班级**（前端 tab 名，非「本校」） | 47 人、跨多个班级（10141~10143 等） |
-| `""` / `0` / `3` / `9` / 非法值 | **146,016** | *前端无对应 tab*，后端兜底分支 | 非法值静默走兜底分支，**不做范围过滤**，含历年毕业届记录（2026-10-05 实测） |
+| `""` / `0` / `5` / `9` / 非法值 | **146,020** | *前端无对应 tab*，后端兜底分支 | 非法值静默走兜底分支，**不做范围过滤**，含历年毕业届记录（2026-10-06 实测；客户端已拦截，见下「两个端点都比前端宽松」） |
 
 - 分页全量：limit=10 走 27 页 → 取回 266 == count，**唯一 id 266、0 重复、0 缺失**
 - limit 边界：1/50/500 正常；`limit=0` 返回 count 但 0 行；offset 越界（265/9999）：返回空数组，不报错。
@@ -374,6 +374,14 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
 | POST | `/eventTwo/listLabel` `{"dimensionId":5}` | 活动类型 |
 | GET | `/evaluation/honor/list` `{"offset":0,"limit":100,"dimensionId":?}` | 荣誉类型+级别；`data` 是 `{pdlist:[…]}`，元素键为 `eventConfigId`（=typeId）、**`title`**（不是 name，如"先进个人"）、`dimensionConfigName`、`levelInfo:[{levelCode,levelDesc,levelSort,score}]`、`honorTemplateId`、`studentEnable` |
 | POST | `/record/queryRecord` `{"id":"<recordId>"}` | 编辑回填 |
+
+🚨 **这两个端点都比前端宽松，客户端已加闸门（2026-10-06）**：
+- `queryRecord` **不校验记录归属**（只按 id 返回），且 `userInf` 原始 **51 字段**含身份证号 / 考号 / 政治面貌 / 家庭住址 / 照片
+  → `QueryMixin.queryRecord()` 默认比对 `userInf.userId` 与登录者，不符即拒（旁路 `allowOther=True`），`userInf` 默认脱敏到 10 字段白名单
+- `queryRecordList` 的非法 `type` 走无过滤兜底分支（**146,020 条**）
+  → `QueryMixin.records()` 只放行前端 4 个 tab（`1/2/3/4`），旁路须显式 `unsafeScope=True`
+
+⚠️ 两道闸门都只防误用、**不是安全控制**——绕过本模块直接发 HTTP 一样拿全量数据。已作为 security 工单上报（见 MEMORY D14/D19），真正的修复要在服务端。
 | POST | `/record/queryClassifyList` / `/record/queryHistoryBookList` | `{}` / `{}` | 分类 `[1人文科学,2自然科学]`；历史书籍**两层** `data.list.list[]`，行含 `recordContent(null)/recordRead/recordBook{name,writer,intro}` |
 
 ✅ 学生端**确有删除接口**（2026-10-04 确认并实测，见下方「删除写实记录」一节）。注意命名是 `del` 前缀不是 `delete`——只在前端 app.js 里 grep `deleteRecord` 会漏掉它。
