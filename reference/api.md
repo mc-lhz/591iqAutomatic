@@ -102,23 +102,20 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 | `0/3/4/5` | 无数据，恒 `totalResult=0` | — |
 | 空 | `code=999997 参数校验失败:搜索类型不能为空` | — |
 
-⚠️ **`type=2` 人员搜索属需授权能力，工具侧默认关闭**：
-`SearchQuery.searchPeople()` / `findPeople()` 未开启就调会抛 `IQError`，
-须先 `enablePeopleSearch("<授权来源>")`（或 `IQ_ALLOW_PEOPLE_SEARCH=1`），
-开启与每次调用都在 stderr 留 WARNING。实测规模与授权流程见
-`reference/api-privileged.md`（**不在公开仓库、不进发布包**）。
+⚠️ **`type=2` 人员搜索已在工具侧整体删除（2026-10-06）**：一次调用可枚举全校
+28,190 人级、原始返回 51 字段含身份证号与照片，而使用者是单个学生账号。
+连授权开关都没有留（留后门等于「藏起来但没关掉」）。
+**本工具不再封装、不再测试、不再文档化其调用方式**；`type=2` 仍是平台侧的口径
+问题，已上报。需要某人 `userId` 时用 `records(type_="2")` 班级 feed。
 
-⚠️ **隐私信息暴露面**：`type=2` 原始返回，以及 `type=1` 每条命中项内嵌的 `userInf`
-（原始 51 字段），均含**身份标识、联系方式、照片等隐私信息**。
-`searchRecords()` 自 2026-10-06 起 `redact=True` 为**默认**，`userInf` 收敛到白名单；
-`searchPeople(redact=True)` 同理。但脱敏都是**客户端丢弃**——数据已过网，
-绕过客户端直接发 HTTP 一样全拿到，**防手滑而非安全控制**。
+⚠️ **隐私信息暴露面**：`type=1` 每条命中项内嵌 `userInf`（原始 51 字段），
+含**身份标识、联系方式、照片等隐私信息**。`searchRecords()` 自 2026-10-06 起
+`redact=True` 为**默认**，`userInf` 收敛到白名单 10 字段。但脱敏是**客户端丢弃**
+——数据已过网，绕过客户端直接发 HTTP 一样全拿到，**防手滑而非安全控制**。
 **别把原始返回打进日志/报告/仓库**；`redact=False` 仅限安全审计且输出须先脱敏。
-需要某人 `userId` 时优先用 `records(type_="2")` 班级 feed，那是 UI 本来就有的范围。
 
 ⚠️ 重名有两层：`status=3` 已毕业账号（`className=null`）造成重名重影；
-此外平台存在多个**完全同名**账号，`findPeople(exact=True)` 砍不掉
-（它只做 `userName == keyword`），**认人只能靠 `userId`**。
+平台存在多个**完全同名**账号，**认人只能靠 `userId`**（姓名不是主键）。
 
 ## 成长空间 / 荣誉 / 活动
 

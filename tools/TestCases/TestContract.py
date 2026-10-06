@@ -396,48 +396,37 @@ def checkEnvelope():
 
 
 def checkCapabilityGate():
-    """能力闸门：全校人员枚举默认关闭 + 记录搜索默认脱敏（合规控制，离线）。
+    """能力红线：人员搜索能力**必须不存在** + 记录搜索默认脱敏（离线）。
 
-    为什么必须进 CI：这类控制最怕的不是被攻击，而是被一次「无害的重构」
-    顺手删掉——删掉之后没有任何测试会红，能力就悄悄回到开箱即用。
-    所以每次 push 都要验一遍：闸门还在、默认拒绝、授权要写来源、开启会留痕。
+    为什么是「必须不存在」而不是「默认拒绝」：2026-10-06 决定把
+    `searchPeople`/`findPeople`（全校枚举他人，28,190 人级）**整体删除**。
+    留一个 env 变量旁路等于「藏起来但没关掉」，会诱导绕过，所以连开关都不留。
 
+    这项进 CI 的理由：合规控制最怕的不是被攻击，而是被一次「无害的重构」
+    顺手加回来或改掉默认值——之后没有任何测试会红，红线就悄悄失效了。
     纯离线：不发任何请求（`_search` 被替换成固定返回），不联网也不要 token。
     """
-    import contextlib
-    import io
-    from Access.HttpTransport import IQError
     from IqClient import IQClient
+    from SearchCenter import SearchQuery
 
     bad = []
+
+    # ① 门面与模块里都不能再有搜人入口，也不能再有授权开关
     c = IQClient("0" * 32)
+    for name in ("searchPeople", "findPeople", "enablePeopleSearch",
+                 "disablePeopleSearch", "peopleSearchReason",
+                 "_gate_people_search"):
+        if hasattr(c, name):
+            bad.append("门面仍暴露 %s" % name)
+        if hasattr(SearchQuery, name):
+            bad.append("SearchQuery 仍定义 %s" % name)
+    for name in ("SEARCH_TYPE_PEOPLE", "PEOPLE_SEARCH_ENV", "PEOPLE_HIDDEN_FIELDS"):
+        if hasattr(SearchQuery, name):
+            bad.append("SearchQuery 仍导出 %s" % name)
+    if os.environ.get("IQ_ALLOW_PEOPLE_SEARCH"):
+        bad.append("环境变量 IQ_ALLOW_PEOPLE_SEARCH 仍在生效")
 
-    for api, name in ((c.searchPeople, "searchPeople"),
-                      (c.findPeople, "findPeople")):
-        try:
-            api("TestContract")
-            bad.append("%s 未授权时没有拒绝" % name)
-        except IQError:
-            pass
-
-    try:
-        c.enablePeopleSearch("")
-        bad.append("空授权来源被接受")
-    except IQError:
-        pass
-
-    buf = io.StringIO()
-    with contextlib.redirect_stderr(buf):
-        c.enablePeopleSearch("TestContract 自检")
-    if "已开启" not in buf.getvalue():
-        bad.append("开启人员枚举未在 stderr 留痕（审计线索缺失）")
-    try:
-        c._gate_people_search("selftest")
-    except IQError as e:
-        bad.append("已授权仍被拒：%s" % str(e)[:60])
-    with contextlib.redirect_stderr(io.StringIO()):
-        c.disablePeopleSearch()
-
+    # ② 记录搜索默认脱敏
     canned = {"totalResult": 1, "data": None,
               "list": [{"id": "x", "recordContent": {"name": "n"},
                         "userInf": {"userId": 1, "userName": "A",
@@ -451,8 +440,8 @@ def checkCapabilityGate():
     if "userName" not in inf:
         bad.append("searchRecords 脱敏过头，丢了白名单字段")
 
-    add("能力闸门（人员枚举默认关闭·记录搜索默认脱敏）", FAIL if bad else OK,
-        "；".join(bad[:3]) or "未授权拒绝/授权留痕/默认脱敏 均生效")
+    add("能力红线（无搜人入口·记录搜索默认脱敏）", FAIL if bad else OK,
+        "；".join(bad[:3]) or "搜人能力已不存在，searchRecords 默认脱敏")
 
 
 def main():

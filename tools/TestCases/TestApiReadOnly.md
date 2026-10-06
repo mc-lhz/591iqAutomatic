@@ -4,9 +4,9 @@
 
 用法：
 ```bash
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>            # 42 项
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>            # 51 项
 python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>           # 门户登录后跑
-python tools/TestCases/TestApiReadOnly.py --token <t> --upload         # 43 项（会真的传一张图）
+python tools/TestCases/TestApiReadOnly.py --token <t> --upload         # 52 项（会真的传一张图）
 python tools/TestCases/TestApiReadOnly.py --token <t> --dump           # 落盘各端点真实返回
 python tools/TestCases/TestApiReadOnly.py --token <t> --dump-limit 2000 # 限制单条打印长度
 ```
@@ -15,9 +15,9 @@ python tools/TestCases/TestApiReadOnly.py --token <t> --dump-limit 2000 # 限制
 
 ## 项数构成
 
-- **只读 42 项**（默认）：账号、门户、任务与消息、写实记录、成长报告、档案、
+- **只读 51 项**（默认）：账号、门户、任务与消息、写实记录、成长报告、档案、
   荣誉与活动统计、兴趣，以及 `record/delRecord` 的**路由存在性探测**。
-- **43 项**（加 `--upload`）：追加 `announcement/upload`，会真的上传一张 1×1 像素图。
+- **52 项**（加 `--upload`）：追加 `announcement/upload`，会真的上传一张 1×1 像素图。
 
 唯一长期 WARN：`/apps/integral/rank/integralRecord/account_integral` → `code=1 找不到对应的积分配置`
 ——学校侧未配置该积分项，接口本身可达。**WARN 不算 FAIL。**

@@ -16,7 +16,7 @@
 | 删掉发错的记录 | `DeleteRecord.py --id <记录id> --dry-run` 先看清是哪一条，确认后加 `--yes` 才真删 |
 | 查待办任务与未读消息 | `TaskAndMessage` 模块，或看首页摘要 |
 | 不知道某类记录该填什么 | 查 `reference/frontend.md`（22 类记录的字段、必填项、平台原话提示） |
-| 确认系统是否正常 | `TestApiReadOnly.py`（42 项只读自检）、`TestRecordRead.py`（13 项业务断言）、`TestContract.py`（14 项本地契约审计，不联网） |
+| 确认系统是否正常 | `TestApiReadOnly.py`（51 项只读自检）、`TestRecordRead.py`（13 项业务断言）、`TestContract.py`（14 项本地契约审计，不联网） |
 | 把报错/未覆盖功能反馈给开发 | `SendFeedback.py --type gap\|bug\|security --title "..." --detail 说明.md --yes`（先 `--dry-run` 预览，自动脱敏学号与敏感信息） |
 
 一句话：**读**——数据汇总导出、任务与记录查询；**写**——写实记录与活动总结提交，
@@ -47,7 +47,7 @@ tools/
   Export/ExportXlsx.py           个人综评全量导出（13 sheet，纯标准库）
   Export/ExportSummaryList.py    活动课程总结清单导出
   Export/XlsxWriter.py           共用的最小 xlsx 写出器（彩色样式）
-  TestCases/TestApiReadOnly.py   只读全量自检（42 项，可选加传图共 43 项）
+  TestCases/TestApiReadOnly.py   只读全量自检（51 项，可选加传图共 52 项）
   TestCases/TestRecordRead.py    写实记录业务 13 项断言回归
   TestCases/TestContract.py      仓库契约与卫生审计（离线，CI 与本地共用）
   Release/PackSkill.py           技能包打包（发版时自动产出 591iqAutomatic.zip）
@@ -96,7 +96,7 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file 正
 python tools/RecordCenter/PublishActivity.py --edit-id <记录id> --title "新标题" --yes
 python tools/RecordCenter/DeleteRecord.py --id <记录id> --dry-run        # 先看清要删的是哪一条
 python tools/RecordCenter/DeleteRecord.py --id <记录id> --yes             # 确认后删除（不可撤销）
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>  # 只读自检 42 项（要 token）
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>  # 只读自检 51 项（要 token）
 python tools/TestCases/TestRecordRead.py <ssoToken>           # 写实记录 13 项断言（要 token）
 python tools/TestCases/TestContract.py                 # 本地契约审计（离线，不要 token）
 ```
@@ -106,7 +106,7 @@ python tools/TestCases/TestContract.py                 # 本地契约审计（�
 
 ## 实测结论（2026-10-02）
 
-- 只读端点自检 **PASS=40 / FAIL=0 / WARN=1**（41 项，约 6.5s）；加 `--upload` 跑满 42 项。
+- 只读端点自检 **PASS=48 / FAIL=0 / WARN=1 / SKIP=2**（51 项，约 6.5s）；加 `--upload` 跑满 52 项。
   唯一 WARN 是积分接口学校侧未配置，接口本身可达。
 - 写实记录列表的 `type` 决定范围，取值语义取自学生端 tab：`1`=我的、`2`=**班级**、`4`=学校；空值/非法值走**后端兜底分支**（无对应 tab，比「学校」宽 12 倍，含历年毕业届记录，不可当「全校」口径引用）。
 - 提交写实记录已真实验证：顶层键必须是组件名（`recordActivityFJ`…），写成数字会

@@ -21,7 +21,7 @@
 | 离线 CI | Ubuntu + Windows 双平台矩阵，13 项契约检查 | `dae225f` `7ae110e` `e79be23` `10963d0` |
 | 发版自动化 | `tools/Release/PackSkill.py` + `.github/workflows/release.yml`，Release 自动挂根目录 zip | `5adeb35` |
 | 首个 pre-release | `v0.1-beta1`（tag `fc75ef3`），53 文件 / 133.3 KB，附件校验通过 | — |
-| SearchCenter | `/search/search` + `searchRecords`/`searchPeople`/`findPeople` + `records(userName=)` | `7e49632` |
+| SearchCenter | `/search/search` + `searchRecords` + `records(userName=)`（搜人能力已于 2026-10-06 删除） | `7e49632` |
 | 遴选/总结域 | `tools/Selection/`：遴选与总结报告的读 + 写（写默认 dryRun） | `b3d75f6` |
 | 辅助模块 | `tools/Common/` 彩色日志 + `tools/Feedback/` 反馈工单 | `362b262` |
 | 口径更正 | `type` 语义、人口数、schId/租户边界（本文件第六节） | 见 git log |
@@ -32,15 +32,18 @@
 
 | 层 | 内容 | 约束 |
 |---|---|---|
-| Tier 1 | 本人档案、任务、记录读写、荣誉、报告、导出 | 默认可用 |
-| Tier 2 | `searchPeople` / `findPeople`（全校人员枚举，实测 28,190 人级） | **默认拒绝**，须 `enablePeopleSearch("<授权来源>")`，开启与每次调用都留 WARNING |
+| Tier 1 | 本人档案、任务、记录读写、荣誉、报告、导出、`searchRecords` | 默认可用 |
+| Tier 2 | ~~`searchPeople` / `findPeople`（全校人员枚举，实测 28,190 人级）~~ | **已整体删除**（2026-10-06）：不封装、不测试、不文档化，连授权开关都没留 |
 | Tier 3 | D14 越权端点、人员枚举实测规模、厂商 chunk/moduleId | 记在 `reference/api-privileged.md`，**gitignored、不进包** |
 
-- 为什么 Tier 2 是「默认拒绝 + 强制留痕」而不是直接删掉：删干净会砍掉「班级 feed
-  里看到某人 → 查 userId」这条正当链路（D12 说明认人只能靠 userId），
-  反而逼人用更隐蔽的方式绕过。合规上最忌讳「藏起来但没关掉」。
-- `TestContract.py` 第 15 项每次 CI 都验这道闸门还在且生效——否则一次无害重构
-  就能把它删掉，且没有任何测试会红。
+- **为什么 Tier 2 从「默认拒绝 + 强制留痕」升级为「整体删除」**：留 env 变量旁路
+  等于「藏起来但没关掉」，反而诱导绕过；对未成年人个人信息的暴露面，
+  「自觉填授权来源」不构成有效控制。正当需求（拿某人 userId）走
+  `records(type_="2")` 班级 feed 或 `records(type_="1", userName=…)` 即可。
+  代价是失去 D3/D12 那两条已知限制的适用对象（都随能力一起消失）。
+- `TestContract.py` 第 15 项每次 CI 都验这条红线：门面与模块都搜不到任何搜人入口，
+  授权开关（`enablePeopleSearch`/`peopleSearchReason`/`IQ_ALLOW_PEOPLE_SEARCH`）
+  也不许复活——否则一次无害重构就能悄悄把能力加回来，且没有任何测试会红。
 
 **当前 `main` 见 `git log -1`（本文件不写死 hash——写死必过期，已过期过两次）。**
 
@@ -132,21 +135,21 @@
 | --- | --- | --- |
 | D1 | ~~`publishHonor()` 荣誉名称字段层级错~~ **已修（`itemName` 从未被写进 form，封装层吞字段）** | 已发→读回→删闭环，`16→17→16` |
 | D2 | `searchRecords()` 返回 `idNumber` 等敏感字段且未脱敏 | 待修（调用方自行处理） |
-| D3 | `findPeople()` limit=50 会截断，需翻页 | 已知限制 |
-| D4 | 文档端点计数与实测脱节 | **部分已同步**：`api.md` 已加「count 会漂，别当断言用」的警示；`TestApiReadOnly` 现为 **52 项（PASS 49 / WARN 1 / SKIP 2）**，加 `--upload` 变 54 项 |
+| D3 | ~~`findPeople()` limit=50 会截断~~ | **随能力删除而失效**（2026-10-06） |
+| D4 | 文档端点计数与实测脱节 | **部分已同步**：`api.md` 已加「count 会漂，别当断言用」的警示；`TestApiReadOnly` 现为 **51 项（PASS 48 / WARN 1 / SKIP 2）**，加 `--upload` 变 54 项 |
 | D5 | `delSummary` 对不存在 id 也返回 `code=0`，无异常保护 | 高危，需二次确认 |
 | D6 | 登录链路遇瞬时网络异常会漏栈而非按退出码契约退出 | 待修 |
 | D7 | release workflow 用插值方式把 tag 拼进 shell 命令，存在注入面 | **已修（`fa5e7be`）**：五处 tag 全改 `env:` 传递，YAML 已复检 |
 | D8 | `release: published` 触发时用的是 **tag 上的旧 workflow 定义**，`workflow_dispatch` 路径已用新定义验证过，自动路径未验证 | 需下一个 release 才能验证 |
 | D9 | SearchCenter 提交后 CI 未复查 | **已复查**：CI #8（`7e49632`）曾因 TestContract 隐私闸门失败（双平台红），`9256f53` 修复后 CI #9 转绿 |
 | D10 | ~~`searchRecords()` 无 `redact` 开关，每条命中项内嵌 `userInf`（51 字段）含身份标识/照片~~ | **已修（2026-10-06）**：`redact=True` 成为**默认**，命中项 `userInf` 收敛到 `PERSON_KEEP` 白名单；`redact=False` 才给原始返回并打 WARNING。已由 TestContract 新增「能力闸门」项离线守着 |
-| D11 | ~~`searchPeople(redact=False)` 原始返回含他人隐私信息，且脱敏是客户端丢弃——服务端照发~~ | 已上报反馈；skill 侧**该能力整体默认关闭**（见「能力分层」），且传 `redact=False` 会打 WARNING 留痕 |
-| D12 | `findPeople(exact=True)` 砍不掉**完全同名**账号（只做 `userName == keyword`） | 已知限制：认人只能靠 `userId` |
+| D11 | ~~`searchPeople(redact=False)` 原始返回含他人隐私信息，且脱敏是客户端丢弃——服务端照发~~ | **已随能力删除而消解**（2026-10-06）：工具不再封装搜人；服务端仍照发，属平台侧口径问题，已上报 |
+| D12 | ~~`findPeople(exact=True)` 砍不掉完全同名账号~~ | **随能力删除而失效**；结论保留：**认人只能靠 `userId`**，姓名不是主键 |
 | D13 | `searchRecords("")` 抛 999997，但 `"   "`（纯空格）返回 1729 条——空串与空格行为不一致 | 已知限制：别拿空白串当有效关键词 |
 | D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **待上报（最重）**：跨角色越权 + 未成年人敏感个人信息。已起草 security 工单待投递；**端点细节已移出本文件到 `reference/api-privileged.md`**（gitignored，不进包）——漏洞细节不该贴在可能被公开读到的文档里 |
 | D15 | 部分配置/导出端点接受客户端传入的 `schId`（`/apps/assess/scheme/list_semester` 实测 `200`→21 条 / `999999`→0 条，无兜底校验） | **待平台方验证**：需真实外校 `schId` 才能确认可利用性，本地单校数据无法判定 |
 | D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
-| D17 | ~~`HttpTransport._call` 只检查顶层 `code`~~，部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **已修**：拆出纯函数 `unwrapEnvelope(out, path)`，`meta` 是 dict 且含 `code` 时以它为准；`TestContract` 新增第 14 项离线守着（7 种信封），已验证旧实现下该项 FAIL。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功。**遗留：无**。2026-10-05 靠 `IQ_VERBOSE=1` 的全量日志枚举出 6 个 `{meta:…}` 端点（家长评语提交 + `/user/getUserInfoDetail` `/studentMgr/getParentList` `/announcement/listAnnouncementRead` `/eventTwo/listActivityStatisticsByDimension` `/growReport/summary/listGrowReportStuByStudentId`），另34 个是顶层 `code` 型；清单见 `reference/api.md`。线上回归无回归：`TestApiReadOnly` 52 项 PASS 49 / WARN 1 / SKIP 2 / FAIL 0、`TestRecordRead` 13/13 |
+| D17 | ~~`HttpTransport._call` 只检查顶层 `code`~~，部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **已修**：拆出纯函数 `unwrapEnvelope(out, path)`，`meta` 是 dict 且含 `code` 时以它为准；`TestContract` 新增第 14 项离线守着（7 种信封），已验证旧实现下该项 FAIL。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功。**遗留：无**。2026-10-05 靠 `IQ_VERBOSE=1` 的全量日志枚举出 6 个 `{meta:…}` 端点（家长评语提交 + `/user/getUserInfoDetail` `/studentMgr/getParentList` `/announcement/listAnnouncementRead` `/eventTwo/listActivityStatisticsByDimension` `/growReport/summary/listGrowReportStuByStudentId`），另34 个是顶层 `code` 型；清单见 `reference/api.md`。线上回归无回归：`TestApiReadOnly` 51 项 PASS 48 / WARN 1 / SKIP 2 / FAIL 0、`TestRecordRead` 13/13 |
 | D18 | ~~`ocrCaptcha` 逻辑 bug：`texts[0]` 恒为预处理图结果，原图识别被丢弃~~ | **已修（离线实测）**：改 3 个全画布阈值化变体投票（170×3 / 180×4 / 200×4）+ `DIGIT2LETTER` 数字映射。48 张逐字真值（输入用文件路径，与生产同路径）**43/48 ≈ 90%**，A 批 21/24、B 批 22/24；旧实现同条件 33/48 ≈ 69%，历史上服务端实测 42/70 = 60%。**服务端实测（2026-10-06，15 轮真实登录）：12/15 = 80%**，同一样本上旧逻辑只对 6/12 = 50% —— 离线 90% 比服务端保守 10 个点，**对外只报服务端数字**。**两个反直觉结论**：①「裁剪归一化」变体只有 7/24，混进投票会把强变体带跑；②变体文件名曾互相覆盖（默认 out 都是 `.prep.png`），投票等于单变体 |
 
 ---
