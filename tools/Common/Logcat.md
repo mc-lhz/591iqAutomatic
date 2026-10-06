@@ -2,14 +2,18 @@
 
 对应：内部诊断日志。**用户可见输出继续用 print**，本模块只服务排查/调试。
 
-对应模块：`Logcat.py`（本目录唯一实现）。
+对应模块：`Logcat.py`（本目录唯一实现）。业务模块一律用**模块级单例 `Log`**：
+    from Common.Logcat import Log, setVerbose
+    Log.d("HTTP", "...")          # 不要自己再 Logcat()，否则一份日志散到两个实例
 
 ## 职责
 
-- 彩色分等级日志：`d()` DEBUG / `i()` INFO / `w()` WARNING / `e()` ERROR / `exc()` 异常+栈
+- 彩色分等级日志：`Log.d()` DEBUG / `Log.i()` INFO / `Log.w()` WARNING /
+  `Log.e()` ERROR / `Log.exc()` 异常+栈
 - 默认写 **stderr**、默认等级 **WARNING**，导入无副作用
+- 脱敏：**只挡密码与身份证**，其余（token / 会话凭据 / 姓名 / 学号 / 手机号）原样输出
 
-不管：用户可见输出（那继续用 `print`）、业务逻辑、日志文件持久化策略。
+不管：用户可见输出（那继续用 `print`）、业务逻辑、日志落盘策略。
 
 ## 与上游 RemoteConnecter/Logcat.py 的差异（刻意为之）
 
@@ -29,38 +33,55 @@
 ## 用法
 
 ```python
-from Common.Logcat import Logcat
+from Common.Logcat import Log, setVerbose
 
-log = Logcat()                    # stderr, WARNING, 无颜色（非TTY）
-log.setLevel("DEBUG")             # 需要时调高
-log.d("Search", "命中 3 条")       # DEBUG：默认不显示
-log.w("Search", "分页参数被忽略")   # WARNING：默认显示
-log.exc("Search", "请求失败")      # ERROR + traceback（在 except 块内）
+Log.d("Search", "命中 3 条")       # DEBUG：默认不显示
+Log.w("Search", "分页参数被忽略")   # WARNING：默认显示
+Log.exc("Search", "请求失败")      # ERROR + traceback（在 except 块内）
 
-log2 = Logcat(outputFile="D:/tmp/x.log", level="DEBUG")   # 落盘，自动脱敏+截断
+setVerbose(True)                   # 等价于 Log.setLevel("DEBUG")，CLI --verbose 用
+# 需要落盘时自己建实例（不要替换单例 Log）：
+log2 = Logcat(outputFile="D:/tmp/x.log", level="DEBUG")
 ```
+
+打开 DEBUG 的两个入口：CLI 传 `--verbose`，或设环境变量 `IQ_VERBOSE=1`
+（后者对所有模块生效，CI 与流水线上默认不开）。
 
 ## 方法
 
 | 方法 | 说明 |
 |---|---|
-| `Logcat(outputFile, fmt, datefmt, level, useColor, maxFileBytes)` | 构造；默认 stderr/WARNING/自动配色 |
-| `setLevel(level)` | 动态调等级（CLI `--verbose` 用），非法等级抛 `ValueError` |
-| `log(tag, level, msg)` | 底层；等级低于阈值直接 return |
-| `d(tag, msg)` | DEBUG |
-| `i(tag, msg)` | INFO |
-| `w(tag, msg)` | WARNING（默认可见） |
-| `e(tag, msg)` | ERROR（默认可见） |
-| `exc(tag, msg=None)` | ERROR + `traceback.format_exc()` |
+| `Log.d(tag, msg)` | DEBUG（默认不可见） |
+| `Log.i(tag, msg)` | INFO（默认不可见） |
+| `Log.w(tag, msg)` | WARNING（默认可见） |
+| `Log.e(tag, msg)` | ERROR（默认可见） |
+| `Log.exc(tag, msg=None)` | ERROR + `traceback.format_exc()` |
+| `Log.setLevel(level)` | 动态调等级，非法等级抛 `ValueError` |
+| `setVerbose(flag=True)` | 模块级函数；`--verbose` 用，不传参时看 `IQ_VERBOSE`，返回最终等级 |
+| `Logcat(outputFile, fmt, datefmt, level, useColor, maxFileBytes)` | 类；默认 stderr/WARNING/自动配色，仅在需要落盘时自己实例化 |
+
+## 调用方（2026-10-05 起真的接上了）
+
+| 模块 | 记什么 |
+|---|---|
+| `Access/HttpTransport.py` | 每次请求的方法/路径/参数键、响应 code、信封键名、耗时；网络异常走 `Log.exc` |
+| `Access/LoginToken.py` | OCR 每个变体的识别结果与置信度、投票明细、每轮登录被拒原因 |
+| `Access/VisionLogin.py` | 取图大小与 JSESSIONID、会话复原是否成功 |
 
 ## 注意事项
 
-- **默认接进来不会有任何可见变化**：stderr + WARNING 阈值。user看到 stdout 依旧干净。
+- **默认接进来不会有任何可见变化**：stderr + WARNING 阈值。用户看 stdout 依旧干净。
 - 等级约定：`DEBUG=10 / INFO=20 / WARNING=30 / ERROR=40`，低于当前阈值的不输出。
-- **文件日志会脱敏**：32 位 hex（token）、`JSESSIONID`、`Authorization`、口令、
-  身份证、手机号一律替换为占位符（`_scrub`）；超 `maxFileBytes`（默认 2 MB）自动截断。
+- **脱敏只挡两类**：`password/密码/口令` 的值、18 位身份证号。
+  ssoToken、JSESSIONID、`Authorization`、URL 里的 `session`、姓名、学号、userId、手机号
+  **一律原样输出**——排查问题必须看得见它们，防护靠「默认不落盘」而不是涂黑。
+  代价是 DEBUG 日志里确实含凭据与个人信息：**不要把日志文件提交进仓库**。
+  （2026-10-05 之前这里有 7 条规则，其中两条还是 `JSESSIONID → "JSESSIONID"` 这种
+  自等替换的 no-op，涂了个寂寞。）
 - `useColor=None` 时按 stderr 是否 TTY 自动判断；管道/重定向下自动无色。
 - 用户可见输出（CLI 结果、xlsx 导出进度）**不要**改成本模块，那是 `print` 的地盘。
+- 直接跑脚本时会实例化单例并按 `IQ_VERBOSE` 定等级；作为库导入时不碰全局控制台
+  （ANSI 使能只在 `Logcat.__init__` 里做，见上文第 2 条差异）。
 
 ## 直接运行
 

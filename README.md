@@ -51,7 +51,7 @@ tools/
   TestCases/TestRecordRead.py    写实记录业务 13 项断言回归
   TestCases/TestContract.py      仓库契约与卫生审计（离线，CI 与本地共用）
   Release/PackSkill.py           技能包打包（发版时自动产出 591iqAutomatic.zip）
-  Common/Logcat.py                彩色分等级日志（内部诊断；用户可见输出仍用 print）
+  Common/Logcat.py                彩色分等级日志（内部诊断；单例 `Log`，用户可见输出仍用 print）
   Feedback/SendFeedback.py        反馈工单CLI（--dry-run 预览 / --yes 真发，自动脱敏）
 ```
 

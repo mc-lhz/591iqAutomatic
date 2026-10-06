@@ -27,7 +27,7 @@ tools/
   TestCases/TestRecordRead.py     13 项
   TestCases/TestContract.py       仓库契约与卫生审计（离线，无网络无凭据）
   Release/PackSkill.py            技能包打包（591iqAutomatic.zip，根目录结构）
-  Common/Logcat.py                彩色分等级日志（内部诊断用；默认 stderr+WARNING）
+  Common/Logcat.py                彩色分等级日志（内部诊断用；默认 stderr+WARNING，单例 `Log`）
   Feedback/FeedbackClient.py      反馈接口投递（独立服务，非 591iq 网关，不注册门面）
   Feedback/Ticket.py              工单HTML 模板 + 学号脱敏 + 投递前敏感信息闸门
   Feedback/SendFeedback.py        反馈工单 CLI（--dry-run 预览 / --yes 真发）
@@ -57,6 +57,12 @@ tools/
 - **门面例外**：`Feedback/` 与 `Release/` 同理——反馈接口是独立服务
   （`feedback.mclhz.de5.net`，裸 JSON、不带 AccessToken），**不注册门面**、不 mixin。
   `Common/` 是通用工具（Logcat），同样不注册门面，仅被内部模块 import
+- **日志分工写死**：给 AI/用户看的结论一律 `print` 走 stdout；内部诊断一律
+  `from Common.Logcat import Log, setVerbose` 走 stderr。**统一用单例 `Log`**，
+  不要在业务模块里再 `Logcat()`，否则一份日志散到两个实例、等级各调各的。
+  打开 DEBUG：CLI `--verbose` 或环境变量 `IQ_VERBOSE=1`。
+  ⚠️ 脱敏**只挡密码与身份证**（用户 2026-10-05 定调），token/会话/姓名/学号原样输出——
+  所以 DEBUG 日志含凭据与个人信息，**不得提交进仓库**。
 - `Http` 必须留在 `IQClient` 继承链末位（基类）
 - 对外 API 只增不改；改方法名必须同步 `IqClient.py` 门面、两个测试、SKILL/README/api.md
 - **改目录/模块名只改 import 语句与文档路径**；API 路径（`/record/...`）、

@@ -4,10 +4,19 @@
 不直接接触 urllib。
 """
 import json
+import os
+import time
 import urllib.parse
 import urllib.request
 
+from Common.Logcat import Log
+
 BASE = "https://service.591iq.cn"
+
+# 内部诊断日志（stderr + WARNING，默认什么都不输出）。
+# 按契约走 Logcat：给 AI/用户看的结论仍然只在 stdout 用 print，
+# 这里只回答「刚才那次请求到底发了什么、回了什么、慢不慢」。
+# 看细节：环境变量 IQ_VERBOSE=1，或 setVerbose()。
 
 
 class IQError(Exception):
@@ -59,8 +68,32 @@ class Http:
         req.add_header("clientos", "pc")
         if body is not None:
             req.add_header("Content-Type", "application/x-www-form-urlencoded")
-        with urllib.request.urlopen(req, timeout=30) as r:
-            out = json.loads(r.read().decode("utf-8"))
+        Log.d("HTTP", "-> %s %s keys=%s" % (method, path,
+                                            sorted((data or {}).keys())))
+        t0 = time.time()
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                raw = r.read().decode("utf-8")
+        except Exception as e:                       # noqa: BLE001
+            Log.exc("HTTP", "请求失败 %s %s after %.0fms: %s"
+                    % (method, path, (time.time() - t0) * 1000,
+                       type(e).__name__))
+            raise
+        ms = (time.time() - t0) * 1000
+        try:
+            out = json.loads(raw)
+        except ValueError:
+            Log.w("HTTP", "响应不是 JSON %s (%.0fms) len=%d 前 80 字=%r"
+                  % (path, ms, len(raw), raw[:80]))
+            raise
+        code = out.get("code") if isinstance(out, dict) else None
+        meta = out.get("meta") if isinstance(out, dict) else None
+        if isinstance(meta, dict) and "code" in meta:
+            code = meta.get("code")
+        shape = sorted(out.keys()) if isinstance(out, dict) else type(out).__name__
+        Log.d("HTTP", "<- %s %s %.0fms code=%s 信封=%s"
+              % (path, "OK" if code in (0, "0", None) else "FAIL", ms, code,
+                 shape))
         return unwrapEnvelope(out, path)
 
     def get(self, path, data=None):
