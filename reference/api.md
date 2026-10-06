@@ -102,12 +102,19 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 | `0/3/4/5` | 无数据，恒 `totalResult=0` | — |
 | 空 | `code=999997 参数校验失败:搜索类型不能为空` | — |
 
+⚠️ **`type=2` 人员搜索属需授权能力，工具侧默认关闭**：
+`SearchQuery.searchPeople()` / `findPeople()` 未开启就调会抛 `IQError`，
+须先 `enablePeopleSearch("<授权来源>")`（或 `IQ_ALLOW_PEOPLE_SEARCH=1`），
+开启与每次调用都在 stderr 留 WARNING。实测规模与授权流程见
+`reference/api-privileged.md`（**不在公开仓库、不进发布包**）。
+
 ⚠️ **隐私信息暴露面**：`type=2` 原始返回，以及 `type=1` 每条命中项内嵌的 `userInf`
-（51 字段），均含**身份标识、联系方式、照片等隐私信息**；且 `type=1` **没有 redact 开关**，
-调用即带出。`SearchQuery.searchPeople()` 默认 `redact=True` 只吐白名单 10 字段，
-但那是**客户端丢弃**——数据已过网，绕过客户端直接发 HTTP 一样全拿到，
-**防手滑而非安全控制**。**别把原始返回打进日志/报告/仓库**；
-`redact=False` 仅限安全审计且输出须先脱敏。
+（原始 51 字段），均含**身份标识、联系方式、照片等隐私信息**。
+`searchRecords()` 自 2026-10-06 起 `redact=True` 为**默认**，`userInf` 收敛到白名单；
+`searchPeople(redact=True)` 同理。但脱敏都是**客户端丢弃**——数据已过网，
+绕过客户端直接发 HTTP 一样全拿到，**防手滑而非安全控制**。
+**别把原始返回打进日志/报告/仓库**；`redact=False` 仅限安全审计且输出须先脱敏。
+需要某人 `userId` 时优先用 `records(type_="2")` 班级 feed，那是 UI 本来就有的范围。
 
 ⚠️ 重名有两层：`status=3` 已毕业账号（`className=null`）造成重名重影；
 此外平台存在多个**完全同名**账号，`findPeople(exact=True)` 砍不掉

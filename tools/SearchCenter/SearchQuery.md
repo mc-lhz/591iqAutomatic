@@ -26,10 +26,37 @@
 
 | 方法 | 说明 |
 |---|---|
-| `searchRecords(keyword, offset=0, limit=10)` | 记录全文搜索；**无 redact 参数**，见下 |
-| `searchPeople(keyword, offset=0, limit=10, redact=True)` | 人员搜索，**默认脱敏** |
-| `findPeople(keyword, exact=False)` | 精简找人；`exact=True` 只留姓名全等者 |
+| `searchRecords(keyword, offset=0, limit=10, redact=True)` | 记录全文搜索；**默认脱敏**（2026-06 起） |
+| `searchPeople(keyword, offset=0, limit=10, redact=True)` | 人员搜索，**默认关闭**，需授权 |
+| `findPeople(keyword, exact=False)` | 精简找人，**默认关闭**，需授权 |
+| `enablePeopleSearch(reason)` | 开启人员枚举，**必须写明授权来源**，会留 WARNING |
+| `disablePeopleSearch()` | 关闭，回到默认拒绝 |
+| `peopleSearchReason` | 属性；当前授权来源，空串=未开启 |
 | `_search(type_, keyword, offset, limit)` | 内部原始调用（返回未脱敏对象，勿直接对外） |
+
+## ⚠️ 能力分层：人员搜索默认关闭（2026-10-06）
+
+`searchPeople()` / `findPeople()` 能在**全校范围枚举他人**（实测单字姓氏即 1411 命中，
+跨汉字去重 28,190 人级），返回里还有身份证号、考号、照片等字段。属**需授权能力**：
+
+| 机制 | 行为 |
+|---|---|
+| 默认拒绝 | 未开启就调 → 抛 `IQError`（**不会**静默返回空列表冒充「没数据」） |
+| 授权要写来源 | `enablePeopleSearch("")` 直接被拒；必须给字符串 |
+| 每次调用留痕 | 开启时与每次调用都打 `Log.w`（stderr，默认可见） |
+| 脚本旁路 | `IQ_ALLOW_PEOPLE_SEARCH=1` 同样留痕 |
+
+```python
+c.enablePeopleSearch("校方德育处口头许可 2026-10")   # 返回并记录授权来源
+r = c.searchPeople("<某同学>", limit=10)           # 白名单 10 字段
+c.disablePeopleSearch()                            # 用完立刻关
+```
+
+**为什么不直接删掉**：`findPeople()` 是唯一能按姓名定位到某个 `userId` 的手段
+（重名只能靠 `userId` 区分，见下），而「班级 feed 里看到某人 → 查他 userId」是正当链路。
+删干净会把正当需求也砍掉，反而逼人用更隐蔽的方式绕过——合规上最忌讳「藏起来但没关掉」。
+
+`TestContract.py` 第 15 项每次 CI 都验这道闸门还在且生效。
 
 ## 返回结构
 
@@ -47,16 +74,18 @@
 
 ## 隐私信息暴露面（⚠️ 读之前先看这段）
 
-**`searchPeople()` 的脱敏是客户端丢弃，不是服务端不返回**——数据已经过网，
-绕过本模块直接发 HTTP 一样全拿到。它防的是自己手滑，**不是安全控制**。
+**客户端脱敏不是服务端不返回**——数据已经过网，绕过本模块直接发 HTTP 一样全拿到。
+脱敏防的是自己手滑，**不是安全控制**；真正的控制是上面那道**默认拒绝的闸门**。
 
-- `searchRecords()` **没有 `redact` 参数**，命中项内嵌 `userInf`（51 字段），
-  其中含身份标识、联系方式、照片等**隐私信息**。调用即带出，调用方需自行处理。
-- `searchPeople(redact=False)` 同上，另含班级干部信息与政治面貌等字段。
+- `searchRecords()`：命中项内嵌 `userInf`（原始 51 字段，含身份标识、联系方式、照片）。
+  **`redact=True` 是默认**（2026-10-06 起），`userInf` 收敛到白名单 10 字段；
+  `redact=False` 才给原始返回并打 WARNING。
+- `searchPeople(redact=False)`：51 字段，另含班级干部信息与政治面貌等字段。
 - `recordContent.userInf` 与 `searchPeople(redact=False)` 的字段集基本一致。
 
 处置约定：**`redact=False` 只允许用于安全审计，且任何输出必须先脱敏**；
 不要把原始返回打进日志、报告或提交进仓库。
+更根本的一条：**他人信息只在授权范围内使用，不外传、不二次分发**。
 
 ## 注意事项
 
@@ -101,8 +130,15 @@
 
 ```python
 c.searchRecords("<关键词>")["totalResult"]               # 记录全文检索，命中总数
-c.searchRecords("<关键词>", limit=3)["list"]             # 命中项（含隐私信息，慎打印）
+c.searchRecords("<关键词>", limit=3)["list"]             # 命中项（userInf 已白名单）
+c.records(type_="2", userName="<某同学>")["list"]["count"]   # 本校 feed 服务端过滤
+
+# 人员枚举需授权：
+c.enablePeopleSearch("校方德育处口头许可 2026-10")
 c.searchPeople("<某同学>")["totalResult"]                # 人员模糊搜索（已脱敏）
 c.findPeople("<某同学>", exact=True)                    # 精确找人 → [{userId, userName, …}]
-c.records(type_="2", userName="<某同学>")["list"]["count"]   # 本校 feed 服务端过滤
+c.disablePeopleSearch()
 ```
+
+需要某人的 `userId` 时，**优先用 `records(type_="2")` 的班级 feed**——
+那是 UI 本来就有的范围，不需要人员枚举授权。
