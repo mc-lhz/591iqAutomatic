@@ -298,10 +298,28 @@ python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 42 项：追�
 
 ⚠️ **平台是每校独立部署的多租户**。`/search/search`、`/record/queryRecordList` 等数据查询端点的请求里**不含任何学校标识**，租户完全由 `AccessToken` 决定；实测全部数据的 `schId` 恒为 `200`（厦门一中）。详见 MEMORY.md「schId 与租户边界」。
 
+## 能力分层：什么默认开、什么要授权
+
+| 层 | 能力 | 怎么用 |
+|---|---|---|
+| 默认可用 | 本人档案、任务消息、记录读写、荣誉、成长报告、导出、发布/删除记录 | 直接调 |
+| **需授权** | `searchPeople()` / `findPeople()`（全校人员枚举，实测 28,190 人级） | 先 `c.enablePeopleSearch("<授权来源>")`，或设 `IQ_ALLOW_PEOPLE_SEARCH=1` |
+| 不公开 | 越权端点细节、人员枚举实测规模、厂商构件编号 | 在 `reference/api-privileged.md`（不进仓库、不进包） |
+
+- **默认拒绝**：未开启就调 `searchPeople`/`findPeople` 会抛 `IQError`，
+  不会被静默当成「没数据」。
+- **开启必须写授权来源**，且**开启与每次调用都打 WARNING 到 stderr**——
+  所以「谁在什么授权下枚举过全校人员」在本地是可审计的。
+- `searchRecords()` 不设闸门但**默认脱敏**（`redact=True`）：每条命中内嵌的
+  51 字段 `userInf` 会收敛到白名单，`redact=False` 才给原始返回并留痕。
+- 优先用 `records(type_="2")` 的班级 feed 拿 userId——那是 UI 本来就有的范围。
+
 ## 注意事项
 
 - **账号信息不入库**：姓名 / 班级 / userId / schoolId 等以调用方自己的
   `loginBySSOToken`、`getUserInfoDetail` 返回为准，ssoToken 只走命令行参数或环境变量。
+- **仅在授权范围内使用**：本工具能读到的他人信息（班级 feed、年级范围）不得
+  外传、不得二次分发；人员枚举类接口只在获得校方明确授权时使用。
 - 读接口全部实测通过；写接口已**真实提交验证**（2026-10-01 军事训练记录，id 已脱敏，
   本人 3→4、本校 265→266、statistics 活动 2→3；同日活动总结提交后
   `count_task.unfinished 1→0`、`finished 33→34`），此后**每次写入仍需逐次征得用户确认**。

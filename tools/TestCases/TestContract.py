@@ -395,6 +395,66 @@ def checkEnvelope():
         "；".join(bad[:3]) or "%d 种信封解析正确，错误码不再被吞" % len(cases))
 
 
+def checkCapabilityGate():
+    """能力闸门：全校人员枚举默认关闭 + 记录搜索默认脱敏（合规控制，离线）。
+
+    为什么必须进 CI：这类控制最怕的不是被攻击，而是被一次「无害的重构」
+    顺手删掉——删掉之后没有任何测试会红，能力就悄悄回到开箱即用。
+    所以每次 push 都要验一遍：闸门还在、默认拒绝、授权要写来源、开启会留痕。
+
+    纯离线：不发任何请求（`_search` 被替换成固定返回），不联网也不要 token。
+    """
+    import contextlib
+    import io
+    from Access.HttpTransport import IQError
+    from IqClient import IQClient
+
+    bad = []
+    c = IQClient("0" * 32)
+
+    for api, name in ((c.searchPeople, "searchPeople"),
+                      (c.findPeople, "findPeople")):
+        try:
+            api("TestContract")
+            bad.append("%s 未授权时没有拒绝" % name)
+        except IQError:
+            pass
+
+    try:
+        c.enablePeopleSearch("")
+        bad.append("空授权来源被接受")
+    except IQError:
+        pass
+
+    buf = io.StringIO()
+    with contextlib.redirect_stderr(buf):
+        c.enablePeopleSearch("TestContract 自检")
+    if "已开启" not in buf.getvalue():
+        bad.append("开启人员枚举未在 stderr 留痕（审计线索缺失）")
+    try:
+        c._gate_people_search("selftest")
+    except IQError as e:
+        bad.append("已授权仍被拒：%s" % str(e)[:60])
+    with contextlib.redirect_stderr(io.StringIO()):
+        c.disablePeopleSearch()
+
+    canned = {"totalResult": 1, "data": None,
+              "list": [{"id": "x", "recordContent": {"name": "n"},
+                        "userInf": {"userId": 1, "userName": "A",
+                                    "idNumber": "0" * 18,
+                                    "userHeadImage": "u"}}]}
+    c._search = lambda *a, **k: canned
+    inf = c.searchRecords("k")["list"][0]["userInf"]
+    leaked = sorted(set(inf) & {"idNumber", "userHeadImage", "phoneNumber"})
+    if leaked:
+        bad.append("searchRecords 默认未脱敏，仍带 %s" % leaked)
+    if "userName" not in inf:
+        bad.append("searchRecords 脱敏过头，丢了白名单字段")
+
+    add("能力闸门（人员枚举默认关闭·记录搜索默认脱敏）", FAIL if bad else OK,
+        "；".join(bad[:3]) or "未授权拒绝/授权留痕/默认脱敏 均生效")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -415,6 +475,7 @@ def main():
     checkPackage()
     checkImport()
     checkEnvelope()
+    checkCapabilityGate()
 
     counts = {OK: 0, WARN: 0, FAIL: 0}
     for _n, st, _note in RESULTS:

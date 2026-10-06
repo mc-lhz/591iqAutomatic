@@ -25,6 +25,22 @@
 | 遴选/总结域 | `tools/Selection/`：遴选与总结报告的读 + 写（写默认 dryRun） | `b3d75f6` |
 | 辅助模块 | `tools/Common/` 彩色日志 + `tools/Feedback/` 反馈工单 | `362b262` |
 | 口径更正 | `type` 语义、人口数、schId/租户边界（本文件第六节） | 见 git log |
+| 正确性 | D17 信封兼容、D18 OCR 投票、Logcat 部署（`d13814d`） | 见 git log |
+| 合规分层 | 人员枚举默认关闭 + 记录搜索默认脱敏（D10），受限文档移出仓库（D14） | 见 git log |
+
+### 能力分层（2026-10-06 定的合规基线）
+
+| 层 | 内容 | 约束 |
+|---|---|---|
+| Tier 1 | 本人档案、任务、记录读写、荣誉、报告、导出 | 默认可用 |
+| Tier 2 | `searchPeople` / `findPeople`（全校人员枚举，实测 28,190 人级） | **默认拒绝**，须 `enablePeopleSearch("<授权来源>")`，开启与每次调用都留 WARNING |
+| Tier 3 | D14 越权端点、人员枚举实测规模、厂商 chunk/moduleId | 记在 `reference/api-privileged.md`，**gitignored、不进包** |
+
+- 为什么 Tier 2 是「默认拒绝 + 强制留痕」而不是直接删掉：删干净会砍掉「班级 feed
+  里看到某人 → 查 userId」这条正当链路（D12 说明认人只能靠 userId），
+  反而逼人用更隐蔽的方式绕过。合规上最忌讳「藏起来但没关掉」。
+- `TestContract.py` 第 15 项每次 CI 都验这道闸门还在且生效——否则一次无害重构
+  就能把它删掉，且没有任何测试会红。
 
 **当前 `main` 见 `git log -1`（本文件不写死 hash——写死必过期，已过期过两次）。**
 
@@ -123,11 +139,11 @@
 | D7 | release workflow 用插值方式把 tag 拼进 shell 命令，存在注入面 | **已修（`fa5e7be`）**：五处 tag 全改 `env:` 传递，YAML 已复检 |
 | D8 | `release: published` 触发时用的是 **tag 上的旧 workflow 定义**，`workflow_dispatch` 路径已用新定义验证过，自动路径未验证 | 需下一个 release 才能验证 |
 | D9 | SearchCenter 提交后 CI 未复查 | **已复查**：CI #8（`7e49632`）曾因 TestContract 隐私闸门失败（双平台红），`9256f53` 修复后 CI #9 转绿 |
-| D10 | `searchRecords()` **无 `redact` 开关**，每条命中项内嵌 `userInf`（51 字段）含身份标识/照片 | **待修（高）**：调用即带出，脱敏只能在调用方做 |
-| D11 | `searchPeople(redact=False)` 原始返回含他人隐私信息，且**脱敏是客户端丢弃**——服务端照发 | 已上报反馈；skill 侧约定仅审计用且输出须脱敏 |
+| D10 | ~~`searchRecords()` 无 `redact` 开关，每条命中项内嵌 `userInf`（51 字段）含身份标识/照片~~ | **已修（2026-10-06）**：`redact=True` 成为**默认**，命中项 `userInf` 收敛到 `PERSON_KEEP` 白名单；`redact=False` 才给原始返回并打 WARNING。已由 TestContract 新增「能力闸门」项离线守着 |
+| D11 | ~~`searchPeople(redact=False)` 原始返回含他人隐私信息，且脱敏是客户端丢弃——服务端照发~~ | 已上报反馈；skill 侧**该能力整体默认关闭**（见「能力分层」），且传 `redact=False` 会打 WARNING 留痕 |
 | D12 | `findPeople(exact=True)` 砍不掉**完全同名**账号（只做 `userName == keyword`） | 已知限制：认人只能靠 `userId` |
 | D13 | `searchRecords("")` 抛 999997，但 `"   "`（纯空格）返回 1729 条——空串与空格行为不一致 | 已知限制：别拿空白串当有效关键词 |
-| D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **待上报**：跨角色越权，比 D10/D11 范围更大 |
+| D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **待上报（最重）**：跨角色越权 + 未成年人敏感个人信息。已起草 security 工单待投递；**端点细节已移出本文件到 `reference/api-privileged.md`**（gitignored，不进包）——漏洞细节不该贴在可能被公开读到的文档里 |
 | D15 | 部分配置/导出端点接受客户端传入的 `schId`（`/apps/assess/scheme/list_semester` 实测 `200`→21 条 / `999999`→0 条，无兜底校验） | **待平台方验证**：需真实外校 `schId` 才能确认可利用性，本地单校数据无法判定 |
 | D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
 | D17 | ~~`HttpTransport._call` 只检查顶层 `code`~~，部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **已修**：拆出纯函数 `unwrapEnvelope(out, path)`，`meta` 是 dict 且含 `code` 时以它为准；`TestContract` 新增第 14 项离线守着（7 种信封），已验证旧实现下该项 FAIL。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功。**遗留：无**。2026-10-05 靠 `IQ_VERBOSE=1` 的全量日志枚举出 6 个 `{meta:…}` 端点（家长评语提交 + `/user/getUserInfoDetail` `/studentMgr/getParentList` `/announcement/listAnnouncementRead` `/eventTwo/listActivityStatisticsByDimension` `/growReport/summary/listGrowReportStuByStudentId`），另34 个是顶层 `code` 型；清单见 `reference/api.md`。线上回归无回归：`TestApiReadOnly` 52 项 PASS 49 / WARN 1 / SKIP 2 / FAIL 0、`TestRecordRead` 13/13 |

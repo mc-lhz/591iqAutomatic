@@ -12,3 +12,5 @@ test_endpoints_report.json
 *.state.json
 *.vision.png
 vl_*
+# 受限能力文档（Tier 3）：越权端点/人员枚举/厂商构件编号，严禁入库与打包
+reference/api-privileged.md
