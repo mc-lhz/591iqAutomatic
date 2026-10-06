@@ -77,7 +77,7 @@
 - 图片 URL 复用：需用**他人** fs 地址，本校 feed 前 30 行全被本人最新记录占满，取不到样本。**未验证。**
 - 其余 10 类记录提交：学校未开通，提交失败无法区分「载荷错」与「未开通」，**无验证信号**。
 - macOS：用户明确要求不测。
-- ~~`reportConfirm` 成功路径~~：**已随遴选域整体删除（2026-10-06）**。历史结论保留——该端点确实能在投票窗口过期后把 `confirmStatus` 从 0 改到 2，**能力真实存在**，属于平台侧越权待修（未上报）。
+- ~~强制确认接口的成功路径~~：**已随遴选域整体删除（2026-10-06）**。历史结论保留——该端点确实能在投票窗口过期后把确认状态从 0 改到 2，**能力真实存在**，属平台侧越权（路径与载荷见 api.md「已移除」节，已随另一张 security 工单上报）。
 
 ---
 
@@ -109,7 +109,7 @@
 
 | 邮件 | 结论 |
 | --- | --- |
-| 591iqAutomatic 技能测试（16:41） | 给出 `/reportManage/queryOwnerReportData`、`/stuffVotes/querySubjectHonorStuff`、`/stuffVotes/commitBatchVoteStuff`、`/diathesisReport/manage/reportConfirm`。**已在本地逐一验证，与邮件一致。** |
+| 591iqAutomatic 技能测试（16:41） | 给出 4 个遴选/投票相关端点。**已在本地逐一验证，与邮件一致**——其中三个暴露的问题（改他人结果、代人确认、窗口过期仍可确认）已随该业务域整体删除，不再入库端点细节。 |
 | 591iq-daily-automation（10-05 00:17） | 该自动化项目当天发布了一条「GitHub/Gitee 仓库更新总结（2026-10-05）」记录 —— **这解释了本地基线 15→16 的增长来源，不是人工操作。** |
 | Anonymous（18:06 / 10-05 00:19，两封内容相同） | 前端全量接口审计终版，与本地 chunk 提取方法一致。 |
 
@@ -153,7 +153,7 @@
 | D11 | ~~`searchPeople(redact=False)` 原始返回含他人隐私信息，且脱敏是客户端丢弃——服务端照发~~ | **已随能力删除而消解**（2026-10-06）：工具不再封装搜人；服务端仍照发，属平台侧口径问题，已上报 |
 | D12 | ~~`findPeople(exact=True)` 砍不掉完全同名账号~~ | **随能力删除而失效**；结论保留：**认人只能靠 `userId`**，姓名不是主键 |
 | D13 | `searchRecords("")` 抛 999997，但 `"   "`（纯空格）返回 1729 条——空串与空格行为不一致 | 已知限制：别拿空白串当有效关键词 |
-| D14 | 教师端端点 `/apps/credit/query/list_school`（学分系统）**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **已上报（2026-10-06）**：security 工单已投递 feedback（id `rEGwKxCIz…`）。跨角色越权 + 未成年人敏感个人信息，**服务端未修前风险不变**。端点细节已移出本文件到 `reference/api-privileged.md`（gitignored，不进包） |
+| D14 | 教师端学分名册端点（**路径见私有工单**，已移出本文件）——**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **已上报（2026-10-06）**：security 工单已投递 feedback（id `rEGwKxCIz…`）。跨角色越权 + 未成年人敏感个人信息，**服务端未修前风险不变**。端点细节已移出本文件到 `reference/api-privileged.md`（gitignored，不进包） |
 | D15 | 部分配置/导出端点接受客户端传入的 `schId`（`/apps/assess/scheme/list_semester` 实测 `200`→21 条 / `999999`→0 条，无兜底校验） | **待平台方验证**：需真实外校 `schId` 才能确认可利用性，本地单校数据无法判定 |
 | D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
 | D17 | ~~`HttpTransport._call` 只检查顶层 `code`~~，部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **已修**：拆出纯函数 `unwrapEnvelope(out, path)`，`meta` 是 dict 且含 `code` 时以它为准；`TestContract` 新增第 14 项离线守着（7 种信封），已验证旧实现下该项 FAIL。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功。**遗留：无**。2026-10-05 靠 `IQ_VERBOSE=1` 的全量日志枚举出 6 个 `{meta:…}` 端点（家长评语提交 + `/user/getUserInfoDetail` `/studentMgr/getParentList` `/announcement/listAnnouncementRead` `/eventTwo/listActivityStatisticsByDimension` `/growReport/summary/listGrowReportStuByStudentId`），另34 个是顶层 `code` 型；清单见 `reference/api.md`。线上回归无回归：`TestApiReadOnly` 47 项 PASS 46 / WARN 1 / FAIL 0、`TestRecordRead` 13/13 |
@@ -169,7 +169,7 @@
 - `schId` 是租户标识，由 `loginBySSOToken` 依据 `ssoToken` 决定后返回（`schoolId:"200"`）。
 - **数据查询类端点的请求里不含任何学校标识**，租户完全由 `AccessToken` 请求头决定：
   - `/search/search` —— 前端全站仅 1 处调用，参数只有 `type` / `content` / `pageRowBounds`
-  - `/record/queryRecordList`、`/apps/credit/query/list_school` —— 同样不传
+  - `/record/queryRecordList` 与教师端学分名册端点（D14）—— 同样不传
 - 实测所有返回的 `schId` **恒为 `200`**：`searchPeople` 跨 407 个汉字去重 28,190 人全部 200；
   跨校学分名册 28,705 人与本校集合交集 28,190、其余 515 人抽查 40/40 也是 200。
 - **结论：数据查询类端点不存在跨校读取路径**（因为根本没有学校参数可传）。

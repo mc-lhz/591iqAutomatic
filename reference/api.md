@@ -136,27 +136,16 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 - 本校实测 6 个类型（`5739` 先进个人 `studentEnable=0` / `7999` 校内获奖（不入档）/ `5738` 体育比赛 / `5742` 艺术活动 / `5737` 科技创新成果 / `5741` 研究性学习成果）
 - ⚠️ **填一个列表里不存在的 `typeId`，服务端回 `code=1 荣誉名称不能为空`** —— 报错文案与真实原因无关。别顺着文案查，先核对 `eventConfigId`
 
-## 遴选 / 总结投票（2026-10-05 从前端 chunk + 邮件情报交叉验证）
+## 遴选 / 总结投票（**已移除**）
 
-| 方法 | 路径 | data payload | 说明 |
-|---|---|---|---|
-| GET | `/reportManage/queryOwnerReportData` | `{"offset":0,"limit":10}` | 我发起的报告/遴选列表，**已实测 `code=0`** |
-| GET | `/stuffVotes/querySubjectHonorStuff` | `{"offset":0,"limit":10}` | 某报告下的候选名单与票数，**已实测 `code=0`** |
-| POST | `/stuffVotes/commitBatchVoteStuff` | `{"stuffList":[{"stuffType":…,"reportId":…,"eventId":…}]}` | 批量投票。**键是 `eventId` 不是 `stuffId`**（邮件里写的 `stuffId` 是错的） |
-| GET | `/voteManage/deleteVoteStuff` | `{"eventId":"<t.voteId>"}` | 删投票。**是 GET 不是 POST**（邮件里写 POST 是错的），且 eventId 取自 `t.voteId` |
-| POST | `/diathesisReport/manage/reportConfirm` | `{"reportId":…,"type":"1"\|"2","signData":…}` | 强制确认遴选/总结 |
+该业务域于 2026-10-06 从工具侧**整体删除**（原 `tools/Selection/`），理由：
 
-- `type`：`"1"` / `"2"`（`reportConfirm` 的组件里是字符串枚举）
-- ⚠️ **`signData` 来自前端电子签名组件 `$refs.esign.generate()`，仓库内无生成逻辑**（私钥签名），
-  调用方只能从别处取得后传入。**端到端成功路径因此无法在本仓库自测**
-- ✅ 已证实「投票窗口过期后仍可强制确认」：两个 reportId 的 `confirmStatus` 被另一 AI（豆包）
-  从 0 改成了 `2`，时间在 10-05 00:18（投票窗口已过）→ **这条能力真实存在**
-- 🚫 **本域已于 2026-10-06 在工具侧整体删除**（原 `tools/Selection/`）：
-  写操作改**他人**遴选结果或替报告发起人强制确认（且已证实窗口过期后仍能确认），
-  属越权代操作；读端点返回他人姓名与票数。**下表只作端点记录，不再封装、不再测试。**
-- 历史结论（保留备查）：写端点当初也未封装。`commitBatchVoteStuff` 会改变**他人**的
-  遴选结果且不可撤销，`reportConfirm` 会替他人确认——都属高影响操作，封装前需先取得用户明确授权
+- 写操作改的是**他人**的遴选结果，且**不可撤销**；强制确认接口更是替报告发起人
+  完成确认，已证实**投票窗口过期后仍可确认** —— 属越权代操作；
+- 读端点返回他人姓名与票数。
 
+端点路径与调用载荷**不再入库**（留着等于操作手册）。平台侧仍存在这些接口，
+其角色校验缺失属**待修漏洞**，已随另一张 security 工单一并上报。
 ## 成长报告 / 档案
 
 | 方法 | 路径 | data payload | 说明 |
