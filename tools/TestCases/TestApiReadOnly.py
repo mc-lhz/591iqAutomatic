@@ -224,22 +224,22 @@ def main():
     case("record/queryHistoryBookList",
          lambda: c.post("/record/queryHistoryBookList", {}))
 
-    # ---- 全局搜索（/search/search）----
+    # ---- 记录搜索（/search/search type=1）----
     # 用本人姓名做关键字，保证任何学校都命中自己，不依赖外部数据
+    # ⚠️ **不测 type=2 人员搜索**：该能力已于 2026-10-06 整体删除（全校枚举他人，
+    # 28,190 人级）。探测它等于把能力又装回去，违背删除初衷。
     kw = (prof.get("userName") or "").strip()
     case("search/search type=1 记录",
          lambda: c.searchRecords(kw, limit=5),
          check=lambda v: isinstance(v, dict) and "totalResult" in v)
-    case("search/search type=2 人员",
-         lambda: c.searchPeople(kw, limit=5),
-         check=lambda v: isinstance(v, dict) and "totalResult" in v)
-    case("search/search type=2 脱敏白名单",
-         lambda: c.searchPeople(kw, limit=5),
+    case("search/search type=1 命中项 userInf 已脱敏",
+         lambda: c.searchRecords(kw, limit=5),
          check=lambda v: all(
-             set(p) <= {"userId", "userName", "userNameAndClassName", "className",
-                        "gradeName", "enrolYearName", "sex", "status", "schId",
-                        "userType"} and "identityCard" not in p
-             for p in v["list"]))
+             set(p.get("userInf") or {}) <= {
+                 "userId", "userName", "userNameAndClassName", "className",
+                 "gradeName", "enrolYearName", "sex", "status", "schId",
+                 "userType"} and "identityCard" not in (p.get("userInf") or {})
+             for p in (v.get("list") or [])))
     case("search/search type=0 无数据",
          lambda: c.get("/search/search", {"type": "0", "content": kw,
                                           "pageRowBounds": {"offset": 0, "limit": 5}}),

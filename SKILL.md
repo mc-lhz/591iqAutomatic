@@ -270,13 +270,13 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 python tools/TestCases/TestContract.py
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录业务 13 项断言
 python tools/TestCases/TestContract.py                # 本地契约审计（离线，14 项）
-python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 41 项
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 41 项
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 51 项
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 51 项
 python tools/TestCases/TestApiReadOnly.py --token <t> --dump     # 额外落盘每个接口的真实返回
-python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 42 项：追加 announcement/upload（会落一个文件）
+python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 52 项：追加 announcement/upload（会落一个文件）
 ```
-全量结果（2026-10-02 实测）：**PASS=41 FAIL=0 WARN=1 SKIP=0**，共 **42 项**（20.9s，`-u -p --upload`）；
-只跑只读端点（不加 `--upload`）为 **41 项 / PASS=40 FAIL=0 WARN=1**——第 42 项
+全量结果（2026-10-02 实测）：**PASS=48 FAIL=0 WARN=1 SKIP=2**，共 **51 项**（20.9s，`-u -p --upload`）；
+只跑只读端点（不加 `--upload`）为 **51 项 / PASS=48 FAIL=0 WARN=1 SKIP=2**——第 52 项
 `announcement/upload` 只在显式 `--upload` 时才计入，**`-u -p` 本身不含上传**。
 （含新增只读：`task/get`、`evaluateActivity/get_config`、`evaluateActivity/querySummary`）；
 产物 `tools/TestCases/TestApiReadOnlyReport.json`（逐项状态，由本次运行生成，gitignore）；
@@ -298,21 +298,21 @@ python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 42 项：追�
 
 ⚠️ **平台是每校独立部署的多租户**。`/search/search`、`/record/queryRecordList` 等数据查询端点的请求里**不含任何学校标识**，租户完全由 `AccessToken` 决定；实测全部数据的 `schId` 恒为 `200`（厦门一中）。详见 MEMORY.md「schId 与租户边界」。
 
-## 能力分层：什么默认开、什么要授权
+## 能力边界：搜索只有「搜记录」，没有「搜人」
 
-| 层 | 能力 | 怎么用 |
-|---|---|---|
-| 默认可用 | 本人档案、任务消息、记录读写、荣誉、成长报告、导出、发布/删除记录 | 直接调 |
-| **需授权** | `searchPeople()` / `findPeople()`（全校人员枚举，实测 28,190 人级） | 先 `c.enablePeopleSearch("<授权来源>")`，或设 `IQ_ALLOW_PEOPLE_SEARCH=1` |
-| 不公开 | 越权端点细节、人员枚举实测规模、厂商构件编号 | 在 `reference/api-privileged.md`（不进仓库、不进包） |
+| 能力 | 状态 |
+|---|---|
+| `searchRecords(kw)` 写实记录全文搜索 | 默认可用，`userInf` 默认脱敏 |
+| ~~`searchPeople()` / `findPeople()`~~ 全校人员枚举 | **已整体删除**（2026-10-06），连授权开关都没有 |
+| 越权端点细节、厂商构件编号 | 在 `reference/api-privileged.md`（不进仓库、不进包） |
 
-- **默认拒绝**：未开启就调 `searchPeople`/`findPeople` 会抛 `IQError`，
-  不会被静默当成「没数据」。
-- **开启必须写授权来源**，且**开启与每次调用都打 WARNING 到 stderr**——
-  所以「谁在什么授权下枚举过全校人员」在本地是可审计的。
-- `searchRecords()` 不设闸门但**默认脱敏**（`redact=True`）：每条命中内嵌的
-  51 字段 `userInf` 会收敛到白名单，`redact=False` 才给原始返回并留痕。
-- 优先用 `records(type_="2")` 的班级 feed 拿 userId——那是 UI 本来就有的范围。
+- **为什么删干净而不是默认关闭**：那个能力一次调用就能枚举全校 28,190 人级、
+  原始返回 51 字段含身份证号与照片，而使用者是单个学生账号。留 env 变量旁路
+  等于「藏起来但没关掉」，反而诱导绕过。
+- **需要某人 `userId` 时用 `records(type_="2")` 的班级 feed**
+  （UI 本来就有的范围）或 `records(type_="1", userName=…)`——少一个搜人能力，
+  不影响任何实际任务。
+- `TestContract.py` 第 15 项每次 CI 都验这条红线，搜人入口与授权开关都不许复活。
 
 ## 注意事项
 
