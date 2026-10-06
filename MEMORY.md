@@ -131,7 +131,7 @@
 | D15 | 部分配置/导出端点接受客户端传入的 `schId`（`/apps/assess/scheme/list_semester` 实测 `200`→21 条 / `999999`→0 条，无兜底校验） | **待平台方验证**：需真实外校 `schId` 才能确认可利用性，本地单校数据无法判定 |
 | D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
 | D17 | ~~`HttpTransport._call` 只检查顶层 `code`~~，部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **已修**：拆出纯函数 `unwrapEnvelope(out, path)`，`meta` 是 dict 且含 `code` 时以它为准；`TestContract` 新增第 14 项离线守着（7 种信封），已验证旧实现下该项 FAIL。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功。**遗留：无**。2026-10-05 靠 `IQ_VERBOSE=1` 的全量日志枚举出 6 个 `{meta:…}` 端点（家长评语提交 + `/user/getUserInfoDetail` `/studentMgr/getParentList` `/announcement/listAnnouncementRead` `/eventTwo/listActivityStatisticsByDimension` `/growReport/summary/listGrowReportStuByStudentId`），另34 个是顶层 `code` 型；清单见 `reference/api.md`。线上回归无回归：`TestApiReadOnly` 52 项 PASS 49 / WARN 1 / SKIP 2 / FAIL 0、`TestRecordRead` 13/13 |
-| D18 | ~~`ocrCaptcha` 逻辑 bug：`texts[0]` 恒为预处理图结果，原图识别被丢弃~~ | **已修（离线实测）**：改 3 个全画布阈值化变体投票（170×3 / 180×4 / 200×4）+ `DIGIT2LETTER` 数字映射。48 张逐字真值（输入用文件路径，与生产同路径）**43/48 ≈ 90%**，A 批 21/24、B 批 22/24；旧实现同条件 33/48 ≈ 69%，历史上服务端实测 42/70 = 60%。**两个反直觉结论**：①「裁剪归一化」变体只有 7/24，混进投票会把强变体带跑；②变体文件名曾互相覆盖（默认 out 都是 `.prep.png`），投票等于单变体 |
+| D18 | ~~`ocrCaptcha` 逻辑 bug：`texts[0]` 恒为预处理图结果，原图识别被丢弃~~ | **已修（离线实测）**：改 3 个全画布阈值化变体投票（170×3 / 180×4 / 200×4）+ `DIGIT2LETTER` 数字映射。48 张逐字真值（输入用文件路径，与生产同路径）**43/48 ≈ 90%**，A 批 21/24、B 批 22/24；旧实现同条件 33/48 ≈ 69%，历史上服务端实测 42/70 = 60%。**服务端实测（2026-10-06，15 轮真实登录）：12/15 = 80%**，同一样本上旧逻辑只对 6/12 = 50% —— 离线 90% 比服务端保守 10 个点，**对外只报服务端数字**。**两个反直觉结论**：①「裁剪归一化」变体只有 7/24，混进投票会把强变体带跑；②变体文件名曾互相覆盖（默认 out 都是 `.prep.png`），投票等于单变体 |
 
 ---
 
