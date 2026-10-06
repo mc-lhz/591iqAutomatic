@@ -193,8 +193,14 @@ def main():
          lambda: c.records(limit=10, type_="1"))
     case("record/queryRecordList type=2",
          lambda: c.records(limit=10, type_="2"))
-    case("record/queryRecordList type=''",
-         lambda: c.records(limit=10, type_=""))
+    # ⚠️ **不再探测 `type_=""`**（2026-10-06）：那个值走服务端兜底分支、
+    # 无范围过滤（实测 146,020 条 ≈ 学校 tab 的 12 倍，含历年毕业届），
+    # 前端没有对应 tab。客户端已在 `QueryMixin.records()` 拦住它，
+    # 这里探它等于把那个范围又用一遍。改测「非法值必须被拒」。
+    case("record/queryRecordList 非法 type_ 被拒",
+         lambda: c.records(limit=10, type_=""),
+         expect_error=True,
+         note="空串走服务端兜底分支，客户端应拦截")
     case("record/queryLabelList", lambda: c.recordLabels())
     case("record/group_type", lambda: c.groupTypes())
     case("record/queryRecordStatistics", lambda: c.recordStatistics())
