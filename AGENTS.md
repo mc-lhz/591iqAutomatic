@@ -152,6 +152,13 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
 - **导出（`Export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%\591iq_*.xlsx`，
   已 gitignore `*.xlsx`；不要把导出文件或含真实姓名的 json 提交进仓库
 - 提交前脱敏：不得包含 token / 密码 / 姓名 / userId / 班级
+- **入库文档里禁止出现任何真实姓名**（含本人与他人），一律写「某学生」。
+  敏感串扫描抓不到散文里的中文人名（通用检测必然误报，见 SENSITIVE 注释），
+  所以靠这条人工约定 + 两条窄规则兜底（带计数后缀的「某（2 封）」形态、夹具 userId）
+- **节流与节制（不对后端造成压力）**：单账号、**串行、禁止并发**（代码里不得引入
+  线程池/多进程）；分页与导出有硬上限（`ExportXlsx.py` 的 `while off < 2000`），
+  不要为了「拿全」调大它；遇 4xx/429/验证码频发立即停手，登录重试上限 `--retry 6`；
+  `TestApiReadOnly`（47 项）与 `TestRecordRead`（13 项）是自检不是压测，跑一次就够
 - 测试需要有效 ssoToken；无 token 时 `TestApiReadOnly.py` 的登录步骤会失败
 - **删除类操作（`RecordCenter/DeleteRecord.py`）默认只读**：先 `--dry-run` 看清目标（id/类型/标题/学期/图片数），再显式 `--yes`；删除**不可撤销**。
   `TestApiReadOnly.py` 里的 `record/delRecord` 用例只用 32 个 `0` 探测路由存在性，**任何情况下都不得改成真删**

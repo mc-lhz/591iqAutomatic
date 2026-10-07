@@ -49,7 +49,11 @@ EXCLUDE_GLOBS = ("__pycache__/*", "*/__pycache__/*", "*.pyc", "*.pyo",
 # 结构自检：这些必须**不存在**于包内
 FORBIDDEN_GLOBS = ("__pycache__/*", "*/__pycache__/*", "*.pyc", ".git/*",
                    "*.state.json", "*.vision.png", "*.jpg", "*.png", "*.xlsx",
-                   ".github/*", "*/.git/*")
+                   ".github/*", "*/.git/*",
+                   # Tier 3 受限文档：越权端点细节与探测手法。它已被 .gitignore
+                   # 挡住（git ls-files 拿不到），这里再加一道是防「哪天有人
+                   # 手工 git add -f 了」——合规文件漏进包比漏进仓库更难发现。
+                   "reference/api-privileged.md")
 MUST_HAVE = ("SKILL.md", "AGENTS.md", "README.md", "VERSION")
 
 

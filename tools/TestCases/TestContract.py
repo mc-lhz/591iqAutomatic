@@ -34,6 +34,12 @@ sys.path.insert(0, TOOLS)
 OK, WARN, FAIL = "PASS", "WARN", "FAIL"
 RESULTS = []
 
+# 合成夹具用的 userId。**必须是明显的占位值**：曾把真实账号的 userId 写在这里，
+# 而敏感串扫描只抓字段形态（"userName":"…"），抓不到裸数字，于是它一路绿灯进了包。
+# 占位值判定见 `isPlaceholderId`：同一位数字反复出现（≤2 种数字）即视为占位。
+FAKE_USER_ID = 900000000          # 夹具里的「登录者本人」
+FAKE_OTHER_ID = 900000009         # 夹具里的「他人」，必须与上面不同
+
 # AGENTS.md 写死的硬约束
 REFERENCE_BUDGET = 150 * 1024
 
@@ -70,7 +76,22 @@ SENSITIVE = [
     #  ② 文档示例里 c.searchXxx("中文名") 这类把姓名当参数写死
     ("姓名字段", r"\"(?:studentName|personName|userName)\"\s*:\s*\"[一-龥]{2,4}\""),
     ("姓名示例", r"search(?:People|Records)\(\s*\"[一-龥]{2,4}\""),
+    # 人名（带计数）：泛用中文人名检测必然误报（方案/于是/方向/文件…），
+    # 但**带计数后缀的「某（2 封）」是情报分级表里固定的人名写法**，这条窄规则专治它。
+    # 真实事故：MEMORY.md 的情报分级表里出现过一个真实姓名，就在这行旁边写着
+    # 「原始数据含 PII，已剔除」——而原有 7 条规则一条都没命中。
+    ("人名（带计数）", r"[一-龥]{2,4}\s*（\d+\s*封）"),
 ]
+
+# 夹具里的 userId：必须用占位值（数字种类 ≤2，形如 900000000），
+# 真实账号标识形如 787316（数字种类多）。纯正则区分不了「占位」与「真实」，
+# 所以这条走自定义判定而不是并进 SENSITIVE。
+FIXTURE_USERID = re.compile(r"userId[\"']?\s*[:=]\s*[\"']?(\d{5,})")
+
+
+def isPlaceholderId(digits: str) -> bool:
+    """看起来像占位值的 id：同一位数字反复出现，最多两种数字。"""
+    return len(set(digits)) <= 2
 SCAN_EXT = (".py", ".md", ".json", ".jsonc", ".yml", ".yaml", ".txt")
 SKIP_DIR = {".git", "__pycache__", ".github"}
 
@@ -172,6 +193,10 @@ def checkSensitive(files):
         for label, pat in SENSITIVE:
             for m in sorted(set(re.findall(pat, text)))[:3]:
                 hits.append("%s: %s → %s" % (rel, label, m))
+        for m in FIXTURE_USERID.finditer(text):
+            if not isPlaceholderId(m.group(1)):
+                hits.append("%s: 夹具 userId 非占位值 → %s"
+                            % (rel, m.group(1)))
     add("敏感串（提交前脱敏）", FAIL if hits else OK,
         "；".join(hits[:3]) or "未发现 token/手机号/密码/真实图片地址")
 
@@ -481,7 +506,7 @@ def checkCapabilityGate():
         posted.append((path, data))
         return {"list": {"count": 146020, "list": []}}
     c._call = _fakeList
-    c.profile = {"userId": 787316}
+    c.profile = {"userId": FAKE_USER_ID}
     for bad_t in ("", "0", "5", "9", "abc"):
         try:
             c.records(limit=1, type_=bad_t)
@@ -504,7 +529,7 @@ def checkCapabilityGate():
         bad.append("unsafeScope=True 仍被拒：%s" % str(e)[:40])
 
     # ⑥ queryRecord 归属校验 + 默认脱敏
-    mine = {"userId": 787316, "userName": "A", "idNumber": "1" * 18,
+    mine = {"userId": FAKE_USER_ID, "userName": "A", "idNumber": "1" * 18,
             "identityCard": "350203" + "0" * 12,
             "unifiedExaminationNumber": "252601", "letter": "ADDR",
             "politicalStatus": "P", "phoneNumber": "138" + "0" * 8}
@@ -520,7 +545,7 @@ def checkCapabilityGate():
         bad.append("queryRecord 脱敏过头")
     c._call = lambda p, data=None, method=None: {"list": {
         "recordContent": {"id": "Y"},
-        "userInf": dict(mine, userId=999999)}}
+        "userInf": dict(mine, userId=FAKE_OTHER_ID)}}
     try:
         c.queryRecord("Y")
         bad.append("queryRecord 读他人记录未被拦")
@@ -534,6 +559,40 @@ def checkCapabilityGate():
     add("能力红线（无搜人/投票·兜底与归属已校验·默认脱敏）", FAIL if bad else OK,
         "；".join(bad[:3]) or
         "搜人/投票已删除；非法 type_ 被拒、他人记录被拒、身份字段默认脱敏")
+
+
+def checkUseScope():
+    """使用范围声明必须在，且受限文档不得进包（离线）。
+
+    两件事都怕「被一次无害的重构顺手删掉」：
+      ① SKILL.md / README.md 开头的「使用范围与红线」——它是对外唯一的定位声明，
+         删了以后这个仓库就只剩一份功能清单，读起来像采集工具。
+      ② `reference/api-privileged.md`（越权端点细节与探测手法）必须**不在包内**。
+         它靠 .gitignore 隐式排除，这里再加一道显式断言。
+    """
+    bad = []
+    must = ("使用范围与红线", "不用于攻击", "不对后端")
+    for rel in ("SKILL.md", "README.md"):
+        p = os.path.join(ROOT, rel)
+        text = io.open(p, encoding="utf-8").read() if os.path.exists(p) else ""
+        if not text:
+            bad.append("%s 不存在" % rel)
+            continue
+        head = text[:2500]
+        for kw in must:
+            if kw not in head:
+                bad.append("%s 开头 2500 字内缺「%s」" % (rel, kw))
+
+    priv = "reference/api-privileged.md"
+    from Release.PackSkill import FORBIDDEN_GLOBS, PKG_NAME
+    if priv not in FORBIDDEN_GLOBS:
+        bad.append("PackSkill.FORBIDDEN_GLOBS 未列入 %s" % priv)
+    if priv in repoFiles():
+        bad.append("%s 竟被 git 跟踪（不该入库）" % priv)
+
+    add("使用范围声明 + 受限文档不入包", FAIL if bad else OK,
+        "；".join(bad[:3]) or
+        "SKILL/README 均声明红线；%s 不在包内（包名 %s）" % (priv, PKG_NAME))
 
 
 def main():
@@ -557,6 +616,7 @@ def main():
     checkImport()
     checkEnvelope()
     checkCapabilityGate()
+    checkUseScope()
 
     counts = {OK: 0, WARN: 0, FAIL: 0}
     for _n, st, _note in RESULTS:
