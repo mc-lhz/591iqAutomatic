@@ -50,7 +50,23 @@
   `queryRecord(id)` 比对 `userInf.userId` 与登录者，不符即拒，旁路须 `allowOther=True`；
   两者旁路都打 WARNING 留痕，且 `userInf` 默认脱敏到 10 字段白名单。
   ⚠️ **闸门只防误用，不是安全控制**——绕过本模块直接发 HTTP 一样拿全量数据，
-  所以 D14/D19 都已作为 security 工单上报，真正的修复要在服务端。
+  所以真正的修复要在服务端。
+
+### 4.1 递交状态（2026-10-06 起）
+
+**两处检索接口漏洞已递交学校信息技术中心**，通报编号 `RISK-2026-1006-01`：
+
+| 处| 通报章节 | 服务端端点 | 本仓库对应缺陷 |
+|---|---|---|---|
+| 搜索 | 问题一 | `GET /search/search` `type=2` 未按角色限制 | D2 / D10 / D11（工具侧已删能力、默认脱敏） |
+| 查询写实记录 | 问题二 | `POST /record/queryRecordList` 非法 `type` 走无过滤兜底分支；`POST /record/queryRecord` 不校验归属 | D19 |
+
+- 学校侧**预计 2026-10-13（下周）起可见并进入处置流程**。在那之前服务端未修复，
+  **风险不变**，客户端闸门继续是唯一屏障。
+- 自建 feedback 站的工单（`rEGwKxCIz…` / `EMflgkmw2B…`）是**我方留痕**，不是学校已受理的凭据——
+  学校与平台方不会自动收到。两件事都别混为一谈。
+- ⚠️ 递交后到修复前这段时间，**对外一律说「已上报、待平台修复」**，
+  不要说「已提交修复」或「已受理」。
 
 **当前 `main` 见 `git log -1`（本文件不写死 hash——写死必过期，已过期过两次）。**
 
@@ -144,7 +160,7 @@
 | D8 | `release: published` 触发时用的是 **tag 上的旧 workflow 定义**，`workflow_dispatch` 路径已用新定义验证过，自动路径未验证 | 需下一个 release 才能验证 |
 | D9 | SearchCenter 提交后 CI 未复查 | **已复查**：CI #8（`7e49632`）曾因 TestContract 隐私闸门失败（双平台红），`9256f53` 修复后 CI #9 转绿 |
 | D10 | ~~`searchRecords()` 无 `redact` 开关，每条命中项内嵌 `userInf`（51 字段）含身份标识/照片~~ | **已修（2026-10-06）**：`redact=True` 成为**默认**，命中项 `userInf` 收敛到 `PERSON_KEEP` 白名单；`redact=False` 才给原始返回并打 WARNING。已由 TestContract 新增「能力闸门」项离线守着 |
-| D11 | ~~`searchPeople(redact=False)` 原始返回含他人隐私信息，且脱敏是客户端丢弃——服务端照发~~ | **已随能力删除而消解**（2026-10-06）：工具不再封装搜人；服务端仍照发，属平台侧口径问题，已上报 |
+| D11 | ~~`searchPeople(redact=False)` 原始返回含他人隐私信息，且脱敏是客户端丢弃——服务端照发~~ | **已随能力删除而消解（工具侧，2026-10-06）**：工具不再封装搜人；**服务端缺陷本身未修**，已作为通报 `RISK-2026-1006-01` 问题一递交学校（预计 2026-10-13 起进入处置流程，见 §4.1）。风险不变 |
 | D12 | ~~`findPeople(exact=True)` 砍不掉完全同名账号~~ | **随能力删除而失效**；结论保留：**认人只能靠 `userId`**，姓名不是主键 |
 | D13 | `searchRecords("")` 抛 999997，但 `"   "`（纯空格）返回 1729 条——空串与空格行为不一致 | 已知限制：别拿空白串当有效关键词 |
 | D14 | 教师端学分名册端点（**路径见私有工单**，已移出本文件）——**学生 token 可读**，返回全校 `studentName` + `idNumber` + `className` | **已上报（2026-10-06）**：security 工单已投递 feedback（id `rEGwKxCIz…`）。跨角色越权 + 未成年人敏感个人信息，**服务端未修前风险不变**。端点细节已移出本文件到 `reference/api-privileged.md`（gitignored，不进包） |
@@ -152,7 +168,7 @@
 | D16 | `/studentMgr/export`、`/teacherMgr/export` 把 `session` 放进 URL query | 待评估：凭据走 URL 的泄露面（日志/Referer） |
 | D17 | ~~`HttpTransport._call` 只检查顶层 `code`~~，部分端点信封是 `{meta:{code,msg}}` → 错误码被吞、返回 `null` | **已修**：拆出纯函数 `unwrapEnvelope(out, path)`，`meta` 是 dict 且含 `code` 时以它为准；`TestContract` 新增第 14 项离线守着（7 种信封），已验证旧实现下该项 FAIL。撞到它的现场：家长评语提交实际被拒（`meta.msg=学生总结已截止`，逾期 22 天），代码却以为成功。**遗留：无**。2026-10-05 靠 `IQ_VERBOSE=1` 的全量日志枚举出 6 个 `{meta:…}` 端点（家长评语提交 + `/user/getUserInfoDetail` `/studentMgr/getParentList` `/announcement/listAnnouncementRead` `/eventTwo/listActivityStatisticsByDimension` `/growReport/summary/listGrowReportStuByStudentId`），另34 个是顶层 `code` 型；清单见 `reference/api.md`。线上回归无回归：`TestApiReadOnly` 47 项 PASS 46 / WARN 1 / FAIL 0、`TestRecordRead` 13/13 |
 | D18 | ~~`ocrCaptcha` 逻辑 bug：`texts[0]` 恒为预处理图结果，原图识别被丢弃~~ | **已修（离线实测）**：改 3 个全画布阈值化变体投票（170×3 / 180×4 / 200×4）+ `DIGIT2LETTER` 数字映射。48 张逐字真值（输入用文件路径，与生产同路径）**43/48 ≈ 90%**，A 批 21/24、B 批 22/24；旧实现同条件 33/48 ≈ 69%，历史上服务端实测 42/70 = 60%。**服务端实测（2026-10-06，15 轮真实登录）：12/15 = 80%**，同一样本上旧逻辑只对 6/12 = 50% —— 离线 90% 比服务端保守 10 个点，**对外只报服务端数字**。**两个反直觉结论**：①「裁剪归一化」变体只有 7/24，混进投票会把强变体带跑；②变体文件名曾互相覆盖（默认 out 都是 `.prep.png`），投票等于单变体 |
-| D19 | `queryRecord(id)` **不校验记录归属**（只按 id 返回），且 `userInf` 原始 51 字段含身份证号/考号/政治面貌/住址/照片；`queryRecordList` 的非法 `type`（空串即可）走**无过滤兜底分支**返回 146,021 条（**与「学校」tab 同一数据集**，倍数 1.00，见 6.7）；且列表行内**无 `userInf`**，故列表本身不返回身份字段，风险落在 `queryRecord` 这一跳 | **已上报**（工单 `EMflgkmw2B…`）+ **客户端已加两道闸门**：`records` 只放行前端 4 个 tab（其余抛错，旁路要 `unsafeScope=True` 留 WARNING）、`queryRecord` 比对 `userInf.userId` 不符即拒（旁路要 `allowOther=True`）+ 默认脱敏。**闸门只防误用不是安全控制**——绕过本模块直接发 HTTP 一样拿全量 | 
+| D19 | `queryRecord(id)` **不校验记录归属**（只按 id 返回），且 `userInf` 原始 51 字段含身份证号/考号/政治面貌/住址/照片；`queryRecordList` 的非法 `type`（空串即可）走**无过滤兜底分支**返回 146,021 条（**与「学校」tab 同一数据集**，倍数 1.00，见 6.7）；且列表行内**无 `userInf`**，故列表本身不返回身份字段，风险落在 `queryRecord` 这一跳 | **已递交学校**（通报 `RISK-2026-1006-01` 问题二，预计 2026-10-13 起进入处置流程，见 §4.1）+ **客户端已加两道闸门**：`records` 只放行前端 4 个 tab（其余抛错，旁路要 `unsafeScope=True` 留 WARNING）、`queryRecord` 比对 `userInf.userId` 不符即拒（旁路要 `allowOther=True`）+ 默认脱敏。**闸门只防误用不是安全控制**——绕过本模块直接发 HTTP 一样拿全量。**服务端未修前风险不变** | 
 
 ---
 

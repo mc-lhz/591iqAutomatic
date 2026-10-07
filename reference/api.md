@@ -106,7 +106,9 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 28,190 人级、原始返回 51 字段含身份证号与照片，而使用者是单个学生账号。
 连授权开关都没有留（留后门等于「藏起来但没关掉」）。
 **本工具不再封装、不再测试、不再文档化其调用方式**；`type=2` 仍是平台侧的口径
-问题，已上报。需要某人 `userId` 时用 `records(type_="2")` 班级 feed。
+问题，**已作为通报 `RISK-2026-1006-01` 问题一递交学校，预计 2026-10-13 起进入处置流程
+（见 MEMORY §4.1）；服务端修复前风险不变**。需要某人 `userId` 时用
+`records(type_="2")` 班级 feed。
 
 ⚠️ **隐私信息暴露面**：`type=1` 每条命中项内嵌 `userInf`（原始 51 字段），
 含**身份标识、联系方式、照片等隐私信息**。`searchRecords()` 自 2026-10-06 起
@@ -145,7 +147,8 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 - 读端点返回他人姓名与票数。
 
 端点路径与调用载荷**不再入库**（留着等于操作手册）。平台侧仍存在这些接口，
-其角色校验缺失属**待修漏洞**，已随另一张 security 工单一并上报。
+其角色校验缺失属**待修漏洞**，**未纳入本次递交的 `RISK-2026-1006-01`**（该通报只含
+两处检索接口，见 MEMORY §4.1）——按需另附。
 ## 成长报告 / 档案
 
 | 方法 | 路径 | data payload | 说明 |
@@ -385,7 +388,9 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
   但每行带一个 32 位记录 `id`，配合上面那个**不校验归属**的 `queryRecord` 即构成
   「批量枚举 id → 逐条取 51 字段」的钥匙链。**风险落在第二跳。**
 
-⚠️ 两道闸门都只防误用、**不是安全控制**——绕过本模块直接发 HTTP 一样拿全量数据。已作为 security 工单上报（见 MEMORY D14/D19），真正的修复要在服务端。
+⚠️ 两道闸门都只防误用、**不是安全控制**——绕过本模块直接发 HTTP 一样拿全量数据。
+**已作为通报 `RISK-2026-1006-01` 问题二递交学校**（预计 2026-10-13 起进入处置流程，
+见 MEMORY §4.1），**服务端修复前风险不变**，真正的修复要在服务端。
 | POST | `/record/queryClassifyList` / `/record/queryHistoryBookList` | `{}` / `{}` | 分类 `[1人文科学,2自然科学]`；历史书籍**两层** `data.list.list[]`，行含 `recordContent(null)/recordRead/recordBook{name,writer,intro}` |
 
 ✅ 学生端**确有删除接口**（2026-10-04 确认并实测，见下方「删除写实记录」一节）。注意命名是 `del` 前缀不是 `delete`——只在前端 app.js 里 grep `deleteRecord` 会漏掉它。
