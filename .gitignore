@@ -14,3 +14,6 @@ test_endpoints_report.json
 vl_*
 # 受限能力文档（Tier 3）：越权端点/人员枚举/厂商构件编号，严禁入库与打包
 reference/api-privileged.md
+# 原站前端原件（564 chunk / 13 MB）：体积过大且是第三方代码，只在本地查表用，
+# 需要时按 reference/api.md「未知槽位结构怎么查」重新抓取，不入库、不打包
+reference/frontend-js/
