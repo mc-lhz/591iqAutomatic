@@ -1,9 +1,11 @@
-# 591iq API 清单（抓包实测，student 角色）
+# 端点清单
+
+> 声明：仅用于更全面地覆盖学生使用新壹我系统的场景，不得用于其他目的。
 
 网关 `https://service.591iq.cn`，全部接口封装 `request={"data":{...}}`，
 GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clientos: pc`。
 
-## 鉴权 / 账号
+## 账号
 
 | 方法 | 路径 | data payload | 说明 |
 |---|---|---|---|
