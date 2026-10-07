@@ -283,7 +283,7 @@ schoolChange(l){ this.$http.post("/account/switch", {data:{schId:l}}).then(l=>{
 - 仓库：`C:\Users\Administrator\.config\opencode\skills\591iqAutomatic`
 - 远端：`https://github.com/mc-lhz/591iqAutomatic`
 - 凭据、token、姓名、手机号、userId、真实记录 ID **一律不入库**；临时数据只放 `%TEMP%\591iq_scratch`。
-- 写入类测试**必须串行**，否则前后条数快照互相干扰。
+- 写入类测试**必须按序逐条跑**，否则前后条数快照互相干扰。
 - 只删本次会话创建的记录；既有记录清单用快照文件固化，删除前逐一比对。
 - `reference/` 预算 **150 KB**（2026-10-05 由 100 KB 抬高，当时已用 97 KB／剩 3 KB，
   无法容纳本轮核验结论与新接口契约），只存提炼结论，不存原始前端代码。

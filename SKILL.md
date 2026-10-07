@@ -248,7 +248,7 @@ c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档
 > 查 `reference/frontend.md`（人看）与 `reference/recordForms.json`（程序读，含每类的
 > `chunk`/`moduleId` 出处）即可；槽位名查 `RECORD_TYPE_MAP`。
 > 只有查表结果对不上时，才按 `reference/api.md`「未知槽位结构怎么查」的优先级链往下走，
-> 且**必须先映射定位那一个 chunk 再读**——全站 564 个 chunk 串行下载约 2.5 min，
+> 且**必须先映射定位那一个 chunk 再读**——全站 564 个 chunk 约 2.5 min，
 > 原始代码一律不入库（`reference/` 体积上限 100 KB，现已用 91.6 KB）。
 
 ### 第二类写入：提交活动总结（✅ 已实测，风险低于写实记录）
@@ -334,15 +334,6 @@ python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 48 项：追�
   不影响任何实际任务。
 - `TestContract.py` 的「能力红线」项每次 CI 都验：搜人入口、授权开关、已移除能力的端点
   都不许复活，非法范围参数必须被客户端拦住。
-
-## 节流与节制（不对后端造成压力）
-
-- **单账号、串行、禁止并发**：本工具没有线程池也没有多进程，一次只发一个请求。
-- **分页与导出有硬上限**：`ExportXlsx.py` 的分页循环上限 2000 条（`while off < 2000`），
-  不要为了「拿全」去改大它。
-- **遇 4xx / 429 / 验证码频发立即停手**，不要换图硬冲；登录重试上限 `--retry 6`。
-- **回归测试跑一次就够**：`TestApiReadOnly`（47 项，约 10 s）与 `TestRecordRead`（13 项，约 16 s）
-  是自检工具，不是压测手段。
 
 ## 注意事项
 

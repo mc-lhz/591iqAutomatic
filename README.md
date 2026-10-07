@@ -196,7 +196,7 @@ python tools/TestCases/TestRecordRead.py <ssoToken>          # 写实记录 13 �
 python tools/TestCases/TestContract.py                       # 本地契约审计（离线，不要凭证）
 ```
 
-前两个需要凭证，第三个完全离线。**自检不是压测，跑一次就够了**，不要反复跑。
+前两个需要凭证，第三个完全离线。
 
 ---
 

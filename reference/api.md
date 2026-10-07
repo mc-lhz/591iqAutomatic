@@ -330,7 +330,7 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
 | 2 | 反查本校 feed：`records(type_="2")` 翻页取行，看行里哪个 `recordXXX` 槽位非空 → `queryRecord(id)` | ~27 次 API，秒级 | **真实样本结构**，含服务端回填字段 | 需要确认服务端实际存了哪些键 |
 | 3 | 查本文档 + `RECORD_TYPE_MAP` | 0 | 槽位名、已知必填项 | 槽位名一定在这里 |
 | 4 | 按 `recordForms.json` 里记的 `chunk` + `moduleId` **定位**那一个 chunk 读原件 | 下载全量后读 1 个文件 | 表单默认值、label 原文、提交逻辑 | 查表结果对不上时 |
-| 5 | 全量关键词搜前端 bundle | **564 chunk / 13 MB 串行下载 ≈ 2.5 min** | 兜底 | 只在 1-4 全失败时 |
+| 5 | 全量关键词搜前端 bundle | **564 chunk / 13 MB ≈ 2.5 min** | 兜底 | 只在 1-4 全失败时 |
 
 2026-10-02 已把第 4 步的成果固化下来：`recordForms.json` 记着 22 类各自的
 `chunk` / `moduleId` / 字段归属 / 必填项与平台提示语，所以现在**绝大多数情况不用再下载前端**。
@@ -351,7 +351,7 @@ python tools/RecordCenter/PublishActivity.py --title "标题" --content-file bod
 - **先映射后搜索**：由 webpack 模块 id / `recordRelease.components` 直接定位 chunk，
   不要遍历 564 个文件找字符串
 - **区分发布态与查看态**：同一业务有两个 chunk（编辑/预览），要的是发布态
-- **下载必须并发**：`scan.py` 那类串行 `urlopen` 循环是本次耗时主因
+- **下载要一次批量拉完**：逐个 `urlopen` 循环是本次耗时主因
 - **落地即建索引**：首次下载后生成「关键词 → 文件名」倒排表，之后查询全走本地，
   不要每次 `os.listdir` 全量重扫
 - **加落盘缓存**：重复查询时先 `if not os.path.exists(p)` 跳过下载
