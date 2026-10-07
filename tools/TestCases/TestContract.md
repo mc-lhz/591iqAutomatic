@@ -53,7 +53,7 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
 | 技能包结构 | 真的打一次 `591iqAutomatic.zip`：根目录必备齐全、未套外层目录、无垃圾文件 | FAIL |
 | 模块可导入 | `IQClient` 与写域 mixin 导入无副作用 | FAIL |
 | 响应信封 | `unwrapEnvelope` 对 7 种信封（顶层 `code` / `meta.code` / 无 code / 裸数组）解析正确，错误码不被吞 | FAIL |
-| 能力红线 | 搜人/投票入口与授权开关**必须不存在**；`records(type_=)` 非法值被客户端拦住（且请求不发出）；`queryRecord` 校验归属；身份字段默认脱敏 | FAIL |
+| 能力红线 | 已移除能力的入口与授权开关**必须不存在**；`records(type_=)` 非法值被客户端拦住（且请求不发出）；`queryRecord` 校验归属；身份字段默认脱敏 | FAIL |
 | 使用范围声明 + 受限文档不入包 | `SKILL.md`/`README.md` 开头 2500 字内必须有「使用范围与红线」及关键否定词；`reference/api-privileged.md` 既不被 git 跟踪、也须在 `PackSkill.FORBIDDEN_GLOBS` 里 | FAIL |
 
 ## 注意事项

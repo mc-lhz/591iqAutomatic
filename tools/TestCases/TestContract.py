@@ -452,7 +452,8 @@ def checkCapabilityGate():
     if os.environ.get("IQ_ALLOW_PEOPLE_SEARCH"):
         bad.append("环境变量 IQ_ALLOW_PEOPLE_SEARCH 仍在生效")
 
-    # ② 遴选/投票域整个模块不得再存在（2026-10-06 删除）
+    # ② 已移除业务域的红线：门面不得再暴露、目录不得重建、模块不得被导入。
+    #    （删除理由与端点见 git log，文档里不留。）
     for name in ("commitBatchVote", "deleteVoteStuff", "reportConfirm",
                  "ownerReports", "subjectHonorStuff", "stuffList"):
         if hasattr(c, name):
@@ -464,7 +465,7 @@ def checkCapabilityGate():
         if name in sys.modules:
             bad.append("%s 仍被导入" % name)
 
-    # ③ 写端点不得被重新接上：用假 _call 探，谁调了投票/确认类端点就记下来
+    # ③ 写端点不得被重新接上：用假 _call 探，谁调了这些前缀就记下来
     touched = []
     c._call = lambda p, *a, **k: touched.append(p) or {}
     for name in ("commitBatchVote", "reportConfirm", "deleteVoteStuff"):
@@ -556,9 +557,9 @@ def checkCapabilityGate():
     except IQError as e:
         bad.append("allowOther=True 仍被拒：%s" % str(e)[:40])
 
-    add("能力红线（无搜人/投票·兜底与归属已校验·默认脱敏）", FAIL if bad else OK,
+    add("能力红线（无已移除业务·兜底与归属已校验·默认脱敏）", FAIL if bad else OK,
         "；".join(bad[:3]) or
-        "搜人/投票已删除；非法 type_ 被拒、他人记录被拒、身份字段默认脱敏")
+        "已移除能力未复活；非法 type_ 被拒、他人记录被拒、身份字段默认脱敏")
 
 
 def checkUseScope():
