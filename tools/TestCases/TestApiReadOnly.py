@@ -281,13 +281,10 @@ def main():
     case("eventTwo/listLabel dim17", lambda: c.activityLabels(17))
     case("evaluation/honor/list", lambda: c.honorTypes())
 
-# ⚠️ **遴选/投票域已整体删除（2026-10-06）**，这里不再有用例。
-    # 原因：写操作会改**他人**遴选结果或替报告发起人强制确认（已证实窗口过期后
-    # 仍能确认），属越权代操作；读端点返回他人姓名与票数。
-    # 原 4 项（queryOwnerReportData / querySubjectHonorStuff /
-    # commitBatchVoteStuff 路由活性 / reportConfirm 路由活性）随之移除。
-    # **探测它们等于把能力又装回去**，所以连「只探路由活性」都不做。
-    # 端点清单见 reference/api.md（只记录、不封装）。
+# ⚠️ **遴选/投票域已整体删除（2026-10-06）**，这里不再有用例，且**本校从未启用该业务**。
+    # 删除理由与业务存在与否无关：那套封装的写操作会改**他人**遴选结果或替报告
+    # 发起人强制确认，且不可撤销。**探测它们等于把能力又装回去**，
+    # 所以连「只探路由活性」都不做。
 
     def _delRoute():
         """探测 /record/delRecord 路由是否还在——**不会删除任何东西**（id 全 0 不存在）。

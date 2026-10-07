@@ -47,7 +47,7 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 | 步骤 | 接口 / 字段 | 实测样例 |
 |---|---|---|
 | 1 | `GET /task/list {"status":"0"\|"1"\|"2",…}` → 行含 `taskId / title / labelList / pcUrl / wxUrl` | `pcUrl:"/#/transferPage?taskId=<taskId>&moduleId=14&appModuleId=9"` |
-| 2 | `GET /task/get {"taskId","messageId":""}` → **按任务类型返回不同参数对象** | 活动总结类：`{templateType:1, eventId:<eventId>, createUserType:"02", title:"…"}`；档案遴选类：`{fileName, reportId, fileId, semesterName, title, userId}` |
+| 2 | `GET /task/get {"taskId","messageId":""}` → **按任务类型返回不同参数对象** | 活动总结类：`{templateType:1, eventId:<eventId>, createUserType:"02", title:"…"}` |
 | 3 | 前端 `transferPage` 按 `userType`（`01` 学生 / `02` 教师）分流 `studentRoute(moduleId, task)`；`parseInt(moduleId,10) > 100` 改走 `classBrandRoute` | 见下表 |
 
 **学生端 moduleId → 路由**（源 `chunk-2d0e1d95.js` 的 `studentRoute`，随发版变；`d=""` = 学生端不跳转）
@@ -138,17 +138,18 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 - 本校实测 6 个类型（`5739` 先进个人 `studentEnable=0` / `7999` 校内获奖（不入档）/ `5738` 体育比赛 / `5742` 艺术活动 / `5737` 科技创新成果 / `5741` 研究性学习成果）
 - ⚠️ **填一个列表里不存在的 `typeId`，服务端回 `code=1 荣誉名称不能为空`** —— 报错文案与真实原因无关。别顺着文案查，先核对 `eventConfigId`
 
-## 遴选 / 总结投票（**已移除**）
+## 遴选 / 总结投票（**本校从未启用，此域已整体删除**）
 
-该业务域于 2026-10-06 从工具侧**整体删除**（原 `tools/Selection/`），理由：
+**本校部署不存在该业务**——学生端菜单树里没有对应入口，任务列表里也不会出现相关待办。
+工具侧的 `Selection/` 域已于 2026-10-06 整体删除。
 
-- 写操作改的是**他人**的遴选结果，且**不可撤销**；强制确认接口更是替报告发起人
-  完成确认，已证实**投票窗口过期后仍可确认** —— 属越权代操作；
-- 读端点返回他人姓名与票数。
+需要说明的是：删除不是因为发现了漏洞，而是因为**即使业务不存在，那套封装本身也不该存在**——
+它的写操作改的是**他人**的结果且不可撤销，强制确认接口更是替报告发起人完成确认。
+留着这种能力的风险不依赖于「本校用不用」。
 
-端点路径与调用载荷**不再入库**（留着等于操作手册）。平台侧仍存在这些接口，
-其角色校验缺失属**待修漏洞**，**未纳入本次递交的 `RISK-2026-1006-01`**（该通报只含
-两处检索接口，见 MEMORY §4.1）——按需另附。
+端点路径与调用载荷从未入库。**若平台方自查时需要这些端点做横向排查**，请另行索取——
+本文件不保留它们。
+
 ## 成长报告 / 档案
 
 | 方法 | 路径 | data payload | 说明 |
