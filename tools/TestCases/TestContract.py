@@ -572,7 +572,7 @@ def checkUseScope():
          它靠 .gitignore 隐式排除，这里再加一道显式断言。
     """
     bad = []
-    must = ("使用范围与红线", "不用于攻击", "不对后端")
+    must = ("使用范围与红线", "不得用于**攻击", "不入库、不外传")
     for rel in ("SKILL.md", "README.md"):
         p = os.path.join(ROOT, rel)
         text = io.open(p, encoding="utf-8").read() if os.path.exists(p) else ""
