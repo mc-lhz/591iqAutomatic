@@ -29,7 +29,7 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
 （断言测试没改动工作区）也一并降级为提示——这是有意的取舍：它同样属于卫生检查，
 不是安全闸门。
 
-退出码：0 全部通过（`WARN` 不阻断）/ 1 有 `FAIL`。共 **14 项**。
+退出码：0 全部通过（`WARN` 不阻断）/ 1 有 `FAIL`。共 **16 项**。
 
 ## 为什么需要它
 
@@ -43,7 +43,7 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
 |---|---|---|
 | 命名契约 | `tools/` 下目录与模块文件大驼峰、无下划线/短横线、不与标准库同名 | FAIL |
 | 每个 py 配同名 `.md` | 见同名 `.md` 是否存在 | FAIL（`IqClient.py`/`XlsxWriter.py` 豁免） |
-| 敏感串 | 32 位 hex、手机号、真实图片地址、硬编码密码 | FAIL |
+| 敏感串 | 32 位 hex、手机号、真实图片地址、硬编码密码、姓名字段/示例、**带计数的中文人名形态**、**非占位的夹具 userId** | FAIL |
 | `reference/` 体积 | ≤ 150 KB（AGENTS 定的预算，2026-10-05 由 100 KB 抬高） | FAIL |
 | UTF-8 卫生 | 无 BOM、无 TAB、无乱码残留 | FAIL |
 | `VERSION` | 存在且格式为 `v数字.数字[-标识]` | FAIL |
@@ -53,6 +53,8 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
 | 技能包结构 | 真的打一次 `591iqAutomatic.zip`：根目录必备齐全、未套外层目录、无垃圾文件 | FAIL |
 | 模块可导入 | `IQClient` 与写域 mixin 导入无副作用 | FAIL |
 | 响应信封 | `unwrapEnvelope` 对 7 种信封（顶层 `code` / `meta.code` / 无 code / 裸数组）解析正确，错误码不被吞 | FAIL |
+| 能力红线 | 搜人/投票入口与授权开关**必须不存在**；`records(type_=)` 非法值被客户端拦住（且请求不发出）；`queryRecord` 校验归属；身份字段默认脱敏 | FAIL |
+| 使用范围声明 + 受限文档不入包 | `SKILL.md`/`README.md` 开头 2500 字内必须有「使用范围与红线」及关键否定词；`reference/api-privileged.md` 既不被 git 跟踪、也须在 `PackSkill.FORBIDDEN_GLOBS` 里 | FAIL |
 
 ## 注意事项
 
