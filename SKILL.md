@@ -123,7 +123,7 @@ python tools/Access/LoginToken.py password -u <学号> -p <密码> --interactive
 | 性别      | 男                            |
 | 出生日期    | 1970-01-01                   |
 | 民族      | 汉族                           |
-| 籍贯      | 福州                           |
+| 籍贯      | <籍贯>                           |
 | 学号 | 2527010100                   |
 | 学校      | xx中学                         |
 | 年级/班级   | 高一(2026级)1班      |
