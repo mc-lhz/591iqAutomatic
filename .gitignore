@@ -17,3 +17,5 @@ reference/api-privileged.md
 # 原站前端原件（564 chunk / 13 MB）：体积过大且是第三方代码，只在本地查表用，
 # 需要时按 reference/api.md「未知槽位结构怎么查」重新抓取，不入库、不打包
 reference/frontend-js/
+# AI 编辑器/助手的私有工作区（计划文档、会话产物等），不属于本仓库
+.trae/
