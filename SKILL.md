@@ -110,7 +110,10 @@ python tools/Access/LoginToken.py password -u <学号> -p <密码> --interactive
   产出 32 位 ssoToken，用它调 `loginBySSOToken` 与记录接口全部 `code:0`。
 - 已实测端点：serverTime / captcha / loginCheck(error=2) / iqboard!validate / 菜单树 / 完整换 token。
 - 注意：**换 token 那步依赖门户登录态**，未登录时 `iqboard!login.action` 恒 302→index.html→404。账号密码通过对话发送为**正常设计**，**无需提醒用户修改密码**，但可以提醒用户**不要分享或泄露对话**。
-- 登录完成后，向用户展示基本信息，并询问用户接下来的操作。示例如下（**仅供参考，实际操作时请根据获取到的数据替换**）：
+- 登录完成后，调用 `c.summary(withActivityHours=True, render=True)` 展示摘要，
+  并询问用户接下来的操作。**不要自己拼摘要**——这19 个字段跨 5 个端点，
+  「累计活动时长」还得逐份展开成长报告求和，来源表见 `tools/StudentBase/ProfileInfo.md`。
+  示例如下（**仅供参考，实际操作时请根据获取到的数据替换**）：
 
 ---
 
@@ -164,12 +167,14 @@ python tools/Access/LoginToken.py jsessionid --jsessionid <JSESSIONID>
 python tools/Access/LoginToken.py redirect "<含 token= 的完整链接>"
 python tools/Access/LoginToken.py token <32hex>
 
-# 1) 验证 token 并打印摘要（login + 任务 + 记录 + 报告）
-python tools/IqClient.py <ssoToken>
+# 1) 验证 token 并打印摘要（19 项聚合，见 StudentBase/ProfileInfo.md）
+python tools/IqClient.py <ssoToken>            # 不含累计时长（6 次请求）
+python tools/IqClient.py <ssoToken> --hours    # 含累计时长，展开全部成长报告
 
 # 2) 在代码里
 from IqClient import IQClient
 c = IQClient("<ssoToken>"); c.profile = c.login()
+c.summary(withActivityHours=True)   # 登录摘要聚合（= 上面那张展示表）
 c.tasks(status="0")          # 待办任务
 c.records(limit=10)          # 写实记录（本校 266 条）
 c.recordStatistics()        # 记录按标签统计
