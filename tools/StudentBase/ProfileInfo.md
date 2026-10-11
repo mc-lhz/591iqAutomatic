@@ -16,7 +16,7 @@
 | `userInfo()` | 本人档案 49 键详情（sex/birthday/className/schoolName…） |
 | `parents()` | 家长列表 |
 | `interests()` | 兴趣特长：艺术爱好、体育爱好、专业方向 |
-| `summary(withActivityHours=False, render=False)` | **登录摘要聚合**，一次返回 SKILL.md 那张展示表的全部 19 项 |
+| `summary(withActivityHours=True, render=False)` | **登录摘要聚合**，一次返回 SKILL.md 那张展示表的全部 19 项。默认即全量（含累计活动时长） |
 
 ## `summary()`：为什么要聚合
 
@@ -38,22 +38,21 @@
 
 **「累计活动时长」是最贵的一项**：`activityStats()` 只给维度条目数，
 **没有时长**；必须按报告份数发 N 次请求展开。实测 2 份报告约 0.5 s，
-报告多时线性增长。所以默认不开，用 `withActivityHours=True` 才算。
+报告多时线性增长。因为它本就是摘要表的一行，**默认就算**；
+只在调试或嫌慢时传 `withActivityHours=False` 跳过。
 
-实测：`withActivityHours=True` 全量 1.2 s / 9 次请求，不开 0.7 s / 6 次请求。
+实测：默认全量 1.2 s / 9 请求；`withActivityHours=False` 时 0.7 s / 6 请求。
 
 ```python
 from IqClient import IQClient
 c = IQClient("<ssoToken>"); c.login()
 
-c.summary()                              # 快路径，不含累计时长
-c.summary(withActivityHours=True)        # 含累计时长（展开 N 份成长报告）
-c.summary(render=True)                   # 直接打印表格
-c.summary(withActivityHours=True, render=True)   # 登录后展示用这个
+c.summary()                              # 默认全量，含累计时长
+c.summary(render=True)                   # 登录后展示用这个，直接打印表格
+c.summary(withActivityHours=False)       # 调试/嫌慢时才跳过时长
 ```
 
-CLI 入口同样可用：`python tools/IqClient.py <ssoToken> [--hours]`，
-`--hours` 就是 `withActivityHours=True`。
+CLI 入口同样直接打印全量：`python tools/IqClient.py <ssoToken>`。
 
 ## 用法
 

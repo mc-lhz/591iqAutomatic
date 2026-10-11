@@ -38,8 +38,11 @@ class ProfileMixin:
                    "05": "维吾尔族", "06": "苗族", "07": "壮族", "08": "布依族",
                    "09": "朝鲜族", "10": "满族", "11": "侗族", "12": "瑶族"}
 
-    def summary(self, withActivityHours=False, render=False):
+    def summary(self, withActivityHours=True, render=False):
         """登录后一次性聚合展示摘要（SKILL.md「登录后展示」那张表的全部字段）。
+
+        **默认就是全量**，包括「累计活动时长(课时)」——`--hours` 开关已取消，
+        摘要就该是完整的那张表，不该让人猜哪个字段没算。
 
         **为什么不直接用一个接口**：平台没有任何端点返回完整摘要。每个字段
         分属不同端点，且「累计活动时长(课时)」**只能从成长报告的 activityList
@@ -56,8 +59,8 @@ class ProfileMixin:
         | **累计活动时长** | `growReportDetail()` 逐份 `activityList[].duration` 求和 |
 
         Args:
-            withActivityHours: 是否展开全部成长报告算累计时长。会多发
-                N 次请求（N=报告份数，实测 2 份 ≈ 0.4 s），不需要就别开。
+            withActivityHours: 默认 True（展开全部成长报告算时长）。传 False
+                只在调试/嫌慢时用；会多发 N 次请求（N=报告份数）。
             render: True 时直接 print 表格，返回值不变。
 
         Returns:
