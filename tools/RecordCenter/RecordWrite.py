@@ -10,6 +10,7 @@ import json
 import urllib.request
 
 from Access.HttpTransport import BASE, IQError, unwrapEnvelope
+from Common.Logcat import Log
 
 # recordType 数字 -> 前端组件/数据槽位（模块 ecf4）
 RECORD_TYPE_MAP = {
@@ -67,6 +68,8 @@ class WriteMixin:
         out = unwrapEnvelope(out, "/announcement/upload")
         if not isinstance(out, dict) or not out.get("imageUrl"):
             raise IQError(f"upload -> {out}")
+        Log.d("RecordWrite", "uploadImage %s (%.0f KB) -> %s"
+              % (filename, len(raw) / 1024, out["imageUrl"]))
         return out["imageUrl"]
 
     def addRecord(self, recordContent, typeForm, recordType):
@@ -80,8 +83,14 @@ class WriteMixin:
         """
         rt = int(recordType)
         slot = RECORD_TYPE_MAP.get(rt, str(recordType))
+        if rt not in RECORD_TYPE_MAP:
+            Log.w("RecordWrite", "addRecord recordType=%s 不在 RECORD_TYPE_MAP，"
+                "槽位回退为数字字符串 %r（大概率触发 999999）" % (rt, slot))
         payload = {"recordContent": recordContent, slot: typeForm}
-        return self._call("/record/updateRecord", payload, method="POST")
+        r = self._call("/record/updateRecord", payload, method="POST")
+        Log.d("RecordWrite", "addRecord rt=%d 槽位=%s -> %s"
+              % (rt, slot, json.dumps(r, ensure_ascii=False)[:120]))
+        return r
 
     def deleteRecord(self, recordId):
         """删除一条写实记录。
@@ -98,7 +107,10 @@ class WriteMixin:
         也**不能拿它当探测接口**乱调——对真实 id 是真删且不可撤销。本仓库因此
         **不封装** delSummary，真要删总结必须人工确认 + 读回执复核。
         """
-        return self._call("/record/delRecord", {"id": str(recordId)}, method="POST")
+        Log.w("RecordWrite", "deleteRecord id=%s（不可撤销）" % recordId)
+        r = self._call("/record/delRecord", {"id": str(recordId)}, method="POST")
+        Log.d("RecordWrite", "delRecord -> %s" % json.dumps(r, ensure_ascii=False)[:120])
+        return r
 
     def _semesterName(self, semesterCode):
         """semesterCode -> 学期名；查不到返回空串。

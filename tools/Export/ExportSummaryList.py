@@ -18,6 +18,7 @@ sys.path.insert(0, _HERE)
 sys.path.insert(1, os.path.abspath(os.path.join(_HERE, "..")))
 
 from IqClient import IQClient, IQError                      # noqa: E402
+from Common.Logcat import Log                               # noqa: E402
 from XlsxWriter import (Workbook, S_DATA, S_ZEBRA, S_WRAP,  # noqa: E402
                         S_WRAP_ZEBRA, S_SECTION, S_TITLE)
 
@@ -204,8 +205,12 @@ def main():
     out = a.out or os.path.join(
         os.environ.get("TEMP", os.getcwd()),
         "591iq_总结清单_%s.xlsx" % time.strftime("%Y%m%d_%H%M%S"))
+    Log.d("Summary", "输出=%s，token 来源=%s"
+          % (out, "--token" if a.token else
+             "env" if os.environ.get("IQ_SSO_TOKEN") else "门户登录"))
     wb = Workbook()
     total, done, todo, edit, alive = build_sheets(wb, rows, c)
+    Log.d("Summary", "4 sheet 构建完成（总/已交/未交/可编辑/原始），落盘 %s" % out)
     wb.save(out)
     if a.json:
         with open(a.json, "w", encoding="utf-8") as f:

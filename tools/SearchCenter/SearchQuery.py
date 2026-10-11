@@ -68,6 +68,9 @@ class SearchMixin:
         `redact=False` 返回原始对象（51 字段），仅限安全审计用并打 WARNING。
         """
         out = self._search(SEARCH_TYPE_RECORD, keyword, offset, limit)
+        Log.d("Search", "searchRecords 关键词=%r 命中 %s 条（本页 %d）"
+              % (keyword, out.get("totalResult"),
+                 len(out.get("list") or [])))
         if not redact:
             Log.w("Search", "searchRecords 关键词=%r redact=False "
                             "（返回含 51 字段 userInf 的原始对象）" % keyword)

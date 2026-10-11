@@ -110,6 +110,7 @@ class QueryMixin:
         """
         rec = self.post("/record/queryRecord", {"id": recordId})["list"]
         if not isinstance(rec, dict):
+            Log.d("RecordQuery", "queryRecord id=%s 返回非 dict（记录不存在？）" % recordId)
             return rec
         owner = (rec.get("userInf") or {}).get("userId")
         mine = str(self.userId)

@@ -36,6 +36,8 @@ import zipfile
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(_HERE))                # 仓库根
+sys.path.insert(0, os.path.dirname(_HERE))                    # tools/
+from Common.Logcat import Log                                 # noqa: E402
 
 PKG_NAME = "591iqAutomatic.zip"
 # 这些是仓库内部约定/流水线配置，随包分发没有意义
@@ -183,11 +185,13 @@ def main():
             print("  %7d  %s" % (os.path.getsize(p), rel))
         print("已排除：%s、以及 .gitignore"
               % "、".join(EXCLUDE_PREFIXES))
+        Log.d("Pack", "--list 结束，%d 文件 / %.1f KB" % (len(files), total / 1024))
         return 0
 
     out = a.out or os.path.join(os.environ.get("TEMP", os.getcwd()), PKG_NAME)
     code, info = build(out, a.require_clean, a.version_check)
     if code:
+        Log.w("Pack", "build 失败退出码 %d" % code)
         return code
     print("[pack] 完成：%s" % info["out"])
     print("  文件数     : %d" % info["count"])

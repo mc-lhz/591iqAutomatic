@@ -66,6 +66,8 @@ def main():
     # 脱敏闸门：扫整个 payload
     blob = json.dumps(payload, ensure_ascii=False)
     hits = scan(blob)
+    Log.d("Feedback", "type=%s payload=%d 字符，脱敏闸门命中 %d 处"
+          % (a.type, len(blob), len(hits)))
     print("脱敏闸门：%s" % ("未命中，可投" if not hits else "命中 %d 处，已拦下" % len(hits)))
     for label, frag, at in hits:
         print("  [%s] %s … (偏移 %d)" % (label, frag, at))
@@ -82,6 +84,8 @@ def main():
         return 6
 
     status, out = post_feedback(**payload)
+    Log.d("Feedback", "已投递 HTTP %s，ok=%s id=%s"
+          % (status, out.get("ok"), out.get("id")))
     print("\nHTTP %s -> %s" % (status, json.dumps(out, ensure_ascii=False)))
     if status == 200 and out.get("ok"):
         print("反馈已受理 id=%s" % out.get("id"))

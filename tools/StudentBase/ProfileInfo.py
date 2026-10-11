@@ -2,17 +2,25 @@
 
 对应端点：/user/getUserInfoDetail、/studentMgr/getParentList、/statistics/student/get_interest
 """
+from Common.Logcat import Log
 
 
 class ProfileMixin:
     def userInfo(self):
         """本人档案详情（49 键：userName/sex/birthday/className/schoolName…）"""
-        return self.get("/user/getUserInfoDetail", {"userId": self.userId})
+        out = self.get("/user/getUserInfoDetail", {"userId": self.userId})
+        Log.d("Profile", "userInfo %d 键" % (len(out) if isinstance(out, dict) else 0))
+        return out
 
     def parents(self):
         """家长列表"""
-        return self.get("/studentMgr/getParentList", {"studentId": self.userId})
+        out = self.get("/studentMgr/getParentList", {"studentId": self.userId})
+        lst = out.get("list") if isinstance(out, dict) else out
+        Log.d("Profile", "parents %d 条" % (len(lst) if isinstance(lst, list) else 0))
+        return out
 
     def interests(self):
         """兴趣特长（艺术爱好/体育爱好/专业方向）"""
-        return self.get("/statistics/student/get_interest")
+        out = self.get("/statistics/student/get_interest")
+        Log.d("Profile", "interests %d 键" % (len(out) if isinstance(out, dict) else 0))
+        return out

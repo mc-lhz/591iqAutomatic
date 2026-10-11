@@ -34,6 +34,7 @@ sys.path.insert(1, os.path.abspath(os.path.join(_HERE, "..")))
 
 from IqClient import IQClient, IQError                       # noqa: E402
 from RecordCenter.RecordWrite import RECORD_TYPE_MAP, RECORD_TYPE_NAME  # noqa: E402
+from Common.Logcat import Log                                # noqa: E402
 
 OK, REJECTED, MISMATCH, NO_TOKEN, PRECHECK, UNEXPECTED = 0, 2, 3, 4, 5, 6
 
@@ -168,7 +169,9 @@ def main():
         for p in problems:
             print("[del] !! %s" % p, file=sys.stderr)
         if problems:
+            Log.w("Del", "回执不一致 id=%s：%s" % (rid, "；".join(problems)))
             return MISMATCH
+        Log.d("Del", "删除确认生效 id=%s" % rid)
         print("[del] 已删除 id=%s" % rid)
         return OK
     except SystemExit:

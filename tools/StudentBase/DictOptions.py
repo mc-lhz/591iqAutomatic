@@ -3,12 +3,17 @@
 对应端点：/sysDict/getDict、/student/homepage/querySemesterList、
           /eventTwo/listLabel、/evaluation/honor/list
 """
+from Common.Logcat import Log
 
 
 class OptionsMixin:
     def sysDict(self, field):
         """取指定字典，返回 {list:[{id,field,fieldName,code,describe,sort}]}"""
-        return self.get("/sysDict/getDict", {"field": field})
+        out = self.get("/sysDict/getDict", {"field": field})
+        lst = out.get("list") if isinstance(out, dict) else None
+        Log.d("Options", "sysDict field=%s %d 条"
+              % (field, len(lst) if isinstance(lst, list) else 0))
+        return out
 
     def semesterOptions(self):
         """学期代码字典；取 ["list"] 后按 code/describe 映射，如 '3'→'高二上'"""
@@ -16,16 +21,26 @@ class OptionsMixin:
 
     def semesters(self):
         """学期列表（带 semesterId，统计数据按它筛选）"""
-        return self.get("/student/homepage/querySemesterList",
+        out = self.get("/student/homepage/querySemesterList",
                         {"offset": 0, "limit": 999})
+        lst = out.get("list") if isinstance(out, dict) else out
+        Log.d("Options", "semesters %d 个学期" % (len(lst) if isinstance(lst, list) else 0))
+        return out
 
     def activityLabels(self, dimensionId):
         """活动类型枚举，dimensionId: 17=思想品德 5=社会实践（还有劳动素养…）"""
-        return self.post("/eventTwo/listLabel", {"dimensionId": dimensionId})
+        out = self.post("/eventTwo/listLabel", {"dimensionId": dimensionId})
+        lst = out.get("list") if isinstance(out, dict) else out
+        Log.d("Options", "activityLabels dimensionId=%s %d 条"
+              % (dimensionId, len(lst) if isinstance(lst, list) else 0))
+        return out
 
     def honorTypes(self, dimensionId=None, limit=100):
         """荣誉类型（typeId=eventConfigId，如 5739 先进个人 / 5737 科技创新成果…）"""
         d = {"offset": 0, "limit": limit}
         if dimensionId:
             d["dimensionId"] = dimensionId
-        return self.get("/evaluation/honor/list", d)["pdlist"]
+        out = self.get("/evaluation/honor/list", d)["pdlist"]
+        Log.d("Options", "honorTypes dimensionId=%s %d 条"
+              % (dimensionId, len(out or [])))
+        return out

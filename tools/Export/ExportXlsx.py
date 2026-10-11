@@ -398,6 +398,7 @@ def build(token, out):
         if len(batch) < PAGE:
             break
         off += PAGE
+    Log.d("Export", "本人记录分页取完 %d 条" % len(mine))
     rec_stats = (c.recordStatistics() or {}).get("list", [])
     honor_stats = extract_rows(c.honorStatistics())
     act_stats = extract_rows(c.activityStats())
@@ -644,6 +645,7 @@ def build(token, out):
                  for a, b, c, d in stat],
                 note="注意：按维度统计来自 activityStats，与 6-活动课程 明细行数可能不一致（源系统口径差异）")
 
+    Log.d("Export", "13 sheet 构建完成，落盘 %s" % out)
     wb.save(out)
     return out, len(mine), len(acts), len(exams)
 
@@ -666,6 +668,9 @@ def main():
     out = a.out or os.path.join(
         os.environ.get("TEMP", os.getcwd()),
         "591iq_综评导出_%s.xlsx" % time.strftime("%Y%m%d_%H%M%S"))
+    Log.d("Export", "token 来源=%s，输出=%s"
+          % ("--token" if a.token else "env" if os.environ.get("IQ_SSO_TOKEN")
+             else "门户登录", out))
     path, n_rec, n_act, n_exam = build(token, out)
     print("saved: %s (%d bytes)" % (path, os.path.getsize(path)))
     print("写实记录 %d 条 / 活动课程 %d 条 / 学业成绩 %d 条"

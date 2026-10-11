@@ -46,6 +46,7 @@ sys.path.insert(1, os.path.abspath(os.path.join(_HERE, "..")))
 
 from IqClient import IQClient, IQError                       # noqa: E402
 from RecordCenter.RecordWrite import RECORD_TYPE_MAP        # noqa: E402
+from Common.Logcat import Log                                # noqa: E402
 
 OK, REJECTED, MISMATCH, NO_TOKEN, PRECHECK, UNEXPECTED = 0, 2, 3, 4, 5, 6
 
@@ -286,6 +287,10 @@ def main():
             print("[publish] 需要 --token / -u -p / 环境变量 IQ_SSO_TOKEN 之一",
                   file=sys.stderr)
             return NO_TOKEN
+        Log.d("Publish", "token 来源=%s，模式=%s"
+              % ("--token" if a.token else
+                 "env" if os.environ.get("IQ_SSO_TOKEN") else "门户登录",
+                 "编辑 %s" % a.edit_id if a.edit_id else "新建"))
         c = IQClient(token)
         c.login()
 
@@ -341,8 +346,10 @@ def main():
 
         good, rid = _verify(c, a, content, images, before, slotName)
         if not good:
+            Log.w("Publish", "回执不一致 rid=%s，退出码 3" % rid)
             print("[publish] 回执不一致，请用 --edit-id %s 人工核查" % rid, file=sys.stderr)
             return MISMATCH
+        Log.d("Publish", "回执一致，完成 rid=%s" % rid)
         print("[publish] 完成：id=%s 标题=%s" % (rid, a.title))
         return OK
     except SystemExit:

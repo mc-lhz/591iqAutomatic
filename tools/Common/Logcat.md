@@ -60,13 +60,30 @@ log2 = Logcat(outputFile="D:/tmp/x.log", level="DEBUG")
 | `setVerbose(flag=True)` | 模块级函数；`--verbose` 用，不传参时看 `IQ_VERBOSE`，返回最终等级 |
 | `Logcat(outputFile, fmt, datefmt, level, useColor, maxFileBytes)` | 类；默认 stderr/WARNING/自动配色，仅在需要落盘时自己实例化 |
 
-## 调用方（2026-10-05 起真的接上了）
+## 调用方（2026-10-05 起真的接上了；2026-10-11 扩到全部业务 mixin + CLI 主流程）
+
+传输层（`HttpTransport`）已打「每次请求/响应」，业务层只打**传输层看不到的业务语义**
+（命中条数、解析结果、脱敏、落盘路径、退出分支），不重复请求日志。
 
 | 模块 | 记什么 |
 |---|---|
 | `Access/HttpTransport.py` | 每次请求的方法/路径/参数键、响应 code、信封键名、耗时；网络异常走 `Log.exc` |
 | `Access/LoginToken.py` | OCR 每个变体的识别结果与置信度、投票明细、每轮登录被拒原因 |
 | `Access/VisionLogin.py` | 取图大小与 JSESSIONID、会话复原是否成功 |
+| `StudentBase/ProfileInfo.py` | userInfo / parents / interests 各自返回的键数/条数 |
+| `StudentBase/DictOptions.py` | sysDict / 学期 / 活动标签 / 荣誉类型各自取回条数 |
+| `HomeWorkbench/TaskAndMessage.py` | 待办计数、任务页取回行数、未读消息、公告取回条数 |
+| `RecordCenter/RecordQuery.py` | records 命中总数与本页行数；queryRecord 返回非 dict（记录不存在？） |
+| `RecordCenter/RecordWrite.py` | 上传后 imageUrl；addRecord 槽位回退数字串（WARN，大概率 999999）；删除留痕（WARN，不可撤销）；学期解析命中/未命中（未命中 WARN，semesterName 将为空） |
+| `SearchCenter/SearchQuery.py` | searchRecords 命中总数与本页条数 |
+| `GrowReport/GrowthReport.py` | 成长报告份数、详情键数 |
+| `GrowReport/GrowthStatistics.py` | 荣誉统计条数、活动统计维度数 |
+| `Export/ExportXlsx.py` | 分页取完条数、各 sheet 数据量、落盘路径、token 来源 |
+| `Export/ExportSummaryList.py` | 总结类任务取完条数、sheet 构建完成/落盘路径、token 来源 |
+| `RecordCenter/PublishActivity.py` | token 来源与新建/编辑模式、`--dry-run` 退出（未写入未上传）、回执不一致（WARN，退出码 3）/一致 |
+| `RecordCenter/DeleteRecord.py` | `--dry-run` 退出（未删除）、回执不一致（WARN）、删除确认生效 |
+| `Feedback/SendFeedback.py` | payload 字符数与脱敏闸门命中处数、`--dry-run` 退出、投递 HTTP 状态与工单 id |
+| `Release/PackSkill.py` | 收集文件数、自检不合规项数（WARN，退出码 3）、zip 完成/体积/sha256、`--list` 与 build 失败分支 |
 
 ## 注意事项
 
