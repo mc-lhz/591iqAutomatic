@@ -22,5 +22,7 @@ class ProfileMixin:
     def interests(self):
         """兴趣特长（艺术爱好/体育爱好/专业方向）"""
         out = self.get("/statistics/student/get_interest")
-        Log.d("Profile", "interests %d 键" % (len(out) if isinstance(out, dict) else 0))
+        # 该端点直接返回 list（艺术/体育/专业方向三组），不是 dict——
+        # 曾按 dict 判断导致日志恒打「0 键」
+        Log.d("Profile", "interests %d 组" % (len(out) if isinstance(out, (list, dict)) else 0))
         return out

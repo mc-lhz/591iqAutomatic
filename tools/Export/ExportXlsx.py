@@ -399,6 +399,8 @@ def build(token, out):
             break
         off += PAGE
     Log.d("Export", "本人记录分页取完 %d 条" % len(mine))
+    if off >= 2000:
+        Log.w("Export", "本人记录达 2000 条分页上限，超出部分未导出")
     rec_stats = (c.recordStatistics() or {}).get("list", [])
     honor_stats = extract_rows(c.honorStatistics())
     act_stats = extract_rows(c.activityStats())

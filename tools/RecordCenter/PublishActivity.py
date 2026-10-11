@@ -286,6 +286,8 @@ def main():
         if not token:
             print("[publish] 需要 --token / -u -p / 环境变量 IQ_SSO_TOKEN 之一",
                   file=sys.stderr)
+            Log.w("Publish", "缺少 token，退出码 4"
+                "（--token / IQ_SSO_TOKEN / -u -p 均未提供）")
             return NO_TOKEN
         Log.d("Publish", "token 来源=%s，模式=%s"
               % ("--token" if a.token else
@@ -359,6 +361,7 @@ def main():
         return REJECTED
     except Exception as e:                                # noqa: BLE001
         print("[publish] 异常: %s: %s" % (type(e).__name__, e), file=sys.stderr)
+        Log.e("Publish", "未预期异常，退出码 6：%s: %s" % (type(e).__name__, e))
         return UNEXPECTED
 
 

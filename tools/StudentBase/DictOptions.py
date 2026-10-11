@@ -23,7 +23,9 @@ class OptionsMixin:
         """学期列表（带 semesterId，统计数据按它筛选）"""
         out = self.get("/student/homepage/querySemesterList",
                         {"offset": 0, "limit": 999})
-        lst = out.get("list") if isinstance(out, dict) else out
+        # 该端点信封是 {totalResult, pdlist}，**没有 list 键**——
+        # 曾按 list 取导致日志恒打「0 个学期」
+        lst = out.get("pdlist") if isinstance(out, dict) else out
         Log.d("Options", "semesters %d 个学期" % (len(lst) if isinstance(lst, list) else 0))
         return out
 

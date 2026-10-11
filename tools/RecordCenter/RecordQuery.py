@@ -78,9 +78,17 @@ class QueryMixin:
             Log.w("RecordQuery", "records 传入非法 type_=%r，落在服务端兜底分支"
                                 "（无范围过滤）；如需全校口径请显式传 "
                                 "unsafeScope=True" % type_)
-        return self.post("/record/queryRecordList", {
+        # 该端点信封是**两层** list：{"list": {"count": N, "list": [行…]}}
+        # ——外层 list 套内层分页对象，少剥一层会拿到 dict 而不是行数组
+        out = self.post("/record/queryRecordList", {
             "type": type_, "recordType": recordType, "labelId": labelId,
             "offset": offset, "limit": limit, "userName": userName})
+        page = out.get("list") if isinstance(out, dict) else None
+        rows = page.get("list") if isinstance(page, dict) else page
+        Log.d("RecordQuery", "records type=%s offset=%d limit=%d 本页 %d 行（总数 %s）"
+              % (type_, offset, limit, len(rows) if isinstance(rows, list) else 0,
+                 page.get("count") if isinstance(page, dict) else "?"))
+        return out
 
     def recordLabels(self):
         """记录标签树"""

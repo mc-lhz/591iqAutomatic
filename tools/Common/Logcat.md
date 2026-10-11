@@ -65,6 +65,10 @@ log2 = Logcat(outputFile="D:/tmp/x.log", level="DEBUG")
 传输层（`HttpTransport`）已打「每次请求/响应」，业务层只打**传输层看不到的业务语义**
 （命中条数、解析结果、脱敏、落盘路径、退出分支），不重复请求日志。
 
+等级语义约定：**DEBUG**=业务语义（默认不可见）/ **WARNING**=非预期但可继续或已拦下的
+异常路径（默认可见）/ **ERROR**=未预期异常带上下文（默认可见）；**INFO 暂不启用**
+（默认阈值 WARNING 下不可见，语义与 DEBUG 重合；成功/里程碑在 stdout，用户已可见）。
+
 | 模块 | 记什么 |
 |---|---|
 | `Access/HttpTransport.py` | 每次请求的方法/路径/参数键、响应 code、信封键名、耗时；网络异常走 `Log.exc` |
@@ -80,8 +84,8 @@ log2 = Logcat(outputFile="D:/tmp/x.log", level="DEBUG")
 | `GrowReport/GrowthStatistics.py` | 荣誉统计条数、活动统计维度数 |
 | `Export/ExportXlsx.py` | 分页取完条数、各 sheet 数据量、落盘路径、token 来源 |
 | `Export/ExportSummaryList.py` | 总结类任务取完条数、sheet 构建完成/落盘路径、token 来源 |
-| `RecordCenter/PublishActivity.py` | token 来源与新建/编辑模式、`--dry-run` 退出（未写入未上传）、回执不一致（WARN，退出码 3）/一致 |
-| `RecordCenter/DeleteRecord.py` | `--dry-run` 退出（未删除）、回执不一致（WARN）、删除确认生效 |
+| `RecordCenter/PublishActivity.py` | token 来源与新建/编辑模式、`--dry-run` 退出（未写入未上传）、回执不一致（WARN，退出码 3）/一致、缺 token（WARN，退出码 4）、未预期异常（ERROR，退出码 6） |
+| `RecordCenter/DeleteRecord.py` | `--dry-run` 退出（未删除）、回执不一致（WARN）、删除确认生效、未预期异常（ERROR，退出码 6） |
 | `Feedback/SendFeedback.py` | payload 字符数与脱敏闸门命中处数、`--dry-run` 退出、投递 HTTP 状态与工单 id |
 | `Release/PackSkill.py` | 收集文件数、自检不合规项数（WARN，退出码 3）、zip 完成/体积/sha256、`--list` 与 build 失败分支 |
 

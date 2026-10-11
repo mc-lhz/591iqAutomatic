@@ -168,6 +168,7 @@ def cmdNew(a):
     except Exception as e:                        # noqa: BLE001
         vision = raw
         print("[vision] 预处理失败(%s)，退回原图" % e, file=sys.stderr)
+        Log.w("Vision", "预处理失败，退回原图: %s: %s" % (type(e).__name__, e))
     print("会话状态  : %s" % state)
     print("JSESSIONID: %s" % (s.cookies.get("JSESSIONID") or "(无)"))
     print()

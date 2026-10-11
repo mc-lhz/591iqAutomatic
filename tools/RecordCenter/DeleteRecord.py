@@ -184,6 +184,7 @@ def main():
         return REJECTED
     except Exception as e:                                # noqa: BLE001
         print("[del] 异常: %s: %s" % (type(e).__name__, e), file=sys.stderr)
+        Log.e("Del", "未预期异常，退出码 6：%s: %s" % (type(e).__name__, e))
         return UNEXPECTED
 
 
