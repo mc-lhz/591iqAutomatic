@@ -286,7 +286,11 @@ c.publishHonor(semesterCode="3", typeId=7999, typeName="校内获奖（不入档
 > `chunk`/`moduleId` 出处）即可；槽位名查 `RECORD_TYPE_MAP`。
 > 只有查表结果对不上时，才按 `reference/api.md`「未知槽位结构怎么查」的优先级链往下走，
 > 且**必须先映射定位那一个 chunk 再读**——全站 564 个 chunk 约 2.5 min，
-> 原始代码一律不入库（`reference/` 体积上限 100 KB，现已用 91.6 KB）。
+> 原始代码一律不入库（`reference/` 体积上限 150 KB，现已用 109.3 KB，
+> 其中 `recordForms.json` 47.3 + `api.md` 39.4 + `frontend.md` 19.7）。
+> `reference/frontend-js/`（原站前端原件 564 chunk / 13 MB）**只在本地查表用**，
+> 已被 `.gitignore` 挡住且不进发布包；要重新抓取按 `reference/api.md`
+> 「未知槽位结构怎么查」优先级链的第 ⑤ 步。
 
 ### 第二类写入：提交活动总结（✅ 已实测，风险低于写实记录）
 

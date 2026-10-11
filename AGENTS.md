@@ -75,6 +75,20 @@ tools/
   确认「确实有用且要长期维护」后，才整理成符合本契约的模块移入 `tools/`，
   并补同名 `.md`、加入 `README`/`SKILL`/`AGENTS`。**不要让半成品、临时产物、
   未验证脚本长期盘踞源 skill 目录**（`%TEMP%\591iq_scratch` 里的东西含凭据，严禁入库）
+- **原型必须有出口**（上面那条的后半段，2026-10-11 补）：验证完立刻分诊——
+  **有用的移入 `tools/`，无用的当场删**；一个专题做完（发一条记录 / 删一项能力 /
+  生成一批材料）**盘点一次**。别让几十个一次性探针永久堆积：
+  它们既是噪声，也是凭据泄漏的来源（见下一条）。
+  ⚠️ **不要把一次性脚本迭代成 v2/v3/v4**：能用一次说清的，结论直接进文档；
+  迭代出多版的，多半是前几版在试错而不是在验证。
+- **`%TEMP%\591iq_scratch` 自身含凭据与个人信息，且不被现有闸门覆盖**：
+  盘点发现全量快照 JSON 里会有会话凭据、明文身份证、考号、同班同学姓名、
+  家长/教师评语；日志里有真实 `JSESSIONID`；探针脚本里硬编码了凭据。
+  处置纪律：① 全量快照**分析完即删**，要留结论就只留统计字段；
+  ② 含 `JSESSIONID` 的登录日志用完即删；③ 一次性探针随原型结束即删。
+  **发布前体检要扩到覆盖 `%TEMP%\591iq_scratch` 全目录**，不能只扫对外产物——
+  否则源码与临时产物成了一条绕过闸门的通路。台账见 `MEMORY.md §8.3`。
+  ⚠️ 探针脚本里写死的账号密码，**只进环境变量不进 argv**，且用完 `Remove-Item Env:` 清掉。
 - **代码与文档不得绑定特定 AI 工具 / IDE**：不写死 `%TEMP%\opencode\`、`%TEMP%\claude\`、
   `.opencode/`、`.cursor/` 等工具私有路径与配置名；工具专属约定只允许出现在 `SKILL.md`
   的调用说明里，工具无关的行为（临时目录、缓存、产物路径）一律用项目自己的名字
@@ -142,10 +156,12 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   → ④ 按 `recordForms.json` 里的 `chunk`/`moduleId` 定位那一个 chunk
   → ⑤ 全量搜 564 个 chunk（约 2.5 min，**仅在前四步全失败时**）。
   禁止从第 ⑤ 步起手；翻 bundle 必须先映射定位、落盘建索引，并区分发布态/查看态 chunk
-- **`reference/` 体积上限 150 KB**（2026-10-05 已用 97 KB：`api.md` 30.2 +
-  `frontend.md` 19.7 + `recordForms.json` 47.3；原 100 KB 预算于 2026-10-05 抬高，
+- **`reference/` 体积上限 150 KB**（2026-10-11 实测已用 **109.3 KB**：`api.md` 39.4 +
+  `recordForms.json` 47.3 + `frontend.md` 19.7，另有 gitignored 的受限文档 2.8；
+  原 100 KB 预算于 2026-10-05 抬高，
   原因见 MEMORY.md「Phase 1」）：只放提炼后的结论，
   **原始前端代码、chunk、映射中间产物一律留在 `%TEMP%\591iq_scratch`，不入库**。
+  （`reference/frontend-js/` 那 13 MB 原件也算这类：已 gitignore 且 PackSkill 排除。）
   要加内容先减：表格按类聚合、不要逐字段成行；`frontend.md` 的表格以
   `recordForms.json` 为准（生成脚本未入库），改 JSON 后要同步改 md 里的表
 - PowerShell 5.1：不要用 Get-Content/Set-Content 处理 UTF-8 中文（会乱码），用文件工具或 python
@@ -155,6 +171,11 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
 - **入库文档里禁止出现任何真实姓名**（含本人与他人），一律写「某学生」。
   敏感串扫描抓不到散文里的中文人名（通用检测必然误报，见 SENSITIVE 注释），
   所以靠这条人工约定 + 两条窄规则兜底（带计数后缀的「某（2 封）」形态、夹具 userId）
+- **每加一条合规红线，必须配一条能证明它会红的破坏用例**（2026-10-11 补）：
+  恒 PASS 的检查是装饰品，只说明它对当前这版代码成立。`TestContract` 的「能力红线」
+  项已带反向用例（移除白名单 / 移除归属校验 / 关闭脱敏 → FAIL，还原 → PASS）。
+  新增红线时照此补；自证粒度与成本分档见 `MEMORY.md §8.1`。
+  ⚠️ 反向用例**不得真删**：只 monkeypatch 或改临时副本，`finally` 还原。
 - **节流与节制**：单账号、串行、禁止并发；分页与导出有硬上限（`ExportXlsx.py` 的 `while off < 2000`）；遇 4xx/429 立即停手
 - 测试需要有效 ssoToken；无 token 时 `TestApiReadOnly.py` 的登录步骤会失败
 - **删除类操作（`RecordCenter/DeleteRecord.py`）默认只读**：先 `--dry-run` 看清目标（id/类型/标题/学期/图片数），再显式 `--yes`；删除**不可撤销**。
