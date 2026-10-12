@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新壹我（591iq）技能 · 学生隐私与安全保护设计全解</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d5bb8'/%3E%3Cpath d='M16 4l9 4v7c0 5.5-3.7 9.8-9 12-5.3-2.2-9-6.5-9-12V8z' fill='%23fff' opacity='.95'/%3E%3Cpath d='M11.5 16l3 3 5.5-6' stroke='%231d5bb8' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@600;700;900&display=swap">
+<style>
+  :root{
+    --ink:#17233b; --ink-2:#3f5170; --ink-3:#7d8da8;
+    --line:#e4eaf3; --bg:#f4f7fb; --card:#ffffff;
+    --brand:#1d5bb8; --brand-2:#2f7ce0; --accent:#0e9f6e;
+    --warn:#d97706; --danger:#dc2626; --chip:#eef3fb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Noto Sans SC",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+  .page{max-width:920px;margin:0 auto;padding:42px 36px 60px}
+  .serif{font-family:"Noto Serif SC",serif}
+
+  .badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1d5bb8,#2f7ce0);color:#fff;font-size:12px;font-weight:700;letter-spacing:.5px;padding:7px 14px;border-radius:999px;box-shadow:0 4px 14px rgba(29,91,184,.28)}
+  .badge svg{width:14px;height:14px}
+  .title{font-family:"Noto Serif SC",serif;font-size:30px;line-height:1.32;font-weight:900;margin:22px 0 10px}
+  .meta{color:var(--ink-3);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:22px}
+  .meta b{color:var(--ink-2);font-weight:500}
+  .lede{font-size:16px;color:var(--ink-2);border-left:4px solid var(--brand);padding:4px 0 4px 16px;margin-bottom:36px}
+
+  .fig{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:18px 0 34px;box-shadow:0 8px 26px rgba(26,42,74,.06);text-align:center}
+  .fig svg{width:100%;height:auto}
+  .fig .cap{font-size:12.5px;color:var(--ink-3);margin-top:12px;text-align:center}
+
+  section{margin-bottom:42px}
+  .sec-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .sec-h .n{width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none}
+  .sec-h h2{font-size:21px;font-weight:700;font-family:"Noto Serif SC",serif}
+  .sec-h .sub{font-size:12.5px;color:var(--ink-3);margin-left:auto}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 6px 20px rgba(26,42,74,.05)}
+  .card p{margin:6px 0;color:var(--ink-2)}
+  .card p b{color:var(--ink)}
+  .card .lead{color:var(--ink);font-size:15px;margin-bottom:10px}
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:8px}
+  colgroup col:first-child{width:20%}
+  colgroup col:nth-child(2){width:46%}
+  colgroup col:last-child{width:34%}
+  th{font-size:12.5px;color:var(--ink-3);font-weight:500;text-align:left;padding:9px 10px;border-bottom:2px solid var(--line)}
+  td{font-size:13.5px;color:var(--ink);padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .ok{color:var(--accent);font-weight:700}
+  .warn{color:var(--warn);font-weight:700}
+  .danger{color:var(--danger);font-weight:700}
+  code{background:#eef3fb;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:var(--brand)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  .mech{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:0 6px 20px rgba(26,42,74,.05)}
+  .mech h3{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .mech h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);flex:none}
+  .mech ul{margin:6px 0 0 2px;padding-left:18px}
+  .mech li{font-size:13.5px;color:var(--ink-2);margin:4px 0}
+  .mech li b{color:var(--ink)}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;margin-right:6px}
+  .pill.g{background:#e7f7f1;color:var(--accent)}
+  .pill.o{background:#fdf3e3;color:var(--warn)}
+  .pill.r{background:#fdeaea;color:var(--danger)}
+
+  .publish{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:46px;padding:20px;border:1.5px dashed var(--brand);border-radius:16px;background:linear-gradient(135deg,#eef4ff,#f6f9ff)}
+  .publish svg{width:22px;height:22px}
+  .publish span{font-weight:700;color:var(--brand);font-size:15px;letter-spacing:.5px}
+
+  @media(max-width:640px){
+    .page{padding:26px 16px 40px}
+    .title{font-size:23px}
+    .grid2{grid-template-columns:1fr}
+    colgroup col:first-child{width:28%}
+    colgroup col:nth-child(2){width:40%}
+    colgroup col:last-child{width:32%}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="badge">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z" fill="#fff" opacity=".95"/><path d="M9 12l2 2 4-4" stroke="#1d5bb8" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    制度 × 机制 × 审计 · 三层防御
+  </div>
+
+  <h1 class="title">学生隐私与安全保护设计全解<br>新壹我（591iq）技能</h1>
+
+  <div class="meta">
+    <span>项目：<b>591iqAutomatic</b></span>
+    <span>系统：<b>www.591iq.cn（新壹我 / 天蛙）</b></span>
+    <span>设计目标：<b>保护学生个人数据</b></span>
+    <span>文档版本：<b>v0.1-beta2</b>（2026-10-06 安全增补）</span>
+  </div>
+
+  <p class="lede">面对一个会接触 <b>学号、姓名、班级、身份证号、成绩、成长档案</b> 等高度敏感学生数据的技能，本项目把“保护学生隐私”落实成 <b>文档层制度 + 代码层机制 + 智能审计</b> 三道防线，而非一句口号。<br>2026-10-06 增补：在原有三道防线之外，新增 <b>能力边界</b>（对服务端宽于前端的接口做客户端收口）与 <b>可观测留痕</b>（危险操作必留 WARNING 日志）两套机制，并把发现的平台侧越权漏洞按<b>安全工单</b>正式上报。</p>
+
+  <!-- 防御总览图 -->
+  <div class="fig">
+    <svg viewBox="0 0 800 300" role="img" aria-label="三层防御体系图">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d5bb8"/><stop offset="1" stop-color="#2f7ce0"/></linearGradient>
+        <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2f7ce0"/><stop offset="1" stop-color="#59a2f5"/></linearGradient>
+      </defs>
+      <text x="400" y="34" text-anchor="middle" font-size="17" font-weight="800" fill="#17233b">三层防御体系</text>
+
+      <!-- layer 3 制度层 -->
+      <rect x="40" y="56" width="720" height="64" rx="12" fill="url(#g1)"/>
+      <circle cx="82" cy="88" r="18" fill="#fff" opacity=".18"/>
+      <path d="M76 88l4 4 7-8" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="116" y="82" font-size="15" font-weight="800" fill="#fff">第 3 层 · 制度层（文档约定）</text>
+      <text x="116" y="104" font-size="12" fill="#dbe7ff">SKILL / AGENTS / MEMORY：规定“什么不许入库、什么不许外传、写前必须确认”</text>
+
+      <!-- connector -->
+      <path d="M400 120 v18" stroke="#2f7ce0" stroke-width="3" fill="none"/>
+      <path d="M393 133 h14 l-7 8 z" fill="#2f7ce0"/>
+
+      <!-- layer 2 机制层 -->
+      <rect x="40" y="138" width="720" height="64" rx="12" fill="url(#g2)"/>
+      <circle cx="82" cy="170" r="18" fill="#fff" opacity=".18"/>
+      <rect x="76" y="164" width="12" height="12" rx="2" fill="#fff"/>
+      <text x="116" y="164" font-size="15" font-weight="800" fill="#fff">第 2 层 · 机制层（代码实现）</text>
+      <text x="116" y="186" font-size="12" fill="#eaf2ff">凭证不落盘 · 网络白名单 · 写操作确认+读回执 · 最小权限 · 用完即焚</text>
+
+      <!-- connector -->
+      <path d="M400 202 v18" stroke="#2f7ce0" stroke-width="3" fill="none"/>
+      <path d="M393 215 h14 l-7 8 z" fill="#2f7ce0"/>
+
+      <!-- layer 1 审计层 -->
+      <rect x="40" y="220" width="720" height="64" rx="12" fill="#3f5170"/>
+      <circle cx="82" cy="252" r="18" fill="#fff" opacity=".16"/>
+      <path d="M74 252 h16 M82 244 v16" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+      <text x="116" y="246" font-size="15" font-weight="800" fill="#fff">第 1 层 · 审计层（智能闸门）</text>
+      <text x="116" y="268" font-size="12" fill="#cbd6e6">TestContract 离线 11 项自检：敏感串扫描 · 结构审计 · 无副作用导入 · CI 双平台</text>
+    </svg>
+    <div class="cap">图 1 · 三层防御体系：制度约束行为 → 机制强制落地 → 审计持续兜底</div>
+  </div>
+
+  <!-- 1 总体设计 -->
+  <section>
+    <div class="sec-h"><div class="n">1</div><h2>总体设计原则</h2></div>
+    <div class="card">
+      <p class="lead">四项核心原则贯穿文档层与代码层：</p>
+      <div class="grid2">
+        <div class="mech"><h3><span class="dot"></span>凭据不落盘</h3><ul><li>账号、密码、token、姓名、班级、userId <b>一律不写入任何文件</b></li><li>仅通过命令行参数或环境变量短暂存在于进程内</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>数据不出官方域</h3><ul><li>全部请求只指向 <b>591iq / 学校官方域名</b></li><li>代码中无任何第三方回传通道</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>写操作必确认</h3><ul><li>凡进入本校 feed 的操作须<b>显式 --yes</b></li><li>只读预览用 <code>--dry-run</code>，连图片都不上传</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>成功判据 = 读回执</h3><ul><li>不信任接口返回值</li><li>以<b>读回执 + 计数变化</b>验证写操作真正生效</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 凭证生命周期 -->
+  <section>
+    <div class="sec-h"><div class="n">2</div><h2>机制一 · 凭证生命周期</h2><span class="sub">不落盘 · 用完即焚 · 最小权限</span></div>
+    <div class="card">
+      <p>登录链路对密码的处理是整个安全设计的关键点：<b>密码只在命令行传入、只在进程内使用、绝不出现在磁盘上</b>。</p>
+      <div class="fig">
+        <svg viewBox="0 0 800 190" role="img" aria-label="凭证生命周期图">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1d5bb8"/></marker>
+          </defs>
+          <!-- steps -->
+          <g>
+            <rect x="30" y="60" width="150" height="70" rx="12" fill="#eef3fb" stroke="#1d5bb8" stroke-width="1.5"/>
+            <text x="105" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#1d5bb8">① 命令行传入</text>
+            <text x="105" y="112" text-anchor="middle" font-size="11" fill="#3f5170">密码仅作为 -p 参数</text>
+          </g>
+          <line x1="182" y1="95" x2="222" y2="95" stroke="#1d5bb8" stroke-width="2.5" marker-end="url(#arr)"/>
+
+          <g>
+            <rect x="228" y="60" width="150" height="70" rx="12" fill="#eef3fb" stroke="#1d5bb8" stroke-width="1.5"/>
+            <text x="303" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#1d5bb8">② 进程内 sha1</text>
+            <text x="303" y="112" text-anchor="middle" font-size="11" fill="#3f5170">哈希后才出进程</text>
+          </g>
+          <line x1="380" y1="95" x2="420" y2="95" stroke="#1d5bb8" stroke-width="2.5" marker-end="url(#arr)"/>
+
+          <g>
+            <rect x="426" y="60" width="170" height="70" rx="12" fill="#e7f7f1" stroke="#0e9f6e" stroke-width="1.5"/>
+            <text x="511" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#0e9f6e">③ 只发官方门户</text>
+            <text x="511" y="112" text-anchor="middle" font-size="11" fill="#3f5170">xmyz.xmedu.cn</text>
+          </g>
+          <line x1="598" y1="95" x2="640" y2="95" stroke="#1d5bb8" stroke-width="2.5" marker-end="url(#arr)"/>
+
+          <g>
+            <rect x="644" y="60" width="128" height="70" rx="12" fill="#fdeaea" stroke="#dc2626" stroke-width="1.5"/>
+            <text x="708" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#dc2626">④ 用完即焚</text>
+            <text x="708" y="112" text-anchor="middle" font-size="11" fill="#3f5170">会话/验证码图删除</text>
+          </g>
+
+          <!-- no-disk banner -->
+          <rect x="150" y="150" width="500" height="26" rx="13" fill="#fff3f3" stroke="#dc2626" stroke-width="1" stroke-dasharray="5 4"/>
+          <text x="400" y="168" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">全程不写盘：无 .env / 无日志 / 无缓存残留</text>
+        </svg>
+        <div class="cap">图 2 · 凭证生命周期：命令行 → 进程内哈希 → 仅官方 → 用完即焚</div>
+      </div>
+      <div class="grid2">
+        <div class="mech"><h3><span class="dot"></span>会话状态文件</h3><ul><li>仅含 cookiejar + 时间戳，<b>绝不含密码</b></li><li>落盘后 <code>chmod 0600</code>（仅当前用户可读）</li><li>登录成功后<b>立即删除</b> state / 验证码图 / 识图图</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>无凭据扫描放行</h3><ul><li>离线 CI 在<b>无任何 secret</b> 环境下运行</li><li>敏感串扫描（token/密码/手机号/真实地址）为硬闸门</li><li>账号信息一律不入库，以调用方返回为准</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 网络白名单 -->
+  <section>
+    <div class="sec-h"><div class="n">3</div><h2>机制二 · 网络白名单</h2><span class="sub">数据不出官方域</span></div>
+    <div class="card">
+      <p>传输层把请求目标<b>收敛为单一常量</b>，全仓库所有网络调用只指向官方域名，代码中不存在任何第三方回传通道。</p>
+      <div class="fig">
+        <svg viewBox="0 0 800 200" role="img" aria-label="网络白名单图">
+          <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1d5bb8"/></marker></defs>
+          <!-- client -->
+          <rect x="40" y="75" width="120" height="56" rx="12" fill="#3f5170"/>
+          <text x="100" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">学生客户端</text>
+          <!-- single path -->
+          <line x1="162" y1="103" x2="300" y2="103" stroke="#1d5bb8" stroke-width="3" marker-end="url(#ar2)"/>
+          <rect x="205" y="88" width="80" height="30" rx="15" fill="#fff" stroke="#1d5bb8" stroke-width="1.5"/>
+          <text x="245" y="107" text-anchor="middle" font-size="11" font-weight="700" fill="#1d5bb8">唯一链路</text>
+          <!-- official domain cluster -->
+          <rect x="305" y="30" width="330" height="150" rx="16" fill="#eef6ff" stroke="#1d5bb8" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <text x="470" y="52" text-anchor="middle" font-size="13" font-weight="800" fill="#1d5bb8">官方域（白名单）</text>
+          <g>
+            <rect x="330" y="66" width="130" height="42" rx="10" fill="#fff" stroke="#1d5bb8"/><text x="395" y="92" text-anchor="middle" font-size="11" font-weight="700" fill="#1d5bb8">service.591iq.cn</text>
+            <rect x="480" y="66" width="130" height="42" rx="10" fill="#fff" stroke="#1d5bb8"/><text x="545" y="92" text-anchor="middle" font-size="11" font-weight="700" fill="#1d5bb8">www.591iq.cn</text>
+            <rect x="330" y="122" width="130" height="42" rx="10" fill="#fff" stroke="#1d5bb8"/><text x="395" y="148" text-anchor="middle" font-size="11" font-weight="700" fill="#1d5bb8">fs.591iq.cn</text>
+            <rect x="480" y="122" width="130" height="42" rx="10" fill="#fff" stroke="#1d5bb8"/><text x="545" y="148" text-anchor="middle" font-size="11" font-weight="700" fill="#1d5bb8">xmyz.xmedu.cn</text>
+          </g>
+          <!-- blocked outsiders -->
+          <g>
+            <rect x="660" y="70" width="110" height="40" rx="10" fill="#f6f8fb" stroke="#dc2626" stroke-dasharray="5 4"/>
+            <text x="715" y="86" text-anchor="middle" font-size="10.5" fill="#dc2626">第三方域名</text>
+            <text x="715" y="102" text-anchor="middle" font-size="10.5" fill="#dc2626">✕ 无任何连接</text>
+          </g>
+        </svg>
+        <div class="cap">图 3 · 客户端 → 唯一链路 → 官方域白名单；第三方域名被隔离</div>
+      </div>
+      <div class="grid2">
+        <div class="mech"><h3><span class="dot"></span>无外传通道</h3><ul><li>无 exec/eval、无 webhook、无 Telegram/Discord</li><li>无 base64 注入、无第三方回调地址</li><li>仅 <code>urllib / requests</code> 访问官方网关</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>请求头最小化</h3><ul><li>仅携带 <code>AccessToken</code> + <code>clientos=pc</code></li><li>参数统一封装 <code>request={"data":…}</code></li><li>传输层 <code>BASE</code> 为单一常量，杜绝硬编码外部地址</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 写操作护栏 -->
+  <section>
+    <div class="sec-h"><div class="n">4</div><h2>机制三 · 写操作双重护栏</h2><span class="sub">确认 + 读回执</span></div>
+    <div class="card">
+      <p>发布 / 删除任何会进入本校 feed 的数据，都被强制套上 <b>“显式确认”和“读回执校验”</b>两道闸。</p>
+      <div class="fig">
+        <svg viewBox="0 0 800 220" role="img" aria-label="写操作护栏流程图">
+          <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1d5bb8"/></marker></defs>
+          <g>
+            <rect x="20" y="20" width="150" height="52" rx="12" fill="#eef3fb" stroke="#1d5bb8"/>
+            <text x="95" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="#1d5bb8">用户确认 --yes？</text>
+            <text x="95" y="61" text-anchor="middle" font-size="10.5" fill="#3f5170">否则只读 --dry-run</text>
+          </g>
+          <line x1="170" y1="46" x2="210" y2="46" stroke="#1d5bb8" stroke-width="2.5" marker-end="url(#ar3)"/>
+          <g>
+            <rect x="215" y="20" width="140" height="52" rx="12" fill="#eef3fb" stroke="#1d5bb8"/>
+            <text x="285" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="#1d5bb8">执行写入</text>
+            <text x="285" y="61" text-anchor="middle" font-size="10.5" fill="#3f5170">updateRecord / 上传</text>
+          </g>
+          <line x1="355" y1="46" x2="395" y2="46" stroke="#1d5bb8" stroke-width="2.5" marker-end="url(#ar3)"/>
+          <g>
+            <rect x="400" y="20" width="150" height="52" rx="12" fill="#eef3fb" stroke="#1d5bb8"/>
+            <text x="475" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="#1d5bb8">读回执校验</text>
+            <text x="475" y="61" text-anchor="middle" font-size="10.5" fill="#3f5170">三口径计数 + 逐字核对</text>
+          </g>
+          <!-- pass -->
+          <path d="M550 46 H 610" stroke="#0e9f6e" stroke-width="2.5" marker-end="url(#ar3)"/>
+          <g>
+            <rect x="612" y="20" width="140" height="52" rx="12" fill="#e7f7f1" stroke="#0e9f6e"/>
+            <text x="682" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="#0e9f6e">通过 → 成功</text>
+            <text x="682" y="61" text-anchor="middle" font-size="10.5" fill="#3f5170">exit 0</text>
+          </g>
+          <!-- fail -->
+          <path d="M475 72 V 120 H 400" stroke="#dc2626" stroke-width="2" fill="none" marker-end="url(#ar3)"/>
+          <g>
+            <rect x="250" y="118" width="200" height="52" rx="12" fill="#fdeaea" stroke="#dc2626"/>
+            <text x="350" y="141" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">回执不符 → exit 3</text>
+            <text x="350" y="158" text-anchor="middle" font-size="10.5" fill="#3f5170">提示 --edit-id 人工核查，不静默放行</text>
+          </g>
+          <!-- note -->
+          <text x="350" y="196" text-anchor="middle" font-size="12" font-weight="700" fill="#17233b">成功判据 = 读回执，不看返回值</text>
+        </svg>
+        <div class="cap">图 4 · 写操作护栏：确认 → 写入 → 读回执 → 不符即报错</div>
+      </div>
+      <div class="grid2">
+        <div class="mech"><h3><span class="dot"></span>删除不可撤销</h3><ul><li>删除先 <code>--dry-run</code> 看清目标（id/类型/标题/图片数）</li><li>再显式 <code>--yes</code>；删除<b>不可撤销</b></li><li>测试用 32 个 0 探测路由，<b>任何情况下不得真删</b></li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>三口径计数校验</h3><ul><li>发布后核对：<b>本人 / 活动 / 本校可见</b> 三个口径条数</li><li>读 <code>queryRecord</code> 核对标题、正文逐字、图片数量</li><li>任一不符即退出码 3，交给人工核查</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 自动审计闸门 -->
+  <section>
+    <div class="sec-h"><div class="n">5</div><h2>机制四 · 智能审计闸门</h2><span class="sub">TestContract 离线自检</span></div>
+    <div class="card">
+      <p>项目内置 <code>TestContract.py</code>，在<b>离线、无网络、无凭据</b>环境下执行契约与卫生检查，作为每次 CI 的硬性隐私闸门。2026-10-06 实测：<b>15 项 · 14 PASS / 1 WARN / 0 FAIL</b>（<code>--strict</code> 退出码 0）。</p><p style="margin-top:8px;font-size:13px;color:#7d8da8">（图 5 绘制于 2026-10-04，列出的检查项为其子集；此后新增了「响应信封」与「能力红线」两项，见下方机制六、七。）</p>
+      <div class="fig">
+        <svg viewBox="0 0 800 250" role="img" aria-label="自动审计闸门清单">
+          <!-- check items -->
+          <g font-size="12.5" fill="#17233b">
+            <rect x="40" y="20" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="58" cy="37" r="7" fill="#0e9f6e"/><path d="M55 37l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="74" y="41">敏感串扫描（token/密码/手机号）</text>
+            <rect x="40" y="62" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="58" cy="79" r="7" fill="#0e9f6e"/><path d="M55 79l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="74" y="83">命名契约 · UTF-8 卫生</text>
+            <rect x="40" y="104" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="58" cy="121" r="7" fill="#0e9f6e"/><path d="M55 121l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="74" y="125">reference/ 体积预算 ≤ 100 KB</text>
+            <rect x="40" y="146" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="58" cy="163" r="7" fill="#0e9f6e"/><path d="M55 163l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="74" y="167">模块可导入 · 无副作用</text>
+            <rect x="40" y="188" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="58" cy="205" r="7" fill="#0e9f6e"/><path d="M55 205l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="74" y="209">CLI --help 冒烟 · 包结构合规</text>
+
+            <rect x="410" y="20" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="428" cy="37" r="7" fill="#0e9f6e"/><path d="M425 37l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="444" y="41">无 BOM / 无 TAB / 无乱码</text>
+            <rect x="410" y="62" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="428" cy="79" r="7" fill="#0e9f6e"/><path d="M425 79l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="444" y="83">RECORD_TYPE_MAP 与文档一致</text>
+            <rect x="410" y="104" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="428" cy="121" r="7" fill="#0e9f6e"/><path d="M425 121l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="444" y="125">VERSION 格式与发布规范</text>
+            <rect x="410" y="146" width="352" height="34" rx="8" fill="#fdf3e3"/><circle cx="428" cy="163" r="7" fill="#d97706"/><text x="425" y="167" font-size="10" fill="#fff">!</text><text x="444" y="167">WARN：命名豁免（2 项，已登记）</text>
+            <rect x="410" y="188" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="428" cy="205" r="7" fill="#0e9f6e"/><path d="M425 205l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="444" y="209">git 大小写审计 · 敏感串入库拦截</text>
+          </g>
+          <rect x="40" y="230" width="722" height="0" rx="0"/>
+        </svg>
+        <div class="cap">图 5 · TestContract 智能审计项（离线可跑，CI 双平台强制）</div>
+      </div>
+      <div class="grid2">
+        <div class="mech"><h3><span class="dot"></span>隐私闸门性质</h3><ul><li>命中敏感串<b>即拒绝提交/入库</b></li><li>32 位 hex（token/recordId）、手机号、真实图片地址、硬编码密码、中文姓名示例一律拦截</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>发版前置</h3><ul><li>发版前必跑 <code>compileall</code> + 契约自检 + 敏感串扫描</li><li>线上回归（只读 <b>47 项</b>）在本地执行</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 导出边界 -->
+  <section>
+    <div class="sec-h"><div class="n">6</div><h2>机制五 · 数据导出边界与脱敏</h2><span class="sub">只读 · 精选 · 隔离</span></div>
+    <div class="card">
+      <div class="grid2">
+        <div class="mech"><h3><span class="dot"></span>只读精选导出</h3><ul><li><code>ExportXlsx</code> 产出 13 个 sheet，<b>不含原始 JSON</b></li><li>仅输出提炼后的字段，避免裸数据泄露</li><li>默认写 <code>%TEMP%\591iq_*.xlsx</code>，已 gitignore</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>脱敏与隔离</h3><ul><li>系统返回的证件号<b>已脱敏</b>（如 <code>G350203**********54</code>）</li><li>临时数据只放 <code>%TEMP%\591iq_scratch</code>，严禁入库</li><li>导出文件含 PII，仅限本人本地使用</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 新增 机制六：能力边界 -->
+  <section>
+    <div class="sec-h"><div class="n">7</div><h2>机制六 · 能力边界</h2><span class="sub">高敏能力默认关闭 / 不留后门</span></div>
+    <div class="card">
+      <p>审计发现平台有若干接口<b>比学生端前端宽松</b>：前端没有的入口、传非法参数就能拿到的更大数据面。这些属于「超出界面设计」的范围扩大。处理原则是：<b>能删就删，删不掉就收口，收口必须留痕</b>。</p>
+      <table style="margin-top:10px">
+        <colgroup><col><col><col></colgroup>
+        <thead><tr><th>能力</th><th>处置</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>全校人员搜索<br><span style="font-size:12px;color:#7d8da8">一次调用可枚举全校学生（实测去重 28,190 人级），原始返回含身份证号、考号、照片、班级干部与政治面貌</span></td>
+              <td><span class="danger">整体删除</span></td>
+              <td>一次调用即把全校人员目录变成可枚举数据源，而使用者是单个学生账号</td></tr>
+          <tr><td>遴选/投票<br><span style="font-size:12px;color:#7d8da8">批量投票改的是他人遴选结果；强制确认可替报告发起人操作，已证实投票窗口过期后仍可确认</span></td>
+              <td><span class="danger">整体删除</span></td>
+              <td>越权代操作，且不可撤销</td></tr>
+          <tr><td>记录列表非法 <code>type</code></td>
+              <td><span class="ok">客户端白名单</span></td>
+              <td>空串/任意非法值走服务端<b>无过滤兜底分支</b>，实测 146,020 条，约为「学校」页的 12 倍，含历年毕业届记录，每行带作者姓名与班级</td></tr>
+          <tr><td>记录详情不校验归属</td>
+              <td><span class="ok">客户端归属校验</span></td>
+              <td>服务端只按 id 返回、不校验归属，且返回体含 51 个身份字段</td></tr>
+        </tbody>
+      </table>
+      <div class="grid2" style="margin-top:12px">
+        <div class="mech"><h3><span class="dot"></span>删除而非开关</h3><ul>
+          <li>上述两项高敏能力<b>整体删除代码与用例</b></li>
+          <li><b>刻意不留环境变量旁路</b>——留后门等于「藏起来但没关掉」，反而诱导绕过</li>
+          <li>正当需求有替代路径：取某人用户 ID 走「班级」范围即可，无需全校搜人</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>收口可被显式绕开，但必留痕</h3><ul>
+          <li>确需更大范围时须<b>显式传参</b>（<code>unsafeScope=True</code> / <code>allowOther=True</code>）</li>
+          <li>每次绕开都打 <b>WARNING 日志</b>，本地可审计</li>
+          <li>不提供静默绕过</li></ul></div>
+      </div>
+      <p style="margin-top:12px;font-size:13.5px;color:#3f5170"><b>诚实说明：</b>这两道客户端闸门<b>只防误用、不是安全控制</b>。绕过本工具直接发 HTTP 请求，依然能拿到全量数据——因为宽松的是服务端。真正的修复必须在平台侧，故已按安全工单上报（见机制七）。</p>
+    </div>
+  </section>
+
+  <!-- 8 新增 机制七：可观测与上报 -->
+  <section>
+    <div class="sec-h"><div class="n">8</div><h2>机制七 · 可观测与安全上报</h2><span class="sub">留痕 · 自证 · 善意披露</span></div>
+    <div class="card">
+      <div class="grid2">
+        <div class="mech"><h3><span class="dot"></span>详细 DEBUG 日志</h3><ul>
+          <li>每次请求记录方法、路径、参数键、响应码、<b>耗时</b>；网络异常记录完整调用栈</li>
+          <li>默认等级 WARNING，<b>默认什么都不输出</b>，不影响用户可见结论</li>
+          <li>用 <code>--verbose</code> 或环境变量开启</li></ul></div>
+        <div class="mech"><h3><span class="dot"></span>闸门自证</h3><ul>
+          <li>合规检查若恒为 PASS，就是装饰品</li>
+          <li>因此<b>逐条破坏红线并验证 CI 会变红</b>：移除白名单→FAIL、移除归属校验→FAIL、关闭脱敏→FAIL、还原→PASS</li>
+          <li>检查项本身每迭代重跑一次</li></ul></div>
+      </div>
+      <div style="margin-top:12px">
+        <h3 style="font-size:15px;margin-bottom:8px"><span class="dot" style="display:inline-block"></span>向平台上报的两条安全工单</h3>
+        <table>
+          <colgroup><col><col><col></colgroup>
+          <thead><tr><th>编号</th><th>问题</th><th>处置</th></tr></thead>
+          <tbody>
+            <tr><td><b>D14</b></td><td>教师端学分名册接口，学生角色令牌可直接调用，返回全校学生姓名、身份证号、班级</td>
+                <td><span class="ok">已投递安全工单</span>，工单内容经脱敏闸门校验，不含任何真实个人信息</td></tr>
+            <tr><td><b>D19</b></td><td>记录详情不校验归属（返回 51 个身份字段）＋ 记录列表非法参数走无过滤兜底分支</td>
+                <td><span class="ok">已投递安全工单</span>，并在工具侧加客户端闸门</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:12px;font-size:13.5px;color:#3f5170"><b>披露原则：</b>只披露最小必要信息——<b>端点路径与调用载荷不写入公开文档与发布包</b>，漏洞细节单独存放且不随包分发；工单正文只写现象、复现、影响与修复建议，字段仅列<b>名称</b>不列<b>值</b>。</p>
+    </div>
+  </section>
+
+  <!-- 7 文档层制度 -->
+  <section>
+    <div class="sec-h"><div class="n">9</div><h2>文档层制度</h2><span class="sub">把安全写进规范</span></div>
+    <div class="card">
+      <table>
+        <colgroup><col><col><col></colgroup>
+        <thead><tr><th>文档</th><th>安全职责</th><th>关键约束</th></tr></thead>
+        <tbody>
+          <tr><td><b>SKILL.md</b></td><td>使用纪律与数据边界</td><td>“账号信息不入库”“教育系统数据含学生个人信息，仅限授权使用，不要外传”“每次写入须逐次确认”</td></tr>
+          <tr><td><b>AGENTS.md</b></td><td>开发/提交契约</td><td>“提交前脱敏：不得含 token/密码/姓名/userId/班级”；导出文件 gitignore；临时目录含凭据严禁入库</td></tr>
+          <tr><td><b>MEMORY.md</b></td><td>跨会话记忆隐私闸门</td><td>写入前必须过契约隐私闸门；PII 整体剔除；不含任何真实学生姓名</td></tr>
+          <tr><td><b>同名 .md 说明</b></td><td>把安全固化为可读规范</td><td>每个 .py 配 .md，记录 --yes / --dry-run / 回执等注意项</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 8 代码层实现对照 -->
+  <section>
+    <div class="sec-h"><div class="n">10</div><h2>代码层实现对照</h2><span class="sub">机制即代码</span></div>
+    <div class="card">
+      <table>
+        <colgroup><col><col><col></colgroup>
+        <thead><tr><th>文件</th><th>安全机制</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td><code>Access/VisionLogin.py</code></td><td>密码不落盘、state 仅 cookie、用完即焚、chmod 0600</td><td><span class="ok">已实测</span></td></tr>
+          <tr><td><code>Access/HttpTransport.py</code></td><td>单一 BASE 常量、无第三方回调</td><td><span class="ok">已实测</span></td></tr>
+          <tr><td><code>RecordCenter/PublishActivity.py</code></td><td>--yes 才写、--dry-run 只读、读回执校验</td><td><span class="ok">已实测</span></td></tr>
+          <tr><td><code>RecordCenter/DeleteRecord.py</code></td><td>删除先预览、不可撤销、测试永不真删</td><td><span class="ok">已实测</span></td></tr>
+          <tr><td><code>TestCases/TestContract.py</code></td><td>敏感串扫描、结构审计、无副作用导入、能力红线、响应信封</td><td><span class="ok">15 项 14 PASS / 0 FAIL</span></td></tr>
+          <tr><td><code>RecordCenter/RecordQuery.py</code></td><td>记录列表范围白名单、详情归属校验、身份字段默认脱敏</td><td><span class="ok">已实测·CI 红线守护</span></td></tr>
+          <tr><td><code>SearchCenter/SearchQuery.py</code></td><td>仅保留记录搜索；人员枚举能力<b>整体删除</b>，命中项默认脱敏</td><td><span class="ok">已实测·CI 红线守护</span></td></tr>
+          <tr><td><code>Common/Logcat.py</code></td><td>详细 DEBUG / WARNING 审计留痕；仅密码与证件号强制脱敏</td><td><span class="ok">已接入三处调用方</span></td></tr>
+          <tr><td><code>Export/ExportXlsx.py</code></td><td>只读精选 13 sheet、不含原始 JSON、gitignore</td><td><span class="ok">已实测</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 9 已知缺口 -->
+  <section>
+    <div class="sec-h"><div class="n">11</div><h2>已知缺口（如实标注）</h2><span class="sub">透明是安全的一部分</span></div>
+    <div class="card">
+      <table>
+        <colgroup><col><col><col></colgroup>
+        <thead><tr><th>编号</th><th>问题</th><th>影响 / 对策</th></tr></thead>
+        <tbody>
+          <tr><td><b>D14</b> / <b>D19</b></td>
+              <td>平台侧角色校验缺失：教师端名册接口学生令牌可读；记录详情不校验归属；记录列表非法参数走无过滤兜底分支</td>
+              <td><span class="danger">平台侧未修</span>。工具侧已加客户端闸门，但<b>绕过工具直连仍可拿全量</b>；已投递安全工单等待修复</td></tr>
+          <tr><td><b>D5</b></td><td>活动总结删除接口对不存在的 ID 仍返回 <code>code=0</code>，无异常保护</td>
+              <td><span class="danger">删除类需二次确认</span>，返回值不可当成功判据</td></tr>
+          <tr><td>—</td><td>导出 xlsx 含本人姓名/班级/成绩等个人信息</td>
+              <td><span class="warn">仅限本人本地使用</span></td></tr>
+          <tr><td>—</td><td>上传到平台图床的图片 URL 可被访问</td>
+              <td><span class="warn">公开存储，发布前确认内容</span></td></tr>
+          <tr><td>—</td><td>本次上报走的是作者自建反馈服务，未直接送达平台方</td>
+              <td><span class="warn">工单已留痕，正式渠道待跟进</span></td></tr>
+</tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 10 结论 -->
+  <section>
+    <div class="sec-h"><div class="n">12</div><h2>设计结论</h2></div>
+    <div class="card">
+      <p><b>本项目把“学生隐私安全”落实为制度 + 机制 + 审计三重保险：</b>文档层规定“什么不许入库、什么不许外传、写前必须确认”；代码层用<b>凭据不落盘、网络白名单、写操作确认+读回执、最小权限、用完即焚</b>五道机制强制执行；智能审计在 CI 中持续拦截敏感串与结构风险。2026-10-06 起再补两套：<b>能力边界</b>（高敏能力整体删除而非留开关；服务端宽于前端的接口做客户端收口）与<b>可观测留痕</b>（危险操作必留 WARNING、闸门逐条自证会失败、漏洞按工单上报且不公开载荷）。整体设计克制、安全、可审计。</p>
+      <p style="margin-top:10px"><b>当前最大短板不再是工具，而是平台侧：</b><b>D14 / D19 两项角色校验缺失尚未修复</b>，工具侧的客户端闸门只防误用、不是安全控制。这也是本项目“如实标注缺口”这一安全态度的体现——能修的立刻修（搜索接口未脱敏已于 2026-10-06 修复并默认脱敏），不能修的写清楚、报上去、等回复。</p>
+    </div>
+  </section>
+
+  <div class="publish">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18 12h3M16.3 7.7l2.1-2.1" stroke="#1d5bb8" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15" r="5" fill="#1d5bb8"/><path d="M10.2 14.6l1.3 1.3 2.3-2.6" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>发布 · 新壹我（591iq）综合素质评价系统</span>
+  </div>
+
+</div>
+</body>
+</html>

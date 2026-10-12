@@ -1,0 +1,59 @@
+[login] 使用给定 token 0467e765352f…
+[login] loginBySSOToken -> 林昊哲 高二(2025级)8班 userId=787316
+
+================================================================================
+  [PASS] loginBySSOToken                              0ms  <userName> <className>
+  [PASS] getUserInfoDetail                          167ms  dict[49] userName,sex,birthday,qq,phoneNumber,blog
+  [PASS] get_sch_feature                            124ms  list[12]
+  [PASS] module/list_front_new                      132ms  list[10]
+  [PASS] module/list                                120ms  list[12]
+  [PASS] sysDict INTEREST                           121ms  dict[1] list
+  [PASS] sysDict SemesterCode                       136ms  dict[1] list
+  [PASS] sysDict RecordHonorOrder                   142ms  dict[1] list
+  [PASS] task/count_task                            132ms  dict[3] unfinished,expired,finished
+  [PASS] task/list status=0                         142ms  dict[2] page,list
+  [PASS] task/list status=1                         153ms  dict[2] page,list
+  [PASS] task/list status=2                         155ms  dict[2] page,list
+  [PASS] task/list_label                            141ms  list[10]
+  [PASS] msg/queryUnRead                            159ms  dict[4] systemCount,favourCount,count,commentCount
+  [PASS] announcement/listAnnouncementRead          208ms  list[0]
+  [PASS] announcement/listPopupAnnouncementRead     185ms  list[0]
+  [PASS] task/get                                   131ms  dict[4] templateType,eventId,createUserType,title
+  [PASS] evaluateActivity/get_config                131ms  dict[2] schId,summaryPicCount
+  [PASS] evaluateActivity/querySummary              157ms  dict[2] totalResult,pdlist
+  [PASS] record/queryRecordList type=1              258ms  dict[1] list
+  [PASS] record/queryRecordList type=2              264ms  dict[1] list
+  [PASS] record/queryRecordList type=''             511ms  dict[1] list
+  [PASS] record/queryLabelList                      126ms  list[21]
+  [PASS] record/group_type                          131ms  list[3]
+  [PASS] record/queryRecordStatistics               129ms  dict[1] list
+  [PASS] record/queryRecord                         123ms  dict[27] recordContent,recordHonor,recordRead,recordBook,recordSport,recordInvent
+  [PASS] record/queryClassifyList                   130ms  list[2]
+  [PASS] record/queryHistoryBookList                291ms  dict[1] list
+  [PASS] search/search type=1 记录                    781ms  dict[3] totalResult,data,list
+  [PASS] search/search type=2 人员                    164ms  dict[2] totalResult,list
+  [PASS] search/search type=2 脱敏白名单                 211ms  dict[2] totalResult,list
+  [PASS] search/search type=0 无数据                   129ms  dict[3] totalResult,data,list
+  [PASS] search/search type=空 报错                    148ms  如期报错 /search/search -> code=999997 msg=参数校验失败:搜索类型不能为空
+  [PASS] record/queryRecordList userName 过滤         184ms  dict[1] list
+  [PASS] querySemesterList                          133ms  dict[2] totalResult,pdlist
+  [PASS] queryHonorStatistics                       194ms  dict[1] list
+  [PASS] listActivityStatisticsByDimension          274ms  list[6]
+  [PASS] get_interest                               153ms  list[3]
+  [WARN] integral/account_integral                  144ms  EXC /apps/integral/rank/integralRecord/account_integral -> code=1 msg=找不到对应的积分配置
+  [PASS] growReport/config/getGrowItem              136ms  list[8]
+  [PASS] growReport/list                            156ms  dict[2] headGrowReport,list
+  [PASS] growReport/detail                          212ms  growReportStuId=<id>
+  [PASS] studentMgr/getParentList                   145ms  list[1]
+  [PASS] diathesis/popup_student                    127ms  dict[3] popup,show,list
+  [PASS] eventTwo/listLabel dim5                    127ms  list[11]
+  [PASS] eventTwo/listLabel dim17                   153ms  list[6]
+  [PASS] evaluation/honor/list                      133ms  list[6]
+  [SKIP] reportManage/queryOwnerReportData            0ms  本账号无荣誉评选报告，ownerReports 回 code=1 没有查询到数据
+  [SKIP] stuffVotes/querySubjectHonorStuff            0ms  本账号无荣誉评选报告，ownerReports 回 code=1 没有查询到数据
+  [PASS] stuffVotes/commitBatchVoteStuff 路由活性       111ms  如期报错 /stuffVotes/commitBatchVoteStuff -> code=999997 msg=参数校验失败:
+  [PASS] diathesisReport/reportConfirm 路由活性         130ms  如期报错 /diathesisReport/manage/reportConfirm -> code=1 msg=档案查询失败
+  [PASS] record/delRecord (仅探测路由，不删)                164ms  route-alive, id 不存在被业务层拒绝: /record/delRecord -> code=1 msg=操…
+================================================================================
+PASS=49 FAIL=0 WARN=1 SKIP=2 共 52 项 总耗时 9695ms  token=0467e765352f47f1…
+报告: C:\Users\Administrator\.config\opencode\skills\591iqAutomatic\tools\TestCases\TestApiReadOnlyReport.json

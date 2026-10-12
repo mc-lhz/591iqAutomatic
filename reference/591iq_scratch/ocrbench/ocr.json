@@ -1,0 +1,242 @@
+[
+ {
+  "tag": "01",
+  "truth": "fares",
+  "got": {
+   "prep": "fares",
+   "norm160": "ares",
+   "norm200": "ares",
+   "orig": "fares"
+  }
+ },
+ {
+  "tag": "02",
+  "truth": "befes",
+  "got": {
+   "prep": "befes",
+   "norm160": "bees",
+   "norm200": "bees",
+   "orig": "befes"
+  }
+ },
+ {
+  "tag": "03",
+  "truth": "feder",
+  "got": {
+   "prep": "feder",
+   "norm160": "feder",
+   "norm200": "eder",
+   "orig": "feder"
+  }
+ },
+ {
+  "tag": "04",
+  "truth": "sends",
+  "got": {
+   "prep": "sen1ds",
+   "norm160": "sends",
+   "norm200": "sends",
+   "orig": "sends"
+  }
+ },
+ {
+  "tag": "05",
+  "truth": "somer",
+  "got": {
+   "prep": "s0mer",
+   "norm160": "s0me",
+   "norm200": "s0me",
+   "orig": "s0mer"
+  }
+ },
+ {
+  "tag": "06",
+  "truth": "strts",
+  "got": {
+   "prep": "s1i1s",
+   "norm160": "strts",
+   "norm200": "strts",
+   "orig": ""
+  }
+ },
+ {
+  "tag": "07",
+  "truth": "sits",
+  "got": {
+   "prep": "sits",
+   "norm160": "sts",
+   "norm200": "s7ts",
+   "orig": "s72ts"
+  }
+ },
+ {
+  "tag": "08",
+  "truth": "harnt",
+  "got": {
+   "prep": "harrnt",
+   "norm160": "harn",
+   "norm200": "harn",
+   "orig": "harrnt"
+  }
+ },
+ {
+  "tag": "09",
+  "truth": "mans",
+  "got": {
+   "prep": "mans",
+   "norm160": "wans",
+   "norm200": "wans",
+   "orig": "ma1ns"
+  }
+ },
+ {
+  "tag": "10",
+  "truth": "Arub",
+  "got": {
+   "prep": "arub",
+   "norm160": "arub",
+   "norm200": "aruq",
+   "orig": "arub"
+  }
+ },
+ {
+  "tag": "11",
+  "truth": "soods",
+  "got": {
+   "prep": "s00ds",
+   "norm160": "ss",
+   "norm200": "soas",
+   "orig": "s00ds"
+  }
+ },
+ {
+  "tag": "12",
+  "truth": "luar",
+  "got": {
+   "prep": "fuar",
+   "norm160": "fuar",
+   "norm200": "fuar",
+   "orig": "fuar"
+  }
+ },
+ {
+  "tag": "13",
+  "truth": "evems",
+  "got": {
+   "prep": "evems",
+   "norm160": "evems",
+   "norm200": "evems",
+   "orig": "evems"
+  }
+ },
+ {
+  "tag": "14",
+  "truth": "voade",
+  "got": {
+   "prep": "voade",
+   "norm160": "vade",
+   "norm200": "vade",
+   "orig": "vade"
+  }
+ },
+ {
+  "tag": "15",
+  "truth": "caits",
+  "got": {
+   "prep": "caits",
+   "norm160": "cats",
+   "norm200": "caits",
+   "orig": "cass"
+  }
+ },
+ {
+  "tag": "16",
+  "truth": "wiins",
+  "got": {
+   "prep": "wiins",
+   "norm160": "wns",
+   "norm200": "wns",
+   "orig": "wiins"
+  }
+ },
+ {
+  "tag": "17",
+  "truth": "gats",
+  "got": {
+   "prep": "gats",
+   "norm160": "ats",
+   "norm200": "9ats",
+   "orig": "gs7e"
+  }
+ },
+ {
+  "tag": "18",
+  "truth": "buod",
+  "got": {
+   "prep": "buod",
+   "norm160": "buod",
+   "norm200": "buod",
+   "orig": "bud"
+  }
+ },
+ {
+  "tag": "19",
+  "truth": "ceock",
+  "got": {
+   "prep": "ceock",
+   "norm160": "cec",
+   "norm200": "cec",
+   "orig": "ce0ck"
+  }
+ },
+ {
+  "tag": "20",
+  "truth": "feier",
+  "got": {
+   "prep": "fe1er",
+   "norm160": "feier",
+   "norm200": "feier",
+   "orig": "fe1er"
+  }
+ },
+ {
+  "tag": "21",
+  "truth": "usch",
+  "got": {
+   "prep": "usch",
+   "norm160": "usch",
+   "norm200": "usch",
+   "orig": "usch"
+  }
+ },
+ {
+  "tag": "22",
+  "truth": "puin",
+  "got": {
+   "prep": "puin",
+   "norm160": "pun",
+   "norm200": "pun",
+   "orig": "pnin"
+  }
+ },
+ {
+  "tag": "23",
+  "truth": "lexi",
+  "got": {
+   "prep": "1exi",
+   "norm160": "ex",
+   "norm200": "ex",
+   "orig": "1exi"
+  }
+ },
+ {
+  "tag": "24",
+  "truth": "oken",
+  "got": {
+   "prep": "n",
+   "norm160": "c0ken",
+   "norm200": "c0ken",
+   "orig": "c0ken"
+  }
+ }
+]

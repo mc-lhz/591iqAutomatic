@@ -1,0 +1,32 @@
+[login] 门户登录成功, JSESSIONID = 34B89B2C60BC908E96B0682E7742C2F1
+第 1轮 新逻辑='hiros' 命中  旧逻辑='hir0s' 会失败  (16s)
+第 2轮 新逻辑='juzac' 未中  (26s)
+[login] 门户登录成功, JSESSIONID = 1F6B66E857FBFACC83CCF322A9E3671E
+第 3轮 新逻辑='ruame' 命中  旧逻辑='ruame' 同样正确  (39s)
+第 4轮 新逻辑=''     未中  (53s)
+[login] 门户登录成功, JSESSIONID = 5CD813EEC0CA1B808DFE8E41D1309B2F
+第 5轮 新逻辑='drlf' 命中  旧逻辑='dr1f' 会失败  (68s)
+第 6轮 新逻辑='enger' 未中  (78s)
+[login] 门户登录成功, JSESSIONID = 9C1FF750FC5F2203D2902F66DD36ABF0
+第 7轮 新逻辑='wated' 命中  旧逻辑='waated' 会失败  (92s)
+[login] 门户登录成功, JSESSIONID = 5D7A1DAC53A154FFE5108B804661BE95
+第 8轮 新逻辑='pllps' 命中  旧逻辑='p11s' 会失败  (108s)
+[login] 门户登录成功, JSESSIONID = A5A60DC91358FE0F47C140352AE9D79C
+第 9轮 新逻辑='tipe' 命中  旧逻辑='tipe' 同样正确  (128s)
+[login] 门户登录成功, JSESSIONID = 405250F989F450046162E44F3BD6FB6D
+第10轮 新逻辑='acnds' 命中  旧逻辑='accnds' 会失败  (146s)
+[login] 门户登录成功, JSESSIONID = B0AFB01A7B053B5B30771F50F7C1EF3D
+第11轮 新逻辑='boct' 命中  旧逻辑='boct' 同样正确  (162s)
+[login] 门户登录成功, JSESSIONID = B862D1E983C5BA4C8A5B5283AC2C266D
+第12轮 新逻辑='hited' 命中  旧逻辑='hited' 同样正确  (176s)
+[login] 门户登录成功, JSESSIONID = 9BF22A4002A4578EAB6937B857BDD9F6
+第13轮 新逻辑='egper' 命中  旧逻辑='egper' 同样正确  (193s)
+[login] 门户登录成功, JSESSIONID = 4FC651C39D7EBEB842FFDA5D004DDF41
+第14轮 新逻辑='waat' 命中  旧逻辑='waat' 同样正确  (205s)
+[login] 门户登录成功, JSESSIONID = 056BD695CC017120B198AFC59F3E9868
+第15轮 新逻辑='soch' 命中  旧逻辑='sch' 会失败  (221s)
+
+==== 结果 ====
+新逻辑通过率: 12/15 = 80.0%
+同一样本上旧逻辑: 6/12 = 50.0%（只统计新逻辑命中的轮次，12 轮可比）
+变体池: [(170, 3), (180, 4), (200, 4)]
