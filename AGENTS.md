@@ -194,9 +194,14 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
      → `.github/workflows/release.yml` 会在 `release: published` 时自动打包
        并把 `591iqAutomatic.zip` 挂为该 Release 的附件（用 runner 自带 `GITHUB_TOKEN`，
        本地不需要任何令牌；预发布同样会触发）
-- 命名：beta 期用 `v0.1-betaN`，功能冻结后转 `v0.1.0`，破坏性改动才升 minor。
-  已知 `v0.1-betaN`（如 `v0.1-beta1` / `v0.1-beta2`）**不是严格 SemVer**
-  （规范写法 `v0.1.0-beta.1`），GitHub 正常但 SemVer 工具无法排序先后——有意选择，记录在案
+- 命名：`v0.1-betaN`（预发布）→ `v0.1.0`（首个可用版）→ **`v1.0.0` 起走严格 SemVer**，
+  即 `MAJOR.MINOR.PATCH`，破坏性改动升 MAJOR，新增能力升 MINOR，修 bug 升 PATCH。
+  已知 `v0.1-betaN` **不是严格 SemVer**（规范写法 `v0.1.0-beta.1`），
+  GitHub 正常但 SemVer 工具无法排序先后——有意选择，记录在案。
+  ⚠️ **`v1.0` 不用写三段**：tag 用 `v1.0`（GitHub 惯用），
+  `VERSION` 与 tag 逐字一致即可（`AGENTS.md:187`），不强制补 `.0`。
+  `v1.0` 的重大改动是**删除遴选/投票域与人员枚举能力**（对下游是 breaking），
+  所以从 `v0.1-beta2` 直接跳 `v1.0` 而非 `v0.1.0`——这个决定记在案。
 - 发版前必跑：`compileall` + `TestContract.py` + 敏感串扫描 +
   `reference/` 未超 150 KB；线上回归（`TestApiReadOnly` / `TestRecordRead`）在本地跑
 - **打包规则**（实现在 `Release/PackSkill.py`，规则改这里，别改 workflow）：
