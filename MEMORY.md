@@ -26,6 +26,7 @@
 | 口径更正 | `type` 语义、人口数、schId/租户边界（本文件第六节） | 见 git log |
 | 正确性 | D17 信封兼容、D18 OCR 投票、Logcat 部署（`d13814d`） | 见 git log |
 | 合规分层 | 人员枚举默认关闭 + 记录搜索默认脱敏（D10），受限文档移出仓库（D14） | 见 git log |
+| 会话沉淀（10-24/25） | 评论/自我总结/总结提交三域 + AppsCenter 读侧 + 写路径演练常驻化；只读套件扩至 52 项 | 见 git log |
 
 ### 能力分层（2026-10-06 定的合规基线）
 
@@ -165,7 +166,7 @@
 | D1 | ~~`publishHonor()` 荣誉名称字段层级错~~ **已修（`itemName` 从未被写进 form，封装层吞字段）** | 已发→读回→删闭环，`16→17→16` |
 | D2 | `searchRecords()` 返回 `idNumber` 等敏感字段且未脱敏 | 待修（调用方自行处理） |
 | D3 | ~~`findPeople()` limit=50 会截断~~ | **随能力删除而失效**（2026-10-06） |
-| D4 | 文档端点计数与实测脱节 | **部分已同步**：`api.md` 已加「count 会漂，别当断言用」的警示；`TestApiReadOnly` 现为 **47 项（PASS 46 / WARN 1）**，加 `--upload` 变 54 项 |
+| D4 | 文档端点计数与实测脱节 | **部分已同步**：`api.md` 已加「count 会漂，别当断言用」的警示；`TestApiReadOnly` 现为 **52 项（PASS 51 / WARN 1）**，加 `--upload` 变 53 项 |
 | D5 | `delSummary` 对不存在 id 也返回 `code=0`，无异常保护 | 高危，需二次确认 |
 | D6 | 登录链路遇瞬时网络异常会漏栈而非按退出码契约退出 | 待修 |
 | D7 | release workflow 用插值方式把 tag 拼进 shell 命令，存在注入面 | **已修（`fa5e7be`）**：五处 tag 全改 `env:` 传递，YAML 已复检 |
@@ -372,3 +373,44 @@ D18/D19 记的是「验出了什么」，这一节记「怎么验的」——后
 - 一个专题做完（提交 / 能力删除 / 材料生成）**盘点一次**，
   别让几十个探针永久堆积——它们既是噪声，也是上面那张凭据台账的来源；
 - 一次性脚本不要迭代出 v2/v3/v4：能用一次说清的，结论直接进文档。
+
+---
+
+## 九、2026-10-24/25 会话沉淀（评论 / 总结 / 应用中心 / 工程事故）
+
+### 服务端契约（新增实测）
+
+- **窗口策略不对称**：活动总结**逾期不拦截**（60 条逾期数月照收，`count_task.expired`
+  随之下降）；成长报告自我总结**窗口强制**（过期 `code=1 学生总结已截止`）。
+  跨写域类比前先看实测。
+- **`task/list` status 语义定案**：`0`=待办 / `1`=逾期未完成 / `2`=已办，与
+  `count_task` 的 unfinished/expired/finished 一一对应（旧文档「1=已完成」已作废）。
+- **`delSummary`**：参数名是 `summaryId`（实测露出）；沿用 api.md 定性
+  （对不存在对象也 code=0、不当探测口、对真实 id 真删）——**不封装**。
+- **`/book/get`**：ISBN 只收 10/13 位纯数字（展示格式需清洗）；查无回
+  `999999 该ISBN未查询到书籍`。
+- **问卷读三件套**：必填 `templateId`（任务列表行 `id` 可直接当之）；
+  `questions[]` 含 type/required/itemList；真实问卷（5 题）读全通过。
+- **积分按校配置**：schId=200 未配置积分体系（`code=1 找不到对应的积分配置`）；
+  `rank_type` 有 5 维度枚举；排行分页键是 **`pageRowBounds`**（offset/limit 会被拒）。
+- **AI 网关**（10-24）：`/ai/dashscope` OpenAI 兼容、`/models` 180 个模型、
+  function calling 闭环可用；`ZHIPU/*` 通道未激活（400 product not activated），
+  无前缀 `glm-5.3` / `glm-5.3-prime` 可用；后端为自建多渠道聚合网关
+  （Envoy 网格 + DashScope 协议指纹，非公网中转 SaaS）。
+- **评论家族**：概述评论在记录详情 `recordComment` 内嵌；活动评论走
+  `summaryId`；载荷 `{id, comment[, replyUserId]}`（详见 RecordComment.md）。
+
+### 工程事故与加固（都已修 + 有闸门）
+
+- **Log 导入缺失**（`SendFeedback` / `ExportXlsx`）：后加的日志代码 + `-h` 冒烟
+  只走到 argparse → 函数体 NameError 落在 CI 盲区。新增 `TestContract`
+  「Log 导入完备性」检查（**含反向用例**）。
+- **工单「发现时间」写死 2026-10-05** → 缺省 = 当天。
+- **演练首跑残留事故**：记录定位查错字段——标题在**槽位对象** `.name`
+  （`recordActivityFJ.name`），不在 `recordContent`；发布成功却定位不到、
+  没删掉，残留 1 条（当场清）。教训：**任何「发布 + 回收」闭环，
+  必须先用一轮演练验证定位逻辑，再上批量**。
+- **写路径演练常驻化**：`TestCases/TestWriteRehearsal.py`（记录评论 / 活动评论 /
+  自我总结快照恢复 / 发布+删除，全部自清理零残留）——批量写操作前先跑它。
+- **只读套件扩容 52 项**：新增 book/get、integral rank_type、prize/list、
+  queryComment、listSurveyTask 探针；跨文档计数（SKILL/AGENTS/api.md/md）同步。
