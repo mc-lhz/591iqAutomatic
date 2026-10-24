@@ -19,13 +19,19 @@ tools/
   RecordCenter/PublishActivity.py 活动记录发布/编辑 CLI（--yes 才写，--dry-run 只读）
   RecordCenter/DeleteRecord.py     写实记录删除 CLI（--yes 才删，--dry-run 只看目标）
   RecordCenter/RecordComment.py   记录/活动评论互动 CLI（发删 --yes 才写，回执核条数）
+  EvaluateActivity/SummaryWrite.py 活动总结域（写）：提交/重交、总结状态回读
+  EvaluateActivity/AutoDraft.py    总结自动草稿 + 批量计划生成（只读）
+  EvaluateActivity/SubmitSummary.py 总结提交 CLI（单条/批量/失败续跑，--yes 才写）
+  AppsCenter/IntegralQuery.py     积分应用（读）：排名/流水/勋章/兑换信息
+  AppsCenter/SurveyQuery.py       问卷应用（读）：任务/题目/历史作答
+  AppsCenter/AppsQuery.py         应用中心只读 CLI（integral/prizes/exchanges/surveys）
   GrowReport/GrowthReport.py      成长报告列表与详情
   GrowReport/GrowthStatistics.py  荣誉统计、活动维度统计
   GrowReport/GrowComment.py       成长报告自我总结读写 CLI（覆盖式，--yes 才写）
   Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet）
   Export/ExportSummaryList.py     活动课程总结清单导出（已交/未交/可编辑重交）
   Export/XlsxWriter.py            共用的最小 xlsx 写出器（纯标准库 zipfile）
-  TestCases/TestApiReadOnly.py    只读 47 项（加 `--upload` 满 48 项）
+  TestCases/TestApiReadOnly.py    只读 52 项（加 `--upload` 满 53 项）
   TestCases/TestRecordRead.py     13 项
   TestCases/TestContract.py       仓库契约与卫生审计（离线，无网络无凭据）
   Release/PackSkill.py            技能包打包（591iqAutomatic.zip，根目录结构）
@@ -122,9 +128,9 @@ python tools/Access/VisionLogin.py submit -u <学号> -p <密码> --code ab12   
 python tools/Access/LoginToken.py password -u <学号> -p <密码>      # 无读图能力时的 OCR 路径
 python tools/Access/LoginToken.py token <32hex>                  # 校验已有 token
 python tools/IqClient.py <ssoToken>                       # 验证并打印摘要
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>    # 只读全量 47 项
-python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>    # 门户登录换 token → 只读 47 项
-python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload  # 48 项（追加上传项，会落一个文件）
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>    # 只读全量 52 项
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>    # 门户登录换 token → 只读 52 项
+python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload  # 53 项（追加上传项，会落一个文件）
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录 13 项断言
 python tools/Export/ExportXlsx.py --token <ssoToken>            # 综评全量导出 xlsx（13 sheet）
 python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结清单导出 xlsx

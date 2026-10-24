@@ -209,6 +209,22 @@ def main():
     case("record/queryClassifyList", lambda: c.post("/record/queryClassifyList", {}))
     case("record/queryHistoryBookList",
          lambda: c.post("/record/queryHistoryBookList", {}))
+    case("book/get 按ISBN查书",
+         lambda: c.book("9787544291163"),
+         check=lambda v: isinstance(v, dict) and bool(v.get("title")),
+         note="公开书号（白夜行）；查无时业务层拒绝，路由仍算可达")
+    case("integral rank_type（维度枚举·路由探活）",
+         lambda: c.integralRankTypes(), check=None,
+         note="未配置积分的学校可能为空，接口可达即可")
+    case("integral exchange/prize/list（路由探活，可空）",
+         lambda: c.exchangePrizes(limit=1), check=None,
+         note="学校未配置积分时为空列表")
+    case("evaluateActivity/queryComment（路由探活，可空）",
+         lambda: c.get("/evaluateActivity/queryComment", {"summaryId": "0"}),
+         check=None, note="不存在的 summaryId 回空数组")
+    case("apps/survey/display/listSurveyTask（路由探活，可空）",
+         lambda: c.surveyTasks(limit=1), check=None,
+         note="无问卷任务时为空列表")
 
     # ---- 记录搜索（/search/search type=1）----
     # 用本人姓名做关键字，保证任何学校都命中自己，不依赖外部数据

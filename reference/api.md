@@ -192,7 +192,7 @@ GET 拼 query、POST 走 form body，请求头 `AccessToken: <ssoToken>`、`clie
 
 > ⚠️ 上表 count 是 **2026-10-04 的快照**，之后本人又发了记录（16 条）、feed 也增长（279），
 > 数字会漂。**别把具体 count 当断言用**，要最新值就跑 `TestApiReadOnly.py`。
-> 该脚本当前 **48 项（47 PASS / 1 WARN）**，加 `--upload` 变 **49 项（48 PASS / 1 WARN）**。
+> 该脚本当前 **52 项（51 PASS / 1 WARN）**，加 `--upload` 变 **53 项（52 PASS / 1 WARN）**。
 
 ## 服务端契约（2026-10-05 实测，12 类提交验证得出）
 

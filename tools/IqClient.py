@@ -14,12 +14,16 @@ from StudentBase.ProfileInfo import ProfileMixin
 from RecordCenter.RecordQuery import QueryMixin
 from RecordCenter.RecordWrite import WriteMixin
 from RecordCenter.RecordComment import CommentMixin
+from EvaluateActivity.SummaryWrite import SummaryMixin
+from AppsCenter.IntegralQuery import IntegralMixin
+from AppsCenter.SurveyQuery import SurveyMixin
 from HomeWorkbench.TaskAndMessage import WorkbenchMixin
 from SearchCenter.SearchQuery import SearchMixin
 
 
 class IQClient(ProfileMixin, OptionsMixin, WorkbenchMixin, QueryMixin, WriteMixin,
-               CommentMixin, ReportMixin, StatsMixin, GrowCommentMixin, SearchMixin, Http):
+               CommentMixin, SummaryMixin, IntegralMixin, SurveyMixin, ReportMixin,
+               StatsMixin, GrowCommentMixin, SearchMixin, Http):
     pass
 
 

@@ -191,6 +191,7 @@ c.userInfo(); c.honorStatistics(); c.activityStats(); c.interests()
 python tools/Export/ExportXlsx.py --token <ssoToken> [--out <路径>]   # 个人综评全量，13 sheet
 python tools/Export/ExportSummaryList.py --token <ssoToken>    # 活动课程总结清单
 python tools/Export/ExportXlsx.py -u <学号> -p <密码>              # 内部自动门户登录
+python tools/AppsCenter/AppsQuery.py integral|prizes|exchanges|surveys --token <t>   # 应用中心只读（按校配置，未配置逐项降级）
 ```
 
 - `ExportXlsx.py` 产出 **13 个定制 sheet**（按阅读顺序编号，**不含原始 JSON**）：
@@ -312,6 +313,13 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 
 细节见 `reference/api.md`「任务详情与路由解析」「写入接口②·活动总结」。
 
+> **提交走 CLI（单条 / 批量）**：单条 `python tools/EvaluateActivity/SubmitSummary.py
+> --event-id <id> --content-file body.txt --yes`；批量先
+> `python tools/EvaluateActivity/AutoDraft.py --status 0,1 --out plan.json` 生成
+> 带草稿的计划（只读，人工过目可改 content），再
+> `SubmitSummary.py --plan plan.json --yes`——失败清单即合法 `--plan`，直接续跑。
+> 逾期不拦截；成功判据 = pdlist 回读 + 正文逐字 + count_task 对照。
+
 ### 第三类写入：评论互动与自我总结（✅ 契约已固化 2026-10-24）
 
 - **记录/活动评论**：`tools/RecordCenter/RecordComment.py`（`show`/`post`/`del`/`activity-*`/`favours`）。
@@ -335,13 +343,13 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 回归自测：
 ```bash
 # 离线：不需要 token、不联网，CI 每次 push 都跑这一条
-python tools/TestCases/TestContract.py
+python tools/TestCases/TestContract.py                # 本地契约审计（离线，17 项）
 python tools/TestCases/TestRecordRead.py <ssoToken>              # 写实记录业务 13 项断言
-python tools/TestCases/TestContract.py                # 本地契约审计（离线，14 项）
-python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 47 项
-python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 47 项
+python tools/TestCases/TestWriteRehearsal.py --token <t>         # 写路径演练（自清理零残留，批量写前先跑）
+python tools/TestCases/TestApiReadOnly.py -u <学号> -p <密码>     # 门户登录（OCR 换 token）→ 只读全量 52 项
+python tools/TestCases/TestApiReadOnly.py --token <ssoToken>     # 已有 token 直接跑，同样 52 项
 python tools/TestCases/TestApiReadOnly.py --token <t> --dump     # 额外落盘每个接口的真实返回
-python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 48 项：追加 announcement/upload（会落一个文件）
+python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 53 项：追加 announcement/upload（会落一个文件）
 ```
 全量结果（2026-10-02 实测）：**PASS=48 FAIL=0 WARN=1 SKIP=2**，共 **47 项**（20.9s，`-u -p --upload`）；
 只跑只读端点（不加 `--upload`）为 **47 项 / PASS=48 FAIL=0 WARN=1 SKIP=2**——第 48 项
