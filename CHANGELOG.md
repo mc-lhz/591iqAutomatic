@@ -7,6 +7,30 @@
 
 ---
 
+## 未发布
+
+### 新增
+
+- **评论互动域**（`tools/RecordCenter/RecordComment.py`，含 CLI）——写实记录与活动课程
+  总结的评论查看 / 发布 / 删除、点赞名单；评论列表内嵌在记录详情 `recordComment` 字段。
+- **成长报告自我总结**（`tools/GrowReport/GrowComment.py`，含 CLI）——学生端评语的读取与
+  覆盖写入（userType=01，800 字上限）。⚠️ 写入受 `studentEnd` 窗口强制（过期返回
+  「学生总结已截止」），与「活动总结逾期不拦截」相反。
+- **图书查询** —— `historyBooks()` 历史图书列表；`book(isbn)` 按 ISBN 查书详情
+  （自动清洗格式，只收 10/13 位纯数字）。
+- **公告已读上报** —— `markAnnouncementRead(objId)`，与公告列表接口配对。
+- **会话卫生** —— `IQClient.logout()` 主动注销 token，缩小凭据存活窗口。
+
+### 修复
+
+- `Feedback/SendFeedback.py`、`Export/ExportXlsx.py` 补 `Log` 导入——漏导入只在主流程
+  NameError，`-h` 冒烟覆盖不到；`TestContract` 新增「Log 导入完备性」检查兜住这一类。
+- 工单模板「发现时间」不再写死 2026-10-05，缺省 = 当天。
+- `tasks()` 文档修正 status 语义（**1=逾期未完成 / 2=已办**），并固化实测结论
+  「逾期总结服务端不拦截」。
+
+---
+
 ## v1.0 — 首个可用版
 
 从 `v0.1-beta2` 直接转正，不经 `v0.1.0`。
