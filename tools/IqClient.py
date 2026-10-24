@@ -8,16 +8,18 @@ SearchCenter 五个域（域内按职责分子模块，每个模块带同名 .md
 from Access.HttpTransport import Http, IQError
 from GrowReport.GrowthReport import ReportMixin
 from GrowReport.GrowthStatistics import StatsMixin
+from GrowReport.GrowComment import GrowCommentMixin
 from StudentBase.DictOptions import OptionsMixin
 from StudentBase.ProfileInfo import ProfileMixin
 from RecordCenter.RecordQuery import QueryMixin
 from RecordCenter.RecordWrite import WriteMixin
+from RecordCenter.RecordComment import CommentMixin
 from HomeWorkbench.TaskAndMessage import WorkbenchMixin
 from SearchCenter.SearchQuery import SearchMixin
 
 
 class IQClient(ProfileMixin, OptionsMixin, WorkbenchMixin, QueryMixin, WriteMixin,
-               ReportMixin, StatsMixin, SearchMixin, Http):
+               CommentMixin, ReportMixin, StatsMixin, GrowCommentMixin, SearchMixin, Http):
     pass
 
 

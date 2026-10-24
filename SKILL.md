@@ -312,6 +312,20 @@ bundle 里有 `/evaluateActivity/delSummary`，但学生端是否暴露**未验�
 
 细节见 `reference/api.md`「任务详情与路由解析」「写入接口②·活动总结」。
 
+### 第三类写入：评论互动与自我总结（✅ 契约已固化 2026-10-24）
+
+- **记录/活动评论**：`tools/RecordCenter/RecordComment.py`（`show`/`post`/`del`/`activity-*`/`favours`）。
+  记录评论列表内嵌在 `queryRecord` 详情的 `recordComment` 字段；发/删走 `/record/comment`、
+  `/record/delComment`（del 前缀，id 是**评论** id）；活动总结评论走
+  `/evaluateActivity/queryComment|comment|delComment`（按 `summaryId`）。
+- **成长报告自我总结（学生端评语）**：`tools/GrowReport/GrowComment.py`（`show`/`set`）。
+  读 `/growReport/summary/queryGrowReportStu`，写 `/growReport/summary/updateGrowReportComment`
+  （`userType:"01"`，800 字上限，meta 信封）。**写入是覆盖式**，set 前先 `show` 看现文。
+  ⚠️ 写入受 `studentEnd` 窗口限制（实测过期返回「学生总结已截止」）；**活动总结相反、
+  逾期不拦截**——两个写域窗口策略不对称。
+- 两者写操作均默认只预览、显式 `--yes` 才写，成功判据是重读回执（条数 ±1 / 逐字一致）。
+  评论对同校可见；读他人记录下的评论须显式 `--allow-other`（留 WARNING 痕）。
+
 ## 接口清单
 
 见 `reference/api.md`（25+ 个已抓包验证端点 + 任务路由解析 moduleId 映射表 +

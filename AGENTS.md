@@ -18,8 +18,10 @@ tools/
   RecordCenter/RecordWrite.py     图片上传、发布写实记录
   RecordCenter/PublishActivity.py 活动记录发布/编辑 CLI（--yes 才写，--dry-run 只读）
   RecordCenter/DeleteRecord.py     写实记录删除 CLI（--yes 才删，--dry-run 只看目标）
+  RecordCenter/RecordComment.py   记录/活动评论互动 CLI（发删 --yes 才写，回执核条数）
   GrowReport/GrowthReport.py      成长报告列表与详情
   GrowReport/GrowthStatistics.py  荣誉统计、活动维度统计
+  GrowReport/GrowComment.py       成长报告自我总结读写 CLI（覆盖式，--yes 才写）
   Export/ExportXlsx.py            个人综评全量数据导出 xlsx（13 sheet）
   Export/ExportSummaryList.py     活动课程总结清单导出（已交/未交/可编辑重交）
   Export/XlsxWriter.py            共用的最小 xlsx 写出器（纯标准库 zipfile）
