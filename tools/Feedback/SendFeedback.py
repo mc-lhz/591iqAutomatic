@@ -21,6 +21,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from Common.Logcat import Log                                # noqa: E402
 from Feedback.FeedbackClient import post_feedback            # noqa: E402
 from Feedback.Ticket import build_ticket, scan                # noqa: E402
 

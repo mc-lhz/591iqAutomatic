@@ -22,6 +22,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _HERE)
 sys.path.insert(1, os.path.abspath(os.path.join(_HERE, "..")))
 
+from Common.Logcat import Log                               # noqa: E402
 from IqClient import IQClient, IQError                       # noqa: E402
 from RecordCenter.RecordWrite import RECORD_TYPE_NAME       # noqa: E402
 from XlsxWriter import (Workbook, S_DATA, S_ZEBRA, S_WRAP,  # noqa: E402

@@ -13,7 +13,7 @@
 | 方法 | 说明 |
 |---|---|
 | `mask_student_no(sid, head=4, tail=2)` | 学号脱敏；纯数字不足 head+tail 则全打码 |
-| `build_ticket(kind, title, name, sid, sections, repro, impact, found)` | 拼一张 HTML 工单；所有插值都经 `html.escape` |
+| `build_ticket(kind, title, name, sid, sections, repro, impact, found)` | 拼一张 HTML 工单；所有插值都经 `html.escape`；`found` 留空=今天（曾写死 2026-10-05） |
 | `scan(payload_text)` | 扫文本，返回 `[(标签, 片段, 偏移)]`；空列表=可投 |
 
 ## 脱敏闸门规则（GATES）

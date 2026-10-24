@@ -48,6 +48,8 @@ CLI_ENTRIES = [
     "Access/LoginToken.py", "Access/VisionLogin.py",
     "Export/ExportXlsx.py", "Export/ExportSummaryList.py",
     "RecordCenter/PublishActivity.py", "RecordCenter/DeleteRecord.py",
+    "RecordCenter/RecordComment.py",
+    "GrowReport/GrowComment.py",
     "Feedback/SendFeedback.py",
     "Release/PackSkill.py",
     "TestCases/TestApiReadOnly.py", "TestCases/TestRecordRead.py",
@@ -235,6 +237,37 @@ def checkHygiene(files):
         bad.append("疑似乱码: %s" % "、".join(mojibake[:3]))
     add("UTF-8 卫生（无 BOM/无 TAB/无乱码）", FAIL if bad else OK,
         "；".join(bad) or "%d 个文件干净" % len(files))
+
+
+def checkLogImport(files):
+    """Log 导入完备性：调用 Log.x() 的模块必须导入 Log。
+
+    2026-10-24 事故：SendFeedback.py / ExportXlsx.py 调用 Log.d 却没导入——
+    日志代码是后加的，而 `-h` 冒烟只走到 argparse 就退出，覆盖不到函数体，
+    跑到主流程才 NameError。这条静态检查专治这一类「函数体内的漏导入」。
+    """
+    # 反向用例：规则必须能抓出「用了 Log 且无导入」的形态（合成样本，不碰真实文件）
+    probe = "def f():\n    Log.d('X', 'y')\n"
+    probe_hit = (re.search(r"\bLog\.(d|w|e|exc|i)\s*\(", probe)
+                 and "from Common.Logcat import" not in probe)
+    if not probe_hit:
+        add("Log 导入完备性（防函数体 NameError）", FAIL, "反向用例不成立：规则失效")
+        return
+    bad = []
+    for rel in files:
+        if not rel.endswith(".py") or rel.endswith("Logcat.py"):
+            continue
+        p = os.path.join(ROOT, *rel.split("/"))
+        s = open(p, encoding="utf-8", errors="ignore").read()
+        if not re.search(r"\bLog\.(d|w|e|exc|i)\s*\(", s):
+            continue
+        if ("from Common.Logcat import" in s
+                or "from Common import Logcat" in s
+                or "import Common.Logcat" in s):
+            continue
+        bad.append(rel)
+    add("Log 导入完备性（防函数体 NameError）", FAIL if bad else OK,
+        "；".join(bad) or "调用 Log 的模块均已导入")
 
 
 def checkVersion(files):
@@ -609,6 +642,7 @@ def main():
     checkSensitive(files)
     checkReferenceBudget()
     checkHygiene(files)
+    checkLogImport(files)
     checkVersion(files)
     checkRecordTypeMap()
     checkCli()

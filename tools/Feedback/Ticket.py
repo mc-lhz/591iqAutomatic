@@ -9,6 +9,7 @@
 """
 import html
 import re
+import time
 
 # ---- 脱敏闸门：命中即拒投。宁可误报也不能把凭据/隐私寄出去。
 # email 不在闸门里——它是被允许的字段（Reply-To）；正文里的邮箱由调用方自觉。
@@ -75,20 +76,21 @@ def _pre(text):
             'Menlo,monospace;font-size:12px">%s</pre>' % html.escape(str(text)))
 
 
-def build_ticket(kind, title, name, sid, sections, repro, impact, found="2026-10-05"):
+def build_ticket(kind, title, name, sid, sections, repro, impact, found=""):
     """拼一张 HTML 工单。
 
     kind     bug / gap / security
     sections [(小节标题, 正文), ...]  正文按纯文本渲染并 escape
     repro    复现步骤（纯文本）
     impact   影响面（纯文本）
+    found    发现时间；留空 = 今天（曾写死 2026-10-05，2026-10-25 修正）
     """
     parts = [_kv([
         ("问题类型", html.escape(KIND_LABEL.get(kind, kind))),
         ("标题", html.escape(title)),
         ("提交人", html.escape(name or "Anonymous")),
         ("学号（脱敏）", "<code>%s</code>" % html.escape(mask_student_no(sid))),
-        ("发现时间", html.escape(found)),
+        ("发现时间", html.escape(found or time.strftime("%Y-%m-%d"))),
     ])]
     for t, b in (sections or []):
         parts.append(_sec(t, _pre(b)))
