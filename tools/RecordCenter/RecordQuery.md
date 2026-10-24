@@ -16,6 +16,10 @@
 - `POST /record/queryRecordStatistics` — 按标签计数（只统计本人）
 - `POST /record/queryRecord` — 编辑前回填。⚠️ **服务端不校验记录归属**，
   本层已加归属校验，见「能力边界」。
+- `POST /record/queryHistoryBookList` — 历史图书（阅读记录配套；行含 `recordRead`/`recordBook` 槽位）
+- `POST /book/get` — 按 ISBN 查图书详情。⚠️ 服务端**只收 10/13 位纯数字** ISBN
+  （原话：「ISBN为10位或13位纯数字，不含空格、横杠」）；清洗后长度不符客户端直接拦；
+  书不在库回 `999999 该ISBN未查询到书籍`
 
 ## 方法
 
@@ -26,6 +30,8 @@
 | `groupTypes()` | 分组 |
 | `recordStatistics(semesterId="")` | 统计（口径=本人，与 type="1" 一致） |
 | `queryRecord(recordId, redact=True, allowOther=False)` | 详情；默认校验归属 + 脱敏 |
+| `historyBooks(offset=0, limit=10)` | 历史图书列表（阅读记录配套） |
+| `book(isbn)` | ISBN 查书；自动清洗非数字字符，长度不符抛 `IQError` |
 | `redactUserInf(rec, redact=True)` | 纯函数：把 `userInf` 收敛到 `USERINF_KEEP` |
 
 ## 能力边界（2026-10-06 加的两道校验）
@@ -63,6 +69,10 @@ c.records(limit=1, type_="1")["list"]["list"][0]   # 本人第一条
 c.queryRecord(rid)                                 # 自己的记录，自动脱敏
 c.queryRecord(rid, allowOther=True)                # 读他人：留 WARNING
 c.records(type_="", unsafeScope=True)              # 兜底分支：留 WARNING（慎用）
+
+c.historyBooks(limit=5)                            # 阅读记录的历史图书
+c.book("I SHN 978-7-5404-7777-6")                  # 展示格式也可，自动清洗；
+c.book("9787544291163")                            # → {id,isbn,title,author,summary,…}
 ```
 
 ## 注意事项

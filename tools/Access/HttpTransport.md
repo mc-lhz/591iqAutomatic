@@ -14,6 +14,7 @@
 | `_call(path, data=None, method=None)` | 底层请求；GET 拼 query、POST 走 form body，末尾调 `unwrapEnvelope` |
 | `get(path, data=None)` / `post(path, data=None)` | 便捷方法 |
 | `login()` | 调 `loginBySSOToken`，结果存 `self.profile` |
+| `logout()` | 调 `/account/logout`（**写**）：服务端作废 ssoToken，之后所有请求回 9000；会话卫生用 |
 | `userId` | 属性，`str(profile["userId"])` |
 
 ## 约定

@@ -1,9 +1,12 @@
-"""记录域（读）：列表 / 标签 / 分组 / 统计 / 详情回填。
+"""记录域（读）：列表 / 标签 / 分组 / 统计 / 详情回填 / 图书查询。
 
 对应端点：/record/queryRecordList、/record/queryLabelList、/record/group_type、
-          /record/queryRecordStatistics、/record/queryRecord
+          /record/queryRecordStatistics、/record/queryRecord、
+          /record/queryHistoryBookList、/book/get
 写入见同目录 RecordWrite.py。
 """
+import re
+
 from Access.HttpTransport import IQError
 from Common.Logcat import Log
 
@@ -132,3 +135,33 @@ class QueryMixin:
             Log.w("RecordQuery", "queryRecord 读取他人记录 id=%s 属 userId=%s"
                                 "（当前 %s）" % (recordId, owner, mine))
         return redactUserInf(rec, redact)
+
+    def historyBooks(self, offset=0, limit=10):
+        """历史图书列表（阅读记录配套）。
+
+        行是槽位信封：`recordRead`（借阅：id/bookIsbn/classifyName…）
+        + `recordBook`（书目：id/isbn/title…），外层与 records() 一样是两层 list。
+        """
+        out = self.post("/record/queryHistoryBookList",
+                        {"offset": offset, "limit": limit})
+        Log.d("RecordQuery", "historyBooks offset=%d" % offset)
+        return out
+
+    def book(self, isbn):
+        """按 ISBN 查图书详情（POST /book/get）。
+
+        isbn 允许传带格式的展示值（如 `"I SHN 978-7-5404-7777-6"`），
+        本方法自动清洗为纯数字；**服务端只收 10 或 13 位纯数字**
+        （实测原话：ISBN为10位或13位纯数字，不含空格、横杠），
+        清洗后长度不符在客户端直接抛 IQError，不发请求。
+        该书不在图书库时服务端回 `999999 该ISBN未查询到书籍`（抛 IQError）。
+        """
+        digits = re.sub(r"\D", "", isbn or "")
+        if len(digits) not in (10, 13):
+            raise IQError(
+                "book(isbn=%r)：清洗后为 %d 位纯数字，服务端要求 10 或 13 位"
+                % (isbn, len(digits)))
+        out = self.post("/book/get", {"isbn": digits})
+        Log.d("RecordQuery", "book isbn=%s -> %s"
+              % (digits, (out or {}).get("title") if isinstance(out, dict) else "?"))
+        return out

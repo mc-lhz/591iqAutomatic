@@ -107,6 +107,16 @@ class Http:
         self.profile = d
         return d
 
+    def logout(self):
+        """注销当前会话（**写操作**：服务端作废该 ssoToken）。
+
+        会话卫生用途——任务做完主动登出，缩小凭据存活窗口；
+        调用后本客户端所有后续请求都会得到 `9000 session已过期`。
+        前端契约（bundle）：`/account/logout` POST、空载荷。
+        """
+        Log.d("Http", "logout ssoToken 尾 6 位 ...%s" % self.ssoToken[-6:])
+        return self._call("/account/logout", {}, method="POST")
+
     @property
     def userId(self):
         return str(self.profile["userId"])

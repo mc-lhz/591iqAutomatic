@@ -11,6 +11,7 @@
 - `GET /task/list_label` — 任务标签
 - `GET /msg/queryUnRead` — 未读计数
 - `GET /announcement/listAnnouncementRead` / `listPopupAnnouncementRead`
+- `GET /announcement/updateAnnouncementRead` — 公告已读上报（**写操作**，载荷 `{objId}`）
 
 ## 方法
 
@@ -20,6 +21,7 @@
 | `tasks(status="0", offset=0, limit=20, labelId="")` | 任务列表，status 取 0/1/2 |
 | `unread()` | `{systemCount, favourCount, count, commentCount}` |
 | `announcements(offset=0, limit=6)` | 公告列表 |
+| `markAnnouncementRead(objId)` | 公告已读上报（**写**）：objId = 公告行 `id`，前端在打开公告时触发 |
 
 ## 用法
 

@@ -1,6 +1,7 @@
 """首页工作台域：待办任务、未读消息、公告。
 
-对应端点：/task/count_task、/task/list、/msg/queryUnRead、/announcement/listAnnouncementRead
+对应端点：/task/count_task、/task/list、/msg/queryUnRead、/announcement/listAnnouncementRead、
+          /announcement/updateAnnouncementRead
 """
 from Common.Logcat import Log
 
@@ -13,7 +14,12 @@ class WorkbenchMixin:
         return out
 
     def tasks(self, status="0", offset=0, limit=20, labelId=""):
-        """任务列表。status: 0=未完成 1=已完成（过期见 api.md 说明）"""
+        """任务列表。
+
+        status 语义（2026-10-24 实测核对，与 /task/count_task 一一对应）：
+        0=待办(unfinished) / **1=逾期未完成(expired)** / 2=已办(finished)。
+        ⚠️ 逾期 ≠ 不可提交：实测逾期总结仍可正常提交（服务端不拦截过期）。
+        """
         out = self.get("/task/list", {
             "status": status, "labelId": labelId,
             "page": {"offset": offset, "limit": limit, "total": 0,
@@ -31,10 +37,20 @@ class WorkbenchMixin:
         return out
 
     def announcements(self, offset=0, limit=6):
-        """公告列表"""
+        """公告列表（含 readFlag 已读标记）"""
         out = self.get("/announcement/listAnnouncementRead",
                         {"offset": offset, "limit": limit})
         lst = out.get("list") if isinstance(out, dict) else out
         Log.d("Workbench", "announcements offset=%d 取回 %d 条"
               % (offset, len(lst) if isinstance(lst, list) else 0))
+        return out
+
+    def markAnnouncementRead(self, objId):
+        """公告已读上报（**写操作**：状态变更，标记该公告为已读）。
+
+        前端行为：打开公告（列表行 `readFlag==1`）时上报 `{objId:<公告id>}`，
+        objId 即 announcements() 行里的 `id`。调用前向用户确认。
+        """
+        out = self.get("/announcement/updateAnnouncementRead", {"objId": objId})
+        Log.d("Workbench", "markAnnouncementRead objId=%s -> %s" % (objId, out))
         return out
