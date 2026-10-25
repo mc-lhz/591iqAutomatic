@@ -7,6 +7,20 @@
 
 ---
 
+## 未发布
+
+### 新增
+
+- **互动补全：点赞与收藏** —— 记录点赞/取消（`/record/favour`）、活动总结点赞/取消
+  （`/evaluateActivity/favour`）、活动收藏/取消（`/evaluateActivity/collect`）三组开关，
+  以及记录点赞名单读取；CLI 增 `like` / `activity-like` / `activity-collect`
+  （默认只预览、`--yes` 才写、回读回执）。
+- **`TestCases/ApiCoverageAudit.py`** —— 端点覆盖审计：bundle 端点清单 vs skill 封装集，
+  输出「同族缺口」报告（某段已有封装却仍有未覆盖兄弟端点）。把 2026-10-25「点赞漏检」
+  这类盲区变成可复跑检查；配套在 AGENTS 立下「兄弟清扫」纪律。
+
+---
+
 ## v1.1 — 评论 / 总结 / 应用中心工具化
 
 自 v1.0 以来首次功能升级。**纯增量、无破坏性变更**：新增三个业务域与两个测试设施，

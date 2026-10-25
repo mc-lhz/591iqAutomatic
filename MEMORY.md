@@ -419,3 +419,12 @@ D18/D19 记的是「验出了什么」，这一节记「怎么验的」——后
   `A and dict` 返回 dict 而非布尔，整个响应 dict 被当「回执一致」打印）。
   已修：`bool()` 断言 + `redactComment()` 白名单收敛（复用 `USERINF_KEEP`）+
   「打印/日志只给 id 与条数」规矩（RecordComment.md）。评论列表/活动评论返回同步收敛。
+- **点赞功能漏检复盘**（2026-10-25）：`/record/favour`（22 chunk）与 `/record/comment`
+  同处**记录卡片 chunk 家族**，但学生面闭包（20 seeds）对两者的命中率是 **0/22**——
+  评论区能落地纯靠点名 + 定向 grep；建评论模块时也没做**兄弟清扫**，同 chunk 的
+  `favour`/`collect` 被挑剩。已补：三组开关（记录赞/总结赞/活动收藏，实测幂等且零残留）+
+  `TestCases/ApiCoverageAudit.py`（同族缺口可复跑）+ AGENTS「兄弟清扫」纪律。
+  扩种子重跑闭包（44 chunk）另浮出**活动报名家族**：`/evaluateActivity/join`
+  GET `{eventId, eventActivityRoleId}`（写，待单独评估）、`queryRoleInfo`（读，角色列表，
+  前端过滤掉主持策划者/主要参与者）；`reviewDel`（GET {id} 删除，对象类型未知）与
+  `/activity/summary/export_picture`（教师侧倾向）**留档不封装**。
