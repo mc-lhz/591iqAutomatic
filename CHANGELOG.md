@@ -7,30 +7,37 @@
 
 ---
 
-## 未发布
+## v1.1 — 评论 / 总结 / 应用中心工具化
+
+自 v1.0 以来首次功能升级。**纯增量、无破坏性变更**：新增三个业务域与两个测试设施，
+把「填写所有活动总结」从一次性脚本升级为正式工具，并收口若干实测发现的坑。
 
 ### 新增
 
 - **评论互动域**（`tools/RecordCenter/RecordComment.py`，含 CLI）——写实记录与活动课程
   总结的评论查看 / 发布 / 删除、点赞名单；评论列表内嵌在记录详情 `recordComment` 字段。
+  评论对象内嵌的完整 `userInfo`（含身份证/考号）已白名单收敛。
 - **成长报告自我总结**（`tools/GrowReport/GrowComment.py`，含 CLI）——学生端评语的读取与
   覆盖写入（userType=01，800 字上限）。⚠️ 写入受 `studentEnd` 窗口强制（过期返回
   「学生总结已截止」），与「活动总结逾期不拦截」相反。
+- **总结提交工具化**（`tools/EvaluateActivity/`）——`SubmitSummary.py`（单条 / `--plan`
+  批量 / 失败清单续跑，`--yes` 才写、回执逐字核对）+ `AutoDraft.py`（按活动类型出草稿、
+  扫描任务生成计划；只读）+ `SummaryWrite` 域方法。招牌用例「填写所有活动总结」
+  从一次性脚本升级为正式工具。
+- **应用中心读侧**（`tools/AppsCenter/`）——积分（排名/流水/勋章/兑换信息）、问卷
+  （任务/题目/历史作答，`templateId` 实测打通）+ 只读 CLI `AppsQuery.py`；
+  按校配置，未配置时逐项降级不崩。
 - **图书查询** —— `historyBooks()` 历史图书列表；`book(isbn)` 按 ISBN 查书详情
   （自动清洗格式，只收 10/13 位纯数字）。
 - **公告已读上报** —— `markAnnouncementRead(objId)`，与公告列表接口配对。
 - **会话卫生** —— `IQClient.logout()` 主动注销 token，缩小凭据存活窗口。
-- **总结提交工具化** —— `EvaluateActivity/SubmitSummary.py`（单条 / `--plan` 批量 /
-  失败清单续跑，`--yes` 才写、回执逐字核对）+ `AutoDraft.py`（按活动类型出草稿、
-  扫描任务生成计划；只读）。招牌用例「填写所有活动总结」从一次性脚本升级为正式工具。
-- **应用中心读侧** —— `AppsCenter/`：积分（排名/流水/勋章/兑换信息）、问卷
-  （任务/题目/历史作答，`templateId` 实测打通）+ 只读 CLI `AppsQuery.py`；
-  按校配置，未配置时逐项降级不崩。
-- **写路径演练** —— `TestCases/TestWriteRehearsal.py`：评论 / 活动评论 / 自我总结
+- **写路径演练**（`TestCases/TestWriteRehearsal.py`）——评论 / 活动评论 / 自我总结
   （快照-恢复）/ 发布+删除 四组自清理用例，零残留；批量写操作前先跑它证明渠道通畅。
 
 ### 修复
 
+- **评论响应 PII 收敛**——`/record/comment` 响应与评论列表内嵌 51 字段 userInfo，
+  首次实跑被 CLI 直出；已改为白名单收敛 + 打印只出 id（与 `queryRecord` 同纪律）。
 - `Feedback/SendFeedback.py`、`Export/ExportXlsx.py` 补 `Log` 导入——漏导入只在主流程
   NameError，`-h` 冒烟覆盖不到；`TestContract` 新增「Log 导入完备性」检查兜住这一类。
 - 工单模板「发现时间」不再写死 2026-10-05，缺省 = 当天。
