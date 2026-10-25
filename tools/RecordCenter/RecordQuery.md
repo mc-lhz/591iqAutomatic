@@ -20,6 +20,8 @@
 - `POST /book/get` — 按 ISBN 查图书详情。⚠️ 服务端**只收 10/13 位纯数字** ISBN
   （原话：「ISBN为10位或13位纯数字，不含空格、横杠」）；清洗后长度不符客户端直接拦；
   书不在库回 `999999 该ISBN未查询到书籍`
+- `POST /record/checkRecordExist` — 按 `recordType + gradeAliasId` 查本人是否已有该类记录
+  （编辑页表单查重/回填；实测 rt=19 无记录时返回空）
 
 ## 方法
 
@@ -32,6 +34,7 @@
 | `queryRecord(recordId, redact=True, allowOther=False)` | 详情；默认校验归属 + 脱敏 |
 | `historyBooks(offset=0, limit=10)` | 历史图书列表（阅读记录配套） |
 | `book(isbn)` | ISBN 查书；自动清洗非数字字符，长度不符抛 `IQError` |
+| `checkRecordExist(recordType, gradeAliasId)` | 查重/回填（编辑页先查后填） |
 | `redactUserInf(rec, redact=True)` | 纯函数：把 `userInf` 收敛到 `USERINF_KEEP` |
 
 ## 能力边界（2026-10-06 加的两道校验）

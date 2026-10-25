@@ -20,6 +20,8 @@
 | POST | `/record/favour` | `{type:"1"/"0", id}` | **记录点赞开关**（名单在详情 `recordFavour` 槽位） |
 | POST | `/evaluateActivity/favour` | `{type:"1"/"0", summaryId}` | **活动总结点赞开关** |
 | GET | `/evaluateActivity/collect` | `{eventId, type:"1"=收藏/"2"=取消}` | **活动收藏开关**（详情 `isCollect` 回读） |
+| GET | `/sm/comment` | `{userId, pageRowBounds}` | **某人「收到的评论」**（个人主页；行内 userInfo 已收敛） |
+| GET | `/sm/favour` | `{userId, pageRowBounds}` | **某人「收到的赞」**（同上） |
 
 > 点赞/收藏三件套是 2026-10-25「点赞漏检」复盘后补的（原闭包没圈到卡片 chunk、
 > 建评论时又没做兄弟清扫）；`TestCases/ApiCoverageAudit.py` 可复跑同族缺口。
@@ -35,6 +37,8 @@
 - `favourRecord(recordId, like=True)` — 记录点赞/取消（写）
 - `favourActivity(summaryId, like=True)` — 活动总结点赞/取消（写）
 - `collectActivity(eventId, collect=True)` — 活动收藏/取消（写）
+- `receivedComments(userId=None, offset=0, limit=20)` — 收到的评论（读；行内 userInfo 已收敛）
+- `receivedFavours(userId=None, offset=0, limit=20)` — 收到的赞（读；同上）
 
 ## 最小用法
 

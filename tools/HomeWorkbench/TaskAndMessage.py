@@ -54,3 +54,20 @@ class WorkbenchMixin:
         out = self.get("/announcement/updateAnnouncementRead", {"objId": objId})
         Log.d("Workbench", "markAnnouncementRead objId=%s -> %s" % (objId, out))
         return out
+
+    def messages(self, offset=0, limit=10):
+        """消息列表（收件箱）。**分页键是裸 offset/limit**（与 tasks() 的 page 不同）。
+
+        返回 `data.list.{pdlist,totalResult}`；行含 `pcUrl` 跳转（任务/公告详情）。
+        """
+        out = self.get("/msg/queryList", {"offset": offset, "limit": limit})
+        Log.d("Workbench", "messages offset=%d limit=%d" % (offset, limit))
+        return out
+
+    def dynamicMessages(self, offset=0, limit=10):
+        """动态消息列表（首页动态流）。**分页键是 pageRowBounds**，
+        返回 `data.pdlist + data.totalResult`（与 messages() 的信封不同）。"""
+        out = self.get("/msg/queryDynamicList",
+                       {"pageRowBounds": {"offset": offset, "limit": limit}})
+        Log.d("Workbench", "dynamicMessages offset=%d limit=%d" % (offset, limit))
+        return out

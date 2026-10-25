@@ -165,3 +165,13 @@ class QueryMixin:
         Log.d("RecordQuery", "book isbn=%s -> %s"
               % (digits, (out or {}).get("title") if isinstance(out, dict) else "?"))
         return out
+
+    def checkRecordExist(self, recordType, gradeAliasId):
+        """按 recordType + gradeAliasId 查本人是否已有该类记录（表单查重/回填）。
+
+        前端用法（rt=19 劳动表现自我评价的编辑页）：进页面先查，存在则用返回的
+        `recordContent` / 对应槽位回填表单。返回结构随类型略有差异，
+        不存在时两键为 None/空（按校配置可能不同）。
+        """
+        return self.post("/record/checkRecordExist",
+                         {"recordType": str(recordType), "gradeAliasId": gradeAliasId})

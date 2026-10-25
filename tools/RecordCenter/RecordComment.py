@@ -49,6 +49,13 @@ def redactComment(c):
     return out
 
 
+def _redactListEnvelope(out):
+    """信封里的行数组统一跑 redactComment（sm 系列列表行含评论者/点赞者 userInfo）。"""
+    if isinstance(out, dict) and isinstance(out.get("list"), list):
+        return dict(out, list=[redactComment(c) for c in out["list"]])
+    return out
+
+
 class CommentMixin:
     """评论域 mixin：记录评论 + 活动课程总结评论。读多写少，写方法一律先确认后调用。"""
 
@@ -130,6 +137,24 @@ class CommentMixin:
         """
         return self.get("/evaluateActivity/collect",
                         {"eventId": eventId, "type": "1" if collect else "2"})
+
+    def receivedComments(self, userId=None, offset=0, limit=20):
+        """某人**收到的评论**列表（个人主页 social 模块；缺省本人）。
+
+        ⚠️ 行内嵌评论者的完整 `userInfo`（51 字段，含身份证/考号）——
+        返回前用 redactComment 白名单收敛；分页键是 pageRowBounds。
+        """
+        out = self.get("/sm/comment",
+                       {"userId": int(userId or self.userId),
+                        "pageRowBounds": {"offset": offset, "limit": limit}})
+        return _redactListEnvelope(out)
+
+    def receivedFavours(self, userId=None, offset=0, limit=20):
+        """某人**收到的赞**列表（个人主页 social 模块；缺省本人）。结构/脱敏同 receivedComments。"""
+        out = self.get("/sm/favour",
+                       {"userId": int(userId or self.userId),
+                        "pageRowBounds": {"offset": offset, "limit": limit}})
+        return _redactListEnvelope(out)
 
 
 def _commentText(c):

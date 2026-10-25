@@ -10,6 +10,8 @@
 - `GET /task/list` — status：0=待办 / 1=逾期未完成 / 2=已办；行含 `taskId/pcUrl`
 - `GET /task/list_label` — 任务标签
 - `GET /msg/queryUnRead` — 未读计数
+- `GET /msg/queryList` — 消息列表（**分页键裸 `offset/limit`**；`data.list.pdlist`）
+- `GET /msg/queryDynamicList` — 动态消息列表（**分页键 `pageRowBounds`**；`data.pdlist`）
 - `GET /announcement/listAnnouncementRead` / `listPopupAnnouncementRead`
 - `GET /announcement/updateAnnouncementRead` — 公告已读上报（**写操作**，载荷 `{objId}`）
 
@@ -22,6 +24,8 @@
 | `unread()` | `{systemCount, favourCount, count, commentCount}` |
 | `announcements(offset=0, limit=6)` | 公告列表 |
 | `markAnnouncementRead(objId)` | 公告已读上报（**写**）：objId = 公告行 `id`，前端在打开公告时触发 |
+| `messages(offset=0, limit=10)` | 消息列表（收件箱；行含 pcUrl 跳转） |
+| `dynamicMessages(offset=0, limit=10)` | 动态消息列表（首页动态流） |
 
 ## 用法
 
