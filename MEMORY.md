@@ -414,3 +414,8 @@ D18/D19 记的是「验出了什么」，这一节记「怎么验的」——后
   自我总结快照恢复 / 发布+删除，全部自清理零残留）——批量写操作前先跑它。
 - **只读套件扩容 52 项**：新增 book/get、integral rank_type、prize/list、
   queryComment、listSurveyTask 探针；跨文档计数（SKILL/AGENTS/api.md/md）同步。
+- **评论响应内嵌完整 userInfo（含身份证/考号）**：`/record/comment` 响应与评论列表
+  携带 51 字段 userInfo；首次实跑时被 CLI 直出（`ok` 误用 `and` 语义——
+  `A and dict` 返回 dict 而非布尔，整个响应 dict 被当「回执一致」打印）。
+  已修：`bool()` 断言 + `redactComment()` 白名单收敛（复用 `USERINF_KEEP`）+
+  「打印/日志只给 id 与条数」规矩（RecordComment.md）。评论列表/活动评论返回同步收敛。

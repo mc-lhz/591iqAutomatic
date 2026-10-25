@@ -13,6 +13,10 @@
 ⚠️ 发 / 删评论都是**写操作**：评论对同校可见（含他人记录下的评论），
 调用前必须向用户确认；成功判据 = 重读列表核对条数与内容，不看返回值。
 评论对象键名以服务端为准，渲染时按 comment/content 兜底。
+
+⚠️ **评论对象嵌套完整 userInfo**（2026-10-25 实测：含 `identityCard` 身份证、
+`unifiedExaminationNumber` 考号等 51 字段，与记录详情同源）。本模块对
+`userInfo` 统一白名单收敛（复用 `USERINF_KEEP`），**任何打印/日志不得直出原始对象**。
 """
 import os
 import sys
@@ -22,6 +26,22 @@ sys.path.insert(0, _HERE)
 sys.path.insert(1, os.path.abspath(os.path.join(_HERE, "..")))
 
 from Common.Logcat import Log  # noqa: E402
+from RecordCenter.RecordQuery import USERINF_KEEP  # noqa: E402
+
+
+def redactComment(c):
+    """评论对象里嵌套的 `userInfo` 按白名单收敛（纯函数，可单测）。
+
+    服务端在评论响应里原样返回 51 字段 userInfo（含身份证/考号）——
+    前端展示用不到，本层统一丢弃。
+    """
+    if not isinstance(c, dict):
+        return c
+    out = dict(c)
+    inf = out.get("userInfo")
+    if isinstance(inf, dict):
+        out["userInfo"] = {k: inf.get(k) for k in USERINF_KEEP if k in inf}
+    return out
 
 
 class CommentMixin:
@@ -31,19 +51,22 @@ class CommentMixin:
         """某条写实记录的评论列表（内嵌在记录详情 recordComment 字段）。
 
         allowOther 语义同 queryRecord：读他人记录下的评论显式传 True（留 WARNING）。
+        返回前对每条评论的嵌套 userInfo 做白名单收敛（见 redactComment）。
         """
         d = self.queryRecord(recordId, redact=True, allowOther=allowOther)
-        return d.get("recordComment") or []
+        return [redactComment(c) for c in (d.get("recordComment") or [])]
 
     def commentRecord(self, recordId, text, replyUserId=None, replyUserName=None):
-        """发记录评论（写）。返回新评论对象；失败抛 IQError。"""
+        """发记录评论（写）。返回新评论对象（userInfo 已收敛）；失败抛 IQError。"""
         data = {"id": recordId, "comment": text}
         if replyUserId:
             data["replyUserId"] = replyUserId
         if replyUserName:
             data["replyUserName"] = replyUserName
-        out = self.post("/record/comment", data)
-        Log.d("RecordComment", "commentRecord %s -> %s" % (recordId, out))
+        out = redactComment(self.post("/record/comment", data))
+        # ⚠️ 日志只记 id：响应原文含完整 userInfo，不得直出（2026-10-25 事故）
+        Log.d("RecordComment", "commentRecord %s -> id=%s"
+              % (recordId, (out or {}).get("id") if isinstance(out, dict) else out))
         return out
 
     def delRecordComment(self, commentId):
@@ -51,15 +74,16 @@ class CommentMixin:
         return self.post("/record/delComment", {"id": commentId})
 
     def activityComments(self, summaryId):
-        """活动课程总结的评论列表（GET queryComment，data 为数组）。"""
-        return self.get("/evaluateActivity/queryComment", {"summaryId": summaryId}) or []
+        """活动课程总结的评论列表（GET queryComment，data 为数组；userInfo 已收敛）。"""
+        lst = self.get("/evaluateActivity/queryComment", {"summaryId": summaryId}) or []
+        return [redactComment(c) for c in lst]
 
     def commentActivity(self, summaryId, text, replyUserId=None):
-        """发活动总结评论（写）。"""
+        """发活动总结评论（写）。返回已收敛对象。"""
         data = {"summaryId": summaryId, "comment": text}
         if replyUserId:
             data["replyUserId"] = replyUserId
-        return self.post("/evaluateActivity/comment", data)
+        return redactComment(self.post("/evaluateActivity/comment", data))
 
     def delActivityComment(self, commentId):
         """删活动总结评论（写，不可撤销）。"""
@@ -157,8 +181,8 @@ def main():
             new = c.commentRecord(a.record, text, a.reply_user_id, a.reply_user_name)
             after = c.recordComments(a.record, allowOther=a.allow_other)
             newId = (new or {}).get("id") if isinstance(new, dict) else None
-            ok = (len(after) == len(before) + 1
-                  and (newId is None or _findComment(after, newId)))
+            ok = bool(len(after) == len(before) + 1
+                      and (newId is None or _findComment(after, newId)))
             print("[post] 回执：评论数 %d -> %d，新评论 id=%s，回执一致=%s"
                   % (len(before), len(after), newId, ok))
             return EXIT_OK if ok else EXIT_RECEIPT
