@@ -56,6 +56,7 @@ CLI_ENTRIES = [
     "Feedback/SendFeedback.py",
     "Release/PackSkill.py",
     "TestCases/TestApiReadOnly.py", "TestCases/TestRecordRead.py",
+    "TestCases/ApiCoverageAudit.py",
     "TestCases/TestContract.py",
 ]
 # 门面与最小库，AGENTS 的「每 py 配同名 md」在这几处历史上没做，先记 WARN 不阻断 CI

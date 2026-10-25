@@ -34,6 +34,8 @@ tools/
   TestCases/TestApiReadOnly.py    只读 52 项（加 `--upload` 满 53 项）
   TestCases/TestRecordRead.py     13 项
   TestCases/TestContract.py       仓库契约与卫生审计（离线，无网络无凭据）
+  TestCases/ApiCoverageAudit.py   端点覆盖审计（bundle 清单 vs 封装集，同族缺口报告）
+  TestCases/AiProxyTest.py        AI 网关本地流式代理（实验脚本；token 走 argv，不进 CLI 名单）
   Release/PackSkill.py            技能包打包（591iqAutomatic.zip，根目录结构）
   Common/Logcat.py                彩色分等级日志（内部诊断用；默认 stderr+WARNING，单例 `Log`）
   Feedback/FeedbackClient.py      反馈接口投递（独立服务，非 591iq 网关，不注册门面）
@@ -89,6 +91,10 @@ tools/
   它们既是噪声，也是凭据泄漏的来源（见下一条）。
   ⚠️ **不要把一次性脚本迭代成 v2/v3/v4**：能用一次说清的，结论直接进文档；
   迭代出多版的，多半是前几版在试错而不是在验证。
+- **兄弟清扫**（2026-10-25，点赞漏检教训）：从某个 chunk 建成模块时，必须把该 chunk 内
+  **全部 `"/xxx"` 路径字面量列出来逐条分诊**（封装 / 留档 / 排除）——教训是取了评论
+  四口就把同 chunk 的 `favour`/`collect` 挑剩了。复跑同族缺口用
+  `tools/TestCases/ApiCoverageAudit.py`（bundle 清单 vs 封装集差集报告，只读）。
 - **`%TEMP%\591iq_scratch` 自身含凭据与个人信息，且不被现有闸门覆盖**：
   盘点发现全量快照 JSON 里会有会话凭据、明文身份证、考号、同班同学姓名、
   家长/教师评语；日志里有真实 `JSESSIONID`；探针脚本里硬编码了凭据。
