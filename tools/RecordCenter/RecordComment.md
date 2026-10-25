@@ -1,11 +1,12 @@
-# RecordComment.py — 记录/活动评论互动
+# RecordComment.py — 记录/活动 评论与点赞互动
 
 ## 职责
 
-写实记录与活动课程总结的**评论**读写：看评论、发评论、删评论、看点赞名单。
-评论是社交面数据（同校可见，含他人记录下的评论区），本模块只做单条、点名的操作。
+写实记录与活动课程总结的**互动**读写：看/发/删评论、看点赞名单、**记录点赞开关、
+活动总结点赞开关、活动收藏开关**。
+评论与点赞是社交面数据（同校可见，含他人记录下的评论区），本模块只做单条、点名的操作。
 
-## 对应端点（2026-10-24 由前端 bundle 抓包固化）
+## 对应端点（2026-10-24/25 由前端 bundle 抓包并实测固化）
 
 | 方法 | 路径 | 载荷 | 说明 |
 |---|---|---|---|
@@ -16,6 +17,12 @@
 | POST | `/evaluateActivity/comment` | `{summaryId, comment[, replyUserId]}` | 发活动总结评论 |
 | POST | `/evaluateActivity/delComment` | `{id:<commentId>}` | 删活动总结评论 |
 | GET | `/evaluateActivity/queryFavour` | `{summaryId}` | 点赞名单 `[{userName,...}]` |
+| POST | `/record/favour` | `{type:"1"/"0", id}` | **记录点赞开关**（名单在详情 `recordFavour` 槽位） |
+| POST | `/evaluateActivity/favour` | `{type:"1"/"0", summaryId}` | **活动总结点赞开关** |
+| GET | `/evaluateActivity/collect` | `{eventId, type:"1"=收藏/"2"=取消}` | **活动收藏开关**（详情 `isCollect` 回读） |
+
+> 点赞/收藏三件套是 2026-10-25「点赞漏检」复盘后补的（原闭包没圈到卡片 chunk、
+> 建评论时又没做兄弟清扫）；`TestCases/ApiCoverageAudit.py` 可复跑同族缺口。
 
 ## 方法清单（CommentMixin，已注册 IQClient）
 
@@ -23,7 +30,11 @@
 - `commentRecord(recordId, text, replyUserId=None, replyUserName=None)` — 发评论（写）
 - `delRecordComment(commentId)` — 删评论（写，不可撤销）
 - `activityComments(summaryId)` / `commentActivity(summaryId, text, replyUserId=None)` / `delActivityComment(commentId)` — 活动总结评论三件套
-- `activityFavours(summaryId)` — 点赞名单（只读）
+- `activityFavours(summaryId)` — 活动总结点赞名单（只读）
+- `recordFavours(recordId, allowOther=False)` — 记录点赞名单（只读，`recordFavour` 槽位）
+- `favourRecord(recordId, like=True)` — 记录点赞/取消（写）
+- `favourActivity(summaryId, like=True)` — 活动总结点赞/取消（写）
+- `collectActivity(eventId, collect=True)` — 活动收藏/取消（写）
 
 ## 最小用法
 
@@ -36,6 +47,9 @@ python tools/RecordCenter/RecordComment.py del --record <id> --comment-id <cid> 
 python tools/RecordCenter/RecordComment.py activity-show --summary <sid>
 python tools/RecordCenter/RecordComment.py activity-post --summary <sid> --text-file body.txt --yes
 python tools/RecordCenter/RecordComment.py favours --summary <sid>
+python tools/RecordCenter/RecordComment.py like --record <id> --yes            # 记录点赞（--off 取消）
+python tools/RecordCenter/RecordComment.py activity-like --summary <sid> --yes # 总结点赞（--off 取消）
+python tools/RecordCenter/RecordComment.py activity-collect --event <eid> --yes # 活动收藏（--off 取消）
 ```
 
 token 优先级：`--token` > 环境变量 `IQ_SSO_TOKEN` > `-u -p`（OCR 登录需 rapidocr 依赖）。
@@ -47,8 +61,11 @@ token 优先级：`--token` > 环境变量 `IQ_SSO_TOKEN` > `-u -p`（OCR 登录
   本模块统一用 `redactComment()` 收敛到 `USERINF_KEEP` 白名单，
   **打印/日志只给出 id 与条数，不得直出原始对象**（发评论回执曾因此直出过
   完整 PII，当场修复并立此规矩）。
-- **写操作默认只预览**：`post`/`del` 不带 `--yes` 时打印载荷直接返回，不触网写入
-- 成功判据 = **重读列表回执**（条数 ±1、id 出现/消失），不看接口返回值
+- **写操作默认只预览**：`post`/`del`/`like`/`activity-like`/`activity-collect`
+  不带 `--yes` 时只打印当前状态与意图，不触网写入
+- 成功判据 = **重读回执**：评论条数 ±1 / id 出现消失；点赞看名单 ±1 且本人状态翻转；
+  收藏看 `isCollect` 翻转。**重复点赞是幂等的**（已赞再赞不重复计数，实测）
+- `collect` 的 type 是 **"1"收藏/"2"取消**（与 favour 家族的 "1"/"0" 不同，别抄错）
 - 退出码：0 成功 / 2 服务端拒绝 / 3 回执不一致 / 4 token 失效 / 5 前置校验失败
 - 删除不可撤销；删前 `del`（无 --yes）会先展示该条评论内容
 - 评论对象键名以服务端为准（`comment`/`content` 兜底渲染），新评论 id 以响应 data 为准

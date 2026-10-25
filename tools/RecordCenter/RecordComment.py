@@ -9,6 +9,11 @@
 - 发活动评论：POST /evaluateActivity/comment {summaryId, comment[, replyUserId]}
 - 删活动评论：POST /evaluateActivity/delComment {id:<commentId>}
 - 点赞名单：GET /evaluateActivity/queryFavour {summaryId} → [{userName,...}]
+- **记录点赞开关**：POST /record/favour {type:"1"=赞/"0"=取消, id:<recordId>}
+  （记录行的点赞名单在 `recordFavour` 槽位：`[{userId,userName}]`）
+- **活动总结点赞开关**：POST /evaluateActivity/favour {type:"1"/"0", summaryId}
+- **活动收藏开关**：GET /evaluateActivity/collect {eventId, type:"1"=收藏/"2"=取消}
+  （活动详情 `isCollect` 字段回读）
 
 ⚠️ 发 / 删评论都是**写操作**：评论对同校可见（含他人记录下的评论），
 调用前必须向用户确认；成功判据 = 重读列表核对条数与内容，不看返回值。
@@ -93,6 +98,39 @@ class CommentMixin:
         """活动总结点赞名单（只读）。"""
         return self.get("/evaluateActivity/queryFavour", {"summaryId": summaryId}) or []
 
+    def recordFavours(self, recordId, allowOther=False):
+        """记录的点赞名单（只读：queryRecord 的 `recordFavour` 槽位，[{userId,userName}]）。
+
+        allowOther 语义同 queryRecord；自己记录的点赞回执校验用它。
+        """
+        d = self.queryRecord(recordId, redact=True, allowOther=allowOther)
+        return d.get("recordFavour") or []
+
+    def favourRecord(self, recordId, like=True):
+        """记录点赞 / 取消（**写**）：POST /record/favour {type:"1"/"0", id}。
+
+        回执校验用 recordFavours()（名单 ±1 且含/不含本人）。
+        """
+        return self.post("/record/favour",
+                         {"type": "1" if like else "0", "id": recordId})
+
+    def favourActivity(self, summaryId, like=True):
+        """活动总结点赞 / 取消（**写**）：POST /evaluateActivity/favour {type, summaryId}。
+
+        回执校验用 activityFavours()（名单条数 ±1）。
+        """
+        return self.post("/evaluateActivity/favour",
+                         {"type": "1" if like else "0", "summaryId": summaryId})
+
+    def collectActivity(self, eventId, collect=True):
+        """活动收藏 / 取消（**写**）：GET /evaluateActivity/collect。
+
+        ⚠️ type 取值与 favour 家族不同：**"1"=收藏 / "2"=取消**（前端由
+        `1+(isCollect?1:0)` 推得）；回执校验用 activityInfo(eventId).isCollect（"0"/"1"）。
+        """
+        return self.get("/evaluateActivity/collect",
+                        {"eventId": eventId, "type": "1" if collect else "2"})
+
 
 def _commentText(c):
     """评论正文兜底取值：键名以服务端为准，comment/content 都试。"""
@@ -117,15 +155,20 @@ def main():
                     "默认只预览，显式 --yes 才真正写入；成功判据是重读回执。",
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("action", choices=["show", "post", "del", "favours",
-                                       "activity-show", "activity-post", "activity-del"],
+                                       "activity-show", "activity-post", "activity-del",
+                                       "like", "activity-like", "activity-collect"],
                     help="show 看记录评论 / post 发 / del 删；"
-                         "activity-* 针对活动课程总结；favours 看点赞名单")
+                         "activity-* 针对活动课程总结；favours 看点赞名单；"
+                         "like 记录点赞 / activity-like 活动总结点赞 / activity-collect 活动收藏")
     ap.add_argument("--token")
     ap.add_argument("-u", "--user")
     ap.add_argument("-p", "--password")
-    ap.add_argument("--record", help="记录 recordId（show/post/del 用）")
+    ap.add_argument("--record", help="记录 recordId（show/post/del/like 用）")
     ap.add_argument("--summary", help="活动总结 summaryId（activity-*/favours 用）")
+    ap.add_argument("--event", help="活动 eventId（activity-collect 用）")
     ap.add_argument("--comment-id", help="评论 id（del 用）")
+    ap.add_argument("--off", action="store_true",
+                    help="like / activity-like / activity-collect：执行「取消」而非点赞/收藏")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--text", help="评论正文（短文本用）")
     g.add_argument("--text-file", help="评论正文 UTF-8 文本文件路径")
@@ -258,6 +301,63 @@ def main():
             after = c.activityComments(a.summary)
             ok = len(after) == len(lst) - 1 and not _findComment(after, a.comment_id)
             print("[del] 回执：评论数 %d -> %d，回执一致=%s" % (len(lst), len(after), ok))
+            return EXIT_OK if ok else EXIT_RECEIPT
+
+        if a.action == "like":
+            if not a.record:
+                print("[comment] like 需要 --record", file=sys.stderr)
+                return EXIT_PRECHECK
+            lst = c.recordFavours(a.record, allowOther=a.allow_other)
+            mine = str(c.userId)
+            has = any(str(x.get("userId")) == mine for x in lst)
+            want = not a.off
+            if not a.yes:
+                print("[dry-run] 将%s记录 %s 的点赞（当前%s，名单 %d 人）——加 --yes 执行"
+                      % ("点赞" if want else "取消", a.record,
+                         "已赞" if has else "未赞", len(lst)))
+                return EXIT_OK
+            c.favourRecord(a.record, like=want)
+            after = c.recordFavours(a.record, allowOther=a.allow_other)
+            now = any(str(x.get("userId")) == mine for x in after)
+            exp = 0 if has == want else (1 if want else -1)
+            ok = bool(now == want and len(after) - len(lst) == exp)
+            print("[like] 回执：名单 %d->%d，本人 %s->%s，回执一致=%s"
+                  % (len(lst), len(after), "已赞" if has else "未赞",
+                     "已赞" if now else "未赞", ok))
+            return EXIT_OK if ok else EXIT_RECEIPT
+
+        if a.action == "activity-like":
+            if not a.summary:
+                print("[comment] activity-like 需要 --summary", file=sys.stderr)
+                return EXIT_PRECHECK
+            lst = c.activityFavours(a.summary)
+            want = not a.off
+            if not a.yes:
+                print("[dry-run] 将%s活动总结 %s 的点赞（当前名单 %d 人）——加 --yes 执行"
+                      % ("点赞" if want else "取消", a.summary, len(lst)))
+                return EXIT_OK
+            c.favourActivity(a.summary, like=want)
+            after = c.activityFavours(a.summary)
+            exp = 1 if want else -1
+            ok = bool(len(after) - len(lst) == exp)
+            print("[like] 回执：名单 %d->%d，回执一致=%s" % (len(lst), len(after), ok))
+            return EXIT_OK if ok else EXIT_RECEIPT
+
+        if a.action == "activity-collect":
+            if not a.event:
+                print("[comment] activity-collect 需要 --event", file=sys.stderr)
+                return EXIT_PRECHECK
+            cur = str(c.activityInfo(a.event).get("isCollect"))
+            want = not a.off
+            want_s = "1" if want else "0"
+            if not a.yes:
+                print("[dry-run] 将%s活动 %s（当前 isCollect=%s）——加 --yes 执行"
+                      % ("收藏" if want else "取消收藏", a.event, cur))
+                return EXIT_OK
+            c.collectActivity(a.event, collect=want)
+            now = str(c.activityInfo(a.event).get("isCollect"))
+            ok = now == want_s
+            print("[collect] 回执：isCollect %s -> %s，回执一致=%s" % (cur, now, ok))
             return EXIT_OK if ok else EXIT_RECEIPT
 
         return EXIT_OK
