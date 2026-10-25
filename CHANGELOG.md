@@ -18,6 +18,10 @@
 - **`TestCases/ApiCoverageAudit.py`** —— 端点覆盖审计：bundle 端点清单 vs skill 封装集，
   输出「同族缺口」报告（某段已有封装却仍有未覆盖兄弟端点）。把 2026-10-25「点赞漏检」
   这类盲区变成可复跑检查；配套在 AGENTS 立下「兄弟清扫」纪律。
+- **同族漏检清单补齐（+5 读口）** —— `messages()` / `dynamicMessages()`（消息列表与
+  动态流，注意两套分页键不一致）、`checkRecordExist()`（编辑页查重回填）、
+  `receivedComments()` / `receivedFavours()`（个人主页「收到的评论 / 赞」，
+  行内 userInfo 已白名单收敛）。
 
 ---
 

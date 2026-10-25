@@ -428,3 +428,6 @@ D18/D19 记的是「验出了什么」，这一节记「怎么验的」——后
   GET `{eventId, eventActivityRoleId}`（写，待单独评估）、`queryRoleInfo`（读，角色列表，
   前端过滤掉主持策划者/主要参与者）；`reviewDel`（GET {id} 删除，对象类型未知）与
   `/activity/summary/export_picture`（教师侧倾向）**留档不封装**。
+  同类漏检清单已同修：`/record/checkRecordExist`（查重回填）、`/sm/comment` + `/sm/favour`
+  （收到的评论/赞，行内 userInfo 已白名单收敛）、`/msg/queryList` + `/msg/queryDynamicList`
+  （消息/动态列表——**两套分页键不一致**：裸 `offset/limit` vs `pageRowBounds`）。
