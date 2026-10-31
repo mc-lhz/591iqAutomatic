@@ -24,7 +24,7 @@ python tools/EvaluateActivity/SubmitSummary.py --token <t> \
 - **成功判据 = 读回执**：`querySummary.pdlist` 出现 + 正文**逐字一致**
   （`submitSummary` 返回值恒 `{"list":null}`，不作数）；同时打印 `count_task` 前后对照。
 - **批量**：串行 + `--sleep`（默认 0.4s，单账号节制）；**已交条目自动跳过**；
-  失败项写「失败清单」（TEMP 目录，文件名 `591iq_总结失败清单_<时间>.json`）——
+  失败项写「失败清单」（TEMP 目录，文件名前缀见 `SubmitSummary.py`，字面不在此列）——
   该文件本身就是合法 `--plan`，直接再喂一遍即续跑。
 - **逾期不拦截**（实测）：截止已过的总结照常提交，可用于历史清账。
 - token 失效立即中止批量（不空转）。

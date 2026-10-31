@@ -1,6 +1,6 @@
 # LoginToken（登录取 token）
 
-管：获取 591iq sso Token 的四种方式 + 门户探测工具。
+管：获取新壹我 sso Token 的四种方式 + 门户探测工具。
 不管：业务接口（拿到 token 后交给 `IqClient`）。
 
 ## 四种登录方式

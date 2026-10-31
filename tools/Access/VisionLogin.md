@@ -47,7 +47,7 @@ python tools/Access/VisionLogin.py submit -u <学号> -p <密码> --code ab12
 
 门户的 `j_captcha` 与**同一会话的 JSESSIONID 强绑定**（2026-10-02 实测：
 用新会话提交旧验证码 → `loginFailure.action?error=2`）。因此第 ① 步把
-cookiejar 落盘到 `%TEMP%\591iq_scratch\vl_<时间戳>.state.json`，
+cookiejar 落盘到原型工作台（真实路径见 gitignored 笔记）的 `vl_<时间戳>.state.json`，
 第 ② 步复原进新会话后再登录。
 
 ## 验证码特征（实测）

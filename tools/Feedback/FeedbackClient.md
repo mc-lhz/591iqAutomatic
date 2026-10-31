@@ -4,7 +4,7 @@
 
 ## 与 `Access/HttpTransport` 的区别（务必知道）
 
-这是**独立服务**，不是 591iq 平台网关：
+这是**独立服务**，不是综评平台网关：
 
 - base 是 `feedback.mclhz.de5.net`，**不经过** `service.591iq.cn`、**不带** `AccessToken`
 - 请求体是**裸 JSON**，**不是** `request={"data":{…}}` form 封装——发 form 会 `400`

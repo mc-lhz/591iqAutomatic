@@ -39,5 +39,5 @@ token 也可走环境变量 `IQ_SSO_TOKEN`。全程只读。
   真正提交走 `reference/api.md`「写入接口②·活动总结」的 6 步闭环。
 - `status` 的三档含义：`0` 待办、`1` 逾期未完成、`2` 已完成——按 `type=3` 取。
 - `querySummary.pdlist` 为空表示还没交；非空表示已提交。
-- 空值统一显示 `--`，默认输出 `%TEMP%\591iq_总结清单_<时间戳>.xlsx`（已 gitignore）。
+- 空值统一显示 `--`，默认输出 `%TEMP%` 下的总结清单 xlsx（文件名前缀见 `ExportSummaryList.py`，字面不在此列，已 gitignore）。
 - 与 `ExportXlsx.py` 的分工：那个导个人全量综评，这个专门盯活动课程总结的进度。

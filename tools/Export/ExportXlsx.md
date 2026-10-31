@@ -18,7 +18,7 @@ python tools/Export/ExportXlsx.py -u <学号> -p <密码>          # 内部自�
 set IQ_SSO_TOKEN=<ssoToken> && python tools/Export/ExportXlsx.py   # 环境变量
 ```
 
-- 默认输出 `%TEMP%\591iq_*.xlsx`；全程只读。
+- 默认输出 `%TEMP%` 下的综评 xlsx（文件名前缀见 `ExportXlsx.py`，字面不在此列）；全程只读。
 - 空值统一显示 `--`（比空白醒目，且不会把「缺数据」误读成「空字符串」）。
 
 ## ExportXlsx.py 的 13 个 sheet

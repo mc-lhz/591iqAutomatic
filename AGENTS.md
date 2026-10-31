@@ -1,6 +1,6 @@
 # AGENTS.md
 
-天蛙综合素质评价系统（www.591iq.cn）自动化工具集。纯 HTTP，读操作不需要浏览器。
+新壹我综合素质评价系统自动化工具集。纯 HTTP，读操作不需要浏览器。
 
 ## 架构
 
@@ -36,9 +36,9 @@ tools/
   TestCases/TestContract.py       仓库契约与卫生审计（离线，无网络无凭据）
   TestCases/ApiCoverageAudit.py   端点覆盖审计（bundle 清单 vs 封装集，同族缺口报告）
   TestCases/AiProxyTest.py        AI 网关本地流式代理（实验脚本；token 走 argv，不进 CLI 名单）
-  Release/PackSkill.py            技能包打包（591iqAutomatic.zip，根目录结构）
+  Release/PackSkill.py            技能包打包（zip 包，根目录结构；产物名见 PackSkill.py，字面不在此列）
   Common/Logcat.py                彩色分等级日志（内部诊断用；默认 stderr+WARNING，单例 `Log`）
-  Feedback/FeedbackClient.py      反馈接口投递（独立服务，非 591iq 网关，不注册门面）
+  Feedback/FeedbackClient.py      反馈接口投递（独立服务，非综评网关，不注册门面）
   Feedback/Ticket.py              工单HTML 模板 + 学号脱敏 + 投递前敏感信息闸门
   Feedback/SendFeedback.py        反馈工单 CLI（--dry-run 预览 / --yes 真发）
 ```
@@ -62,7 +62,7 @@ tools/
   复合名同时解决可读性与冲突
 - 每业务一个目录 + 每个 py 一个同名 .md 说明；说明含：职责、对应端点、方法清单、最小用法、注意事项
 - 新增业务域 = 新目录（含 `__init__.py`）+ mixin + 说明 + 在 `IqClient.py` 门面注册
-- **唯一例外**：`Release/`（仓库维护工具，与 591iq 平台 API 无关）**不注册门面**，
+- **唯一例外**：`Release/`（仓库维护工具，与综评平台 API 无关）**不注册门面**，
   其模块也不 mixin 进 `IQClient`；它仍需同名 `.md` 说明与 `__init__.py`
 - **门面例外**：`Feedback/` 与 `Release/` 同理——反馈接口是独立服务
   （`feedback.mclhz.de5.net`，裸 JSON、不带 AccessToken），**不注册门面**、不 mixin。
@@ -80,11 +80,11 @@ tools/
   `record`/`grow` 等词**不受目录改名影响**，不要一起替换
 - **禁止用正则批量替换目录名**——会误伤 API 路径与字段名；逐条精确替换并做内容完好性断言
 - **新功能一律先在系统临时目录原型化，不得直接写进 skill 源码目录**：
-  探索脚本、一次性探针、dump 文件一律放 `%TEMP%\591iq_scratch\`（自建，不依赖任何
-  特定 AI 工具/编辑器的私有目录约定）；
+  探索脚本、一次性探针、dump 文件一律放原型工作台（自建、不依赖任何
+  特定 AI 工具/编辑器的私有目录约定，真实路径见 gitignored 的 `reference/api-privileged.md`）；
   确认「确实有用且要长期维护」后，才整理成符合本契约的模块移入 `tools/`，
   并补同名 `.md`、加入 `README`/`SKILL`/`AGENTS`。**不要让半成品、临时产物、
-  未验证脚本长期盘踞源 skill 目录**（`%TEMP%\591iq_scratch` 里的东西含凭据，严禁入库）
+  未验证脚本长期盘踞源 skill 目录**（原型工作台里的东西含凭据，严禁入库）
 - **原型必须有出口**（上面那条的后半段，2026-10-11 补）：验证完立刻分诊——
   **有用的移入 `tools/`，无用的当场删**；一个专题做完（发一条记录 / 删一项能力 /
   生成一批材料）**盘点一次**。别让几十个一次性探针永久堆积：
@@ -95,18 +95,18 @@ tools/
   **全部 `"/xxx"` 路径字面量列出来逐条分诊**（封装 / 留档 / 排除）——教训是取了评论
   四口就把同 chunk 的 `favour`/`collect` 挑剩了。复跑同族缺口用
   `tools/TestCases/ApiCoverageAudit.py`（bundle 清单 vs 封装集差集报告，只读）。
-- **`%TEMP%\591iq_scratch` 自身含凭据与个人信息，且不被现有闸门覆盖**：
+- **原型工作台自身含凭据与个人信息，且不被现有闸门覆盖**：
   盘点发现全量快照 JSON 里会有会话凭据、明文身份证、考号、同班同学姓名、
   家长/教师评语；日志里有真实 `JSESSIONID`；探针脚本里硬编码了凭据。
   处置纪律：① 全量快照**分析完即删**，要留结论就只留统计字段；
   ② 含 `JSESSIONID` 的登录日志用完即删；③ 一次性探针随原型结束即删。
-  **发布前体检要扩到覆盖 `%TEMP%\591iq_scratch` 全目录**，不能只扫对外产物——
+  **发布前体检要扩到覆盖原型工作台全目录**，不能只扫对外产物——
   否则源码与临时产物成了一条绕过闸门的通路。台账见 `MEMORY.md §8.3`。
   ⚠️ 探针脚本里写死的账号密码，**只进环境变量不进 argv**，且用完 `Remove-Item Env:` 清掉。
 - **代码与文档不得绑定特定 AI 工具 / IDE**：不写死 `%TEMP%\opencode\`、`%TEMP%\claude\`、
   `.opencode/`、`.cursor/` 等工具私有路径与配置名；工具专属约定只允许出现在 `SKILL.md`
   的调用说明里，工具无关的行为（临时目录、缓存、产物路径）一律用项目自己的名字
-  （本项目为 `591iq_scratch` / `591iq_*.xlsx`）
+  （本项目为原型工作台 / 综评导出 xlsx）
 - **Git 大小写**：仓库已设 `core.ignorecase=false`；仅改大小写必须 `git rm --cached` + `git add` 两步登记。
   Windows 上文件系统大小写不敏感，`git mv A a` 可能「假成功」，**必须走临时名两段式**
   （`git mv A A__tmp && git mv A__tmp a`），改完用 `git ls-files` 复核索引里的真实大小写。
@@ -174,12 +174,13 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   `recordForms.json` 47.3 + `frontend.md` 19.7，另有 gitignored 的受限文档 2.8；
   原 100 KB 预算于 2026-10-05 抬高，
   原因见 MEMORY.md「Phase 1」）：只放提炼后的结论，
-  **原始前端代码、chunk、映射中间产物一律留在 `%TEMP%\591iq_scratch`，不入库**。
+  **原始前端代码、chunk、映射中间产物一律留在原型工作台，不入库**。
   （`reference/frontend-js/` 那 13 MB 原件也算这类：已 gitignore 且 PackSkill 排除。）
   要加内容先减：表格按类聚合、不要逐字段成行；`frontend.md` 的表格以
   `recordForms.json` 为准（生成脚本未入库），改 JSON 后要同步改 md 里的表
 - PowerShell 5.1：不要用 Get-Content/Set-Content 处理 UTF-8 中文（会乱码），用文件工具或 python
-- **导出（`Export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%\591iq_*.xlsx`，
+- **导出（`Export/`）只读，但产出含学生个人信息**：默认写 `%TEMP%` 下的综评导出 xlsx
+  （文件名前缀见 `ExportXlsx.py`，字面不在此列），
   已 gitignore `*.xlsx`；不要把导出文件或含真实姓名的 json 提交进仓库
 - 提交前脱敏：不得包含 token / 密码 / 姓名 / userId / 班级
 - **入库文档里禁止出现任何真实姓名**（含本人与他人），一律写「某学生」。
@@ -206,7 +207,7 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   3. `git tag -a <v> -m "<v>"` → `git push origin <v>`
   4. 在 GitHub 网页端建 Release、勾 **Pre-release**、粘贴说明、点发布
      → `.github/workflows/release.yml` 会在 `release: published` 时自动打包
-       并把 `591iqAutomatic.zip` 挂为该 Release 的附件（用 runner 自带 `GITHUB_TOKEN`，
+       并把技能包 zip（产物名见 `PackSkill.py`，字面不在此列）挂为该 Release 的附件（用 runner 自带 `GITHUB_TOKEN`，
        本地不需要任何令牌；预发布同样会触发）
 - 命名：`v0.1-betaN`（预发布）→ `v0.1.0`（首个可用版）→ **`v1.0.0` 起走严格 SemVer**，
   即 `MAJOR.MINOR.PATCH`，破坏性改动升 MAJOR，新增能力升 MINOR，修 bug 升 PATCH。
@@ -220,8 +221,8 @@ python tools/Export/ExportSummaryList.py --token <ssoToken>     # 活动总结�
   `reference/` 未超 150 KB；线上回归（`TestApiReadOnly` / `TestRecordRead`）在本地跑
 - **打包规则**（实现在 `Release/PackSkill.py`，规则改这里，别改 workflow）：
   · 文件来源 `git ls-files`，额外排除 `.github/` 与 `.gitignore`（流水线配置与 git 内部约定不必随包分发）
-  · 产物固定名 `591iqAutomatic.zip`，**根目录结构**：`SKILL.md` / `tools/` / `reference/` 直接在顶层，**不套外层目录**（与 GitHub 自动源码包不同）
-  · 因此安装要自己先建目录：`mkdir -p ~/.config/opencode/skills/591iqAutomatic` 再解压进去；这一步必须写进 Release 说明
+  · 产物固定名见 `Release/PackSkill.py` 的 `PKG_NAME`（字面不在此列），**根目录结构**：`SKILL.md` / `tools/` / `reference/` 直接在顶层，**不套外层目录**（与 GitHub 自动源码包不同）
+  · 因此安装要自己先建目录：`mkdir -p ~/.config/opencode/skills/<技能目录名>` 再解压进去；这一步必须写进 Release 说明
   · 打包后自检：根目录必备齐全、未套层、包内无 .git/.github/__pycache__/*.pyc/*.xlsx/图片，
     并输出 **sha256**；Release 说明注明「以 tag 为准，zip 是同快照的便利副本」
   · `--version-check` 强制 VERSION 与 tag 逐字相同，`--require-clean` 拒绝把本地脏改动打进包

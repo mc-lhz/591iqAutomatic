@@ -50,7 +50,7 @@ workflow 注解（`::error::` / `::warning::`），直接显示在 PR 页面的�
 | `VERSION` vs tag | 与 `git describe --tags` 一致 | FAIL（无 tag 时 WARN） |
 | rt 映射 | `RECORD_TYPE_MAP` / `RECORD_TYPE_NAME` 各 22 项，且与 `reference/frontend.md` 表格对得上 | FAIL |
 | 命令行入口 | 11 个入口都具备 `__main__` | FAIL |
-| 技能包结构 | 真的打一次 `591iqAutomatic.zip`：根目录必备齐全、未套外层目录、无垃圾文件 | FAIL |
+| 技能包结构 | 真的打一次技能包 zip（`PKG_NAME`，见 `Release/PackSkill.py`）：根目录必备齐全、未套外层目录、无垃圾文件 | FAIL |
 | 模块可导入 | `IQClient` 与写域 mixin 导入无副作用 | FAIL |
 | 响应信封 | `unwrapEnvelope` 对 7 种信封（顶层 `code` / `meta.code` / 无 code / 裸数组）解析正确，错误码不被吞 | FAIL |
 | 能力红线 | 已移除能力的入口与授权开关**必须不存在**；`records(type_=)` 非法值被客户端拦住（且请求不发出）；`queryRecord` 校验归属；身份字段默认脱敏 | FAIL |

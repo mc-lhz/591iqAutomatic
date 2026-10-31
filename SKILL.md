@@ -1,13 +1,13 @@
 ---
 name: 591iqAutomatic
-description: 新壹我（天蛙）综合素质评价系统（www.591iq.cn，福建厦门一中等校）使用教程与工具集。Use when the user mentions 591iq、综合素质评价、综评系统、成长报告、写实记录、成长空间、学生档案、待办任务、ssoToken、#/mock_login，或要查询/导出本人综评数据、任务、荣誉、写实记录，或提交写实记录与活动总结。
+description: 厦门一中新壹我综合素质评价系统Skill与使用教程。Use when the user mentions 新壹我、综合素质评价、综评系统、成长报告、写实记录、成长空间、学生档案、待办任务、ssoToken、#/mock_login，或要查询/导出本人综评数据、任务、荣誉、写实记录，或提交写实记录与活动总结。
 ---
 
-# 新壹我（天蛙）综合素质评价系统（www.591iq.cn）使用指南
+# 新壹我综合素质评价系统使用指南
 
 > 使用范围与红线：仅用于快捷操作新壹我平台，不得用于**攻击、压力测试、窥探隐私**；不得用于发布**涉黄、涉暴、危害国家安全、颠覆国家统一的内容**；发现越权或泄露类问题时，**只上报、不封装**。综评系统含未成年人个人信息，**账号信息、凭据、导出文件不入库、不外传。**
 
-目标站：`https://www.591iq.cn/#/student/index?theme=gray`（Vue SPA，hash 路由）。
+目标站：新壹我门户（Vue SPA，hash 路由；门户地址见 `tools/Access/LoginToken.py` 的 `APP` 常量）。
 API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作，无需浏览器。**
 
 ## 鉴权模型（已实测打通）
@@ -15,7 +15,8 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
 1. **入口签发 ssoToken**：由厦门一中门户
    `xmyz.xmedu.cn/account/open-api/iqboard!login.action?terminal=computer&service=CQES`
    两次 302 后落地到
-   `https://www.591iq.cn/#/mock_login?logoutDisable=1&from=third&token=<32位小写hex>&userType=2`
+   门户的 `mock_login` 地址（含 `token=<32位小写hex>&userType=2` 参数，URL 字面见
+   `tools/Access/LoginToken.py`）。
    - ⚠️ 该入口**无法匿名直连**：不带门户登录态时恒返回
      `302 → /account/open-api/index.html → 404`，加 token/sign/ticket/各类 header 都无效（已系统性验证）。
    - **获取 ssoToken 的四种登录方式**（统一入口 `tools/Access/LoginToken.py`，输出同一个 token）：
@@ -23,8 +24,8 @@ API 网关：`https://service.591iq.cn`。**纯 HTTP 即可完成全部读操作
      （门户登录 + 验证码 OCR，见下节）；
      ② **原站 JSESSIONID** `python tools/Access/LoginToken.py jsessionid --jsessionid <JSESSIONID>`
      （浏览器已登录门户时复制会话 id，免输验证码；会话失效则回落 `302→index.html→404`）；
-     ③ **591iq 302 跳转链接** `python tools/Access/LoginToken.py redirect "<含 token= 的完整链接>"`；
-     ④ **591iq token** `python tools/Access/LoginToken.py token <32hex>`（仅校验）。
+     ③ **门户 302 跳转链接** `python tools/Access/LoginToken.py redirect "<含 token= 的完整链接>"`；
+     ④ **门户 token** `python tools/Access/LoginToken.py token <32hex>`（仅校验）。
      每种都打印 `ssoToken` + `mock_login` 链接 + `verify: OK/FAIL`（`loginBySSOToken`）。
    - ssoToken 在有效期内**可重复使用**（同一个 token 连续调用多次均 `code:0`）。
 
@@ -82,9 +83,9 @@ POST /j_spring_security_check                   # j_username=<账号> j_password
      失败 → /account/user!loginFailure.action?error=2（验证码错）
 POST /account/user!getGrantedMenuTree.action    # 登录判据：非空菜单树
 GET  /account/open-api/iqboard!login.action?terminal=computer&service=CQES
-     → 302 https://integrate.tianwayun.com/sso/authority?supplier=XMYZ&supplierProject=prod
+     → 302 门户 SSO 授权地址（supplier=XMYZ&supplierProject=prod）
               &service=CQES&loginName=<账号>&lastModifyTime=<ms>&sign=<...>
-     → 302 https://www.591iq.cn/#/mock_login?...&token=<32hex>&userType=2
+     → 302 门户 mock_login 链接（token=<32hex>&userType=2）
 ```
 
 ```bash
@@ -200,7 +201,7 @@ python tools/AppsCenter/AppsQuery.py integral|prizes|exchanges|surveys --token <
   其中 3/4/5/6/10/11/12 全部来自 `growReport/summary/detail`（逐份报告展开），**无需额外端点**。
 - `ExportSummaryList.py` sheet：`总览` `未提交总结` `已提交总结` `可编辑重交` `全量原始`；
   口径 `/task/list` 三种 status 中 `type=3` → `/task/get` → `/evaluateActivity/querySummary`。
-- 全程只读，空值统一显示 `--`，默认输出 `%TEMP%\591iq_*.xlsx`。
+- 全程只读，空值统一显示 `--`，默认输出 `%TEMP%` 下的综评导出 xlsx（文件名前缀见 `tools/Export/ExportXlsx.py`，字面不在此列）。
 - 细节见 `tools/Export/ExportXlsx.md`。
 
 ## 写入：发布写实记录（✅ 已实测提交成功，仍需逐次确认）
@@ -419,8 +420,8 @@ python tools/TestCases/TestApiReadOnly.py -u .. -p .. --upload   # 53 项：追�
 - **Windows 编码坑**：PowerShell 5.1 默认 GBK 代码页，Python 输出中文前先
   `$env:PYTHONIOENCODING='utf-8'`；UTF-8 中文文件用文件工具/Python 读写，
   不要用 `Get-Content`/`Set-Content`（会整文件乱码）。
-- **扩展本 skill 时**：新功能先在 `%TEMP%\591iq_scratch\` 原型化（探索脚本、探针、dump 放那里，
-  该目录自建、不依赖任何特定 AI 工具或 IDE），确认有用后再整理成符合 `AGENTS.md` 契约的模块
+- **扩展本 skill 时**：新功能先在原型工作台原型化（探索脚本、探针、dump 放那里；
+  该目录自建、不依赖任何特定 AI 工具或 IDE，真实路径见 gitignored 的 `reference/api-privileged.md`），确认有用后再整理成符合 `AGENTS.md` 契约的模块
   移入 `tools/`，补同名 `.md` 并同步 README/SKILL/AGENTS；**不要把半成品、临时产物直接写进
   skill 源码目录**，也不要写死任何工具私有路径（`%TEMP%\opencode\`、`.opencode/` 等）。
 - 教育系统数据含学生个人信息，仅限授权使用，不要外传。

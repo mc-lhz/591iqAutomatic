@@ -23,7 +23,7 @@
   **任务列表行的 `id` 可直接当 templateId**。
 - `questions[]` 结构：`{id, templateId, type, title, required, itemList/itemMap,
   multi, tip, fileType/fileCount/fileLimit…}`；type=1 为单选（实测首题）。
-- 5 题的「天蛙学生综评系统AI功能需求调研问卷」读全通过；`lastSurveyAnswer`
+- 5 题的「学生综评系统AI功能需求调研问卷」读全通过；`lastSurveyAnswer`
   无历史时返回 null。
 
 ## 提交作答（未封装）

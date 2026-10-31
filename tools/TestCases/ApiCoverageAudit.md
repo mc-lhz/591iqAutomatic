@@ -20,7 +20,7 @@ python tools/TestCases/ApiCoverageAudit.py --inventory <路径> --routes <路径
 
 | 参数 | 默认 | 说明 |
 |---|---|---|
-| `--inventory` | `%TEMP%\591iq_scratch\frontend-js-*\api_inventory.json` | bundle 扫描产物 `{路径: [chunk…]}` |
+| `--inventory` | 原型工作台的 `frontend-js-*\api_inventory.json`（字面路径见 `ApiCoverageAudit.py`，真实目录见 gitignored 笔记） | bundle 扫描产物 `{路径: [chunk…]}` |
 | `--routes` | 同目录 `all_routes.json`（存在才用） | 剔除前端路由噪声 |
 | `--segment` | 空（全部） | 只看某首段 |
 | `--out` | 空 | 完整差集落盘 JSON |
