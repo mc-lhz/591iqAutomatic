@@ -1,7 +1,7 @@
 # 新壹我 AI技能包
 
 > [!WARNING]
-> **本项目已归档（2026-10-25），停止开发，仓库只读。**
+> **本项目已归档（2026-11-08），停止开发，仓库只读。**
 > 后续开发已迁移至 [AutoXMYZ](https://github.com/mc-lhz/AutoXMYZ)：
 > 三站聚合（校内系统 CampusNet + 学社 XmyzStudent + 新壹我），
 > 统一加载与登录，功能更全面。
